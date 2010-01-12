@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src-gae"/>
+	<classpathentry kind="src" path="src-proxy"/>
+	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jetty"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/httpcomponent"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hyk-rpc"/>
+	<classpathentry kind="output" path="war/WEB-INF/classes"/>
+</classpath>
