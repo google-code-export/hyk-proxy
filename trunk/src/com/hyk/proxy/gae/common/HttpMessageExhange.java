@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.hyk.compress.Compressor;
+import com.hyk.compress.gz.GZipCompressor;
+import com.hyk.compress.sevenzip.SevenZipCompressor;
 import com.hyk.serializer.io.HykObjectInput;
 
 /**
@@ -27,6 +30,8 @@ public class HttpMessageExhange implements Externalizable
 {
 	protected ArrayList<String[]> headers = new ArrayList<String[]>();
 	protected byte[] body;
+	
+	//protected transient Compressor 	compressor = new GZipCompressor();
 	
 	public void addHeader(String name, String value)
 	{
@@ -47,6 +52,13 @@ public class HttpMessageExhange implements Externalizable
 	{
 		return headers;
 	}
+	
+	public void printHeaders()
+	{
+		for (String[] header : headers) {
+			System.out.println("##" + header[0] + ": " + header[1]);
+		}
+	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
@@ -61,6 +73,12 @@ public class HttpMessageExhange implements Externalizable
 				headers.add(header);
 				i++;
 			}
+//			byte[] compress = hin.readObject(byte[].class);
+//			if(null != compress)
+//			{
+//				body = compressor.decompress(compress);
+//			}
+			
 			body = hin.readObject(byte[].class);
 		}
 
@@ -75,6 +93,8 @@ public class HttpMessageExhange implements Externalizable
 		}
 		if(null != body && body.length > 0)
 		{
+//			byte[] compress = compressor.compress(body);
+//			out.writeObject(compress);
 			out.writeObject(body);
 		}
 	}

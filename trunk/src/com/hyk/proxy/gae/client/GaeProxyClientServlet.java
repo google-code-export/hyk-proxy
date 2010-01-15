@@ -27,6 +27,9 @@ import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.hyk.compress.Compressor;
+import com.hyk.compress.gz.GZipCompressor;
+import com.hyk.compress.sevenzip.SevenZipCompressor;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
@@ -40,7 +43,7 @@ public class GaeProxyClientServlet extends HttpServlet
 {
 	static HttpClient	client	= new HttpClient();
 	static Serializer serializer;
-
+	static Compressor 	compressor = new SevenZipCompressor();
 	static
 	{
 		serializer = new HykSerializer();
@@ -114,6 +117,7 @@ public class GaeProxyClientServlet extends HttpServlet
 			ContentExchange contentExchange = new ContentExchange();
 			contentExchange.setURL("http://localhost:8888/fetchproxy");
 			byte[] data = serializer.serialize(forwardRequest);
+			data = compressor.compress(data);
 			System.out.println("####Encode req" + data.length);
 			org.eclipse.jetty.io.Buffer buffer = new ByteArrayBuffer(data);
 			contentExchange.setRequestContent(buffer);
@@ -128,6 +132,7 @@ public class GaeProxyClientServlet extends HttpServlet
 				response.setStatus(contentExchange.getStatus());
 				return;
 			}
+			responseContent = compressor.decompress(responseContent);
 			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, responseContent);
 			buildHttpServletResponse(response, forwardResponse);
 		}

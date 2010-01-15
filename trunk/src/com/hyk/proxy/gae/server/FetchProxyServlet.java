@@ -13,6 +13,8 @@ import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.google.appengine.api.users.UserServiceFactory;
+import com.hyk.compress.Compressor;
+import com.hyk.compress.sevenzip.SevenZipCompressor;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
@@ -31,13 +33,19 @@ public class FetchProxyServlet extends HttpServlet
 			
 		try
 		{
+			System.out.println("####Req len : " + buffer.length);
 			Serializer serializer = new HykSerializer();
+			Compressor 	compressor = new SevenZipCompressor();
 			//serializer.registerDefaultConstructor(HTTPRequest.class, new URL("http://www.google.com"));
+			buffer = compressor.decompress(buffer);
 			HttpRequestExchange fetchReq = serializer.deserialize(HttpRequestExchange.class, buffer);
 			HTTPResponse fetchRes = URLFetchServiceFactory.getURLFetchService().fetch(fetchReq.toHTTPRequest());
 			resp.setStatus(200);
 			HttpResponseExchange exchangeRes  = new HttpResponseExchange(fetchRes);
 			byte[] rawRes = serializer.serialize(exchangeRes);
+			rawRes = compressor.compress(rawRes);
+			System.out.println("####Res len : " + rawRes.length);
+			exchangeRes.printHeaders();
 			resp.getOutputStream().write(rawRes);
 		}
 		catch(Throwable e)
