@@ -26,7 +26,7 @@ import com.hyk.serializer.io.HykObjectInput;
 /**
  *
  */
-public class HttpMessageExhange implements Externalizable
+public abstract class HttpMessageExhange implements Externalizable
 {
 	protected ArrayList<String[]> headers = new ArrayList<String[]>();
 	protected byte[] body;
@@ -48,16 +48,32 @@ public class HttpMessageExhange implements Externalizable
 		return body;
 	}
 	
+	public int getContentLength()
+	{
+		for (String[] header : headers) {
+			if(header[0].equals("Content-Length"))
+			{
+				return Integer.parseInt(header[1]);
+			}
+		}
+		return 0;
+	}
+	
 	public List<String[]> getHeaders()
 	{
 		return headers;
 	}
 	
-	public void printHeaders()
+	protected abstract void print();
+	public void printMessage()
 	{
+		System.out.println("#########");
+		print();
 		for (String[] header : headers) {
-			System.out.println("##" + header[0] + ": " + header[1]);
+			System.out.println(header[0] + ": " + header[1]);
 		}
+		System.out.println("#########");
+		System.out.println();
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
@@ -78,8 +94,16 @@ public class HttpMessageExhange implements Externalizable
 //			{
 //				body = compressor.decompress(compress);
 //			}
+			boolean b = hin.readBoolean();
+			if(b)
+			{
+				int len = hin.readInt();
+				body = new byte[len];
+				//System.out.println("####Expected read " + len);
+				hin.read(body);
+				//body = hin.readObject(byte[].class);
+			}
 			
-			body = hin.readObject(byte[].class);
 		}
 
 	}
@@ -91,11 +115,14 @@ public class HttpMessageExhange implements Externalizable
 		{
 			out.writeObject(header);
 		}
+		out.writeBoolean(null != body&& body.length > 0);
 		if(null != body && body.length > 0)
 		{
 //			byte[] compress = compressor.compress(body);
 //			out.writeObject(compress);
-			out.writeObject(body);
+			//out.writeObject(body);
+			out.writeInt(body.length);
+			out.write(body);
 		}
 	}
 }

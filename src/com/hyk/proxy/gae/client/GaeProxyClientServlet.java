@@ -10,6 +10,9 @@
 package com.hyk.proxy.gae.client;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.NotSerializableException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
@@ -19,17 +22,27 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.client.ContentExchange;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.io.ByteArrayBuffer;
 
-import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPMethod;
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.eclipse.jetty.client.Address;
+import org.eclipse.jetty.client.ContentExchange;
+//import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.io.ByteArrayBuffer;
+import org.jivesoftware.smack.XMPPException;
+
+
+import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
 import com.hyk.compress.Compressor;
 import com.hyk.compress.gz.GZipCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
+
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
@@ -41,7 +54,7 @@ import com.hyk.serializer.StandardSerializer;
  */
 public class GaeProxyClientServlet extends HttpServlet
 {
-	static HttpClient	client	= new HttpClient();
+	//static HttpClient	client	= new DefaultHttpClient();
 	static Serializer serializer;
 	static Compressor 	compressor = new SevenZipCompressor();
 	static
@@ -52,8 +65,9 @@ public class GaeProxyClientServlet extends HttpServlet
 		{
 			//serializer.registerDefaultConstructor(HTTPResponse.class, 200);
 			//serializer.registerDefaultConstructor(URL.class, "http://www.google.com");
-			client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
-			client.start();
+			//client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
+			//client.setProxy(new Address("127.0.0.1", 9666));
+			//client.start();
 		}
 		catch(Exception e)
 		{
@@ -63,9 +77,11 @@ public class GaeProxyClientServlet extends HttpServlet
 
 	protected HttpRequestExchange buildForwardRequest(HttpServletRequest request) throws IOException
 	{
-		//URL url = new URL(request.getRequestURL().toString());
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
-		gaeRequest.setURL(request.getRequestURL().toString());
+		StringBuffer urlbuffer = new StringBuffer();
+		urlbuffer.append(request.getRequestURL().toString());
+		urlbuffer.append("?").append(request.getQueryString());
+		gaeRequest.setURL(urlbuffer.toString());
 		gaeRequest.setMethod(request.getMethod());
 		Enumeration<String> headers = request.getHeaderNames();
 		while(headers.hasMoreElements())
@@ -102,8 +118,41 @@ public class GaeProxyClientServlet extends HttpServlet
 		{
 			response.getOutputStream().write(content);
 		}
+	}
+	
+	protected byte[] talkByHttp(byte[] request) throws TalkException, IOException, InterruptedException
+	{
+		HttpClient	client	= new DefaultHttpClient();
+		HttpPost post = new HttpPost("http://hykserver.appspot.com/fetchproxy");
+		HttpEntity e = new ByteArrayEntity(request);
+		//System.out.println("####" + e.getContentType());
+		post.setEntity(e);
+		HttpResponse response = client.execute(post);
 		
-		// response.
+		HttpEntity resEntity = response.getEntity();
+		InputStream entityIs = resEntity.getContent();
+		byte[] resContent = new byte[0];
+		if(resEntity.getContentLength() > 0)
+		{
+			resContent = new byte[(int) resEntity.getContentLength()];
+			int offset = 0;
+			int length = resContent.length;
+			while(length != 0)
+			{
+				offset = entityIs.read(resContent,offset,length); 
+				length -= offset;
+			}
+		}
+		if(response.getStatusLine().getStatusCode() != 200)
+		{
+			throw new TalkException(response.getStatusLine().getStatusCode(), new String(resContent));
+		}
+		return resContent;
+	}
+	
+	protected byte[] talkByXmpp(byte[] request) throws XMPPException, InterruptedException, Base64DecoderException, TalkException
+	{
+		return new XmppTalk().talk(request);
 	}
 
 	@Override
@@ -113,34 +162,72 @@ public class GaeProxyClientServlet extends HttpServlet
 		try
 		{
 			HttpRequestExchange forwardRequest = buildForwardRequest(request);
-
-			ContentExchange contentExchange = new ContentExchange();
-			contentExchange.setURL("http://localhost:8888/fetchproxy");
 			byte[] data = serializer.serialize(forwardRequest);
 			data = compressor.compress(data);
-			System.out.println("####Encode req" + data.length);
-			org.eclipse.jetty.io.Buffer buffer = new ByteArrayBuffer(data);
-			contentExchange.setRequestContent(buffer);
-			contentExchange.setMethod("GET");
-		
-			client.send(contentExchange);
-			contentExchange.waitForDone();
-			byte[] responseContent = contentExchange.getResponseContentBytes();
-			// HTTPResponse res = new HTTPResponse();
-			if(contentExchange.getResponseStatus() != 200)
-			{
-				response.setStatus(contentExchange.getStatus());
+			
+			byte[] responseContent;
+			try {
+				//responseContent = talkByHttp(data);
+				responseContent = talkByXmpp(data);
+				//System.out.println("####Res len:" + responseContent.length);
+			} catch (TalkException e) {
+				response.sendError(e.getResCode(), e.getResCause());
 				return;
 			}
+			
+			//System.out.println("###Response size: " + responseContent.length);
 			responseContent = compressor.decompress(responseContent);
 			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, responseContent);
-			buildHttpServletResponse(response, forwardResponse);
+			//forwardResponse.printMessage();
+			if(null != forwardResponse.getRedirectURL())
+			{
+				//response.encodeRedirectURL(forwardResponse.getRedirectURL());
+				//System.out.println("###Redirect " + response.encodeRedirectURL(forwardResponse.getRedirectURL()));
+				response.sendRedirect(response.encodeRedirectURL(forwardResponse.getRedirectURL()));
+			}
+			//else
+			{
+				//response.
+				buildHttpServletResponse(response, forwardResponse);
+			}
+			
 		}
 		catch(Throwable e)
 		{
 			e.printStackTrace();
 		}
 
+	}
+	
+	public static void main(String[] args) throws NotSerializableException, IOException, InterruptedException
+	{
+		//HttpRequestExchange forwardRequest = buildForwardRequest(request);
+
+		ContentExchange contentExchange = new ContentExchange();
+		contentExchange.setURL("http://wangqiying.appspot.com/");
+		byte[] data = "0012345".getBytes();
+		org.eclipse.jetty.io.Buffer buffer = new ByteArrayBuffer(data);
+		//contentExchange.setRequestContent(buffer);
+		//
+		contentExchange.setMethod("POST");
+		contentExchange.setRequestContent(buffer);
+		//client.send(contentExchange);
+		contentExchange.waitForDone();
+		//contentExchange.
+		byte[] responseContent = contentExchange.getResponseContentBytes();
+		// HTTPResponse res = new HTTPResponse();
+		if(contentExchange.getResponseStatus() != 200)
+		{
+			System.out.println("#####Error Code" + contentExchange.getResponseStatus());
+			//response.sendError(contentExchange.getResponseStatus(), contentExchange.getResponseContent());
+			//response.setStatus(contentExchange.getStatus());
+			System.out.println("#####Error Content:\n" + contentExchange.getResponseContent());
+			return;
+		}
+		else
+		{
+			System.out.println("#####Content:\n" + contentExchange.getResponseContent());
+		}
 	}
 
 }
