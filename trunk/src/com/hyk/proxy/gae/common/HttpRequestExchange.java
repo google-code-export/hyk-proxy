@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.appengine.api.urlfetch.FetchOptions;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
@@ -62,7 +63,7 @@ public class HttpRequestExchange extends HttpMessageExhange
 	public HTTPRequest toHTTPRequest() throws MalformedURLException
 	{
 		URL requrl = new URL(url);
-		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(method));
+		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(method), FetchOptions.Builder.disallowTruncate().followRedirects());
 		for(String[] header:headers)
 		{
 			req.addHeader(new HTTPHeader(header[0], header[1]));
@@ -83,5 +84,13 @@ public class HttpRequestExchange extends HttpMessageExhange
 		byte[] data = serializer.serialize(req);
 		System.out.println("####data len " + data.length);
 		req = serializer.deserialize(HttpRequestExchange.class, data);
+	}
+
+	@Override
+	protected void print() {
+		System.out.print(method);
+		System.out.print("  ");
+		System.out.println(url);
+		
 	}
 }

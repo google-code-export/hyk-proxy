@@ -25,6 +25,17 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 public class HttpResponseExchange extends HttpMessageExhange
 {
 	public int responseCode;
+	private String redirectURL;
+	
+	public String getRedirectURL() {
+		return redirectURL;
+	}
+	
+	protected void print() {
+
+		System.out.println(responseCode);
+		
+	}
 	
 	public void setResponseCode(int responseCode)
 	{
@@ -48,18 +59,32 @@ public class HttpResponseExchange extends HttpMessageExhange
 		}
 		setBody(res.getContent());
 		URL url = res.getFinalUrl();
-		
+		if(null != url)
+		{
+			redirectURL = url.toString();
+		}
 	}
+	
+	
 	
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		responseCode = in.readInt();
+		if(in.readBoolean())
+		{
+			redirectURL = in.readUTF();
+		}
 		super.readExternal(in);
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 		out.writeInt(responseCode);
+		out.writeBoolean(null != redirectURL);
+		if(null != redirectURL)
+		{
+			out.writeUTF(redirectURL);
+		}
 		super.writeExternal(out);
 	}
 	

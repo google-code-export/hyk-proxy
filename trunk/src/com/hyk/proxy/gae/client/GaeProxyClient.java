@@ -10,6 +10,9 @@
 package com.hyk.proxy.gae.client;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.bio.SocketConnector;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -30,7 +33,16 @@ public class GaeProxyClient
 	
 	public void start() throws Exception
 	{
-		Server server = new Server(48100);
+		Server server = new Server();
+		SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
+		selectChannelConnector.setPort(48100);
+		SslSocketConnector sslSocketConnector = new SslSocketConnector();
+		sslSocketConnector.setPort(48103);
+		//sslSocketConnector.set
+		server.addConnector(selectChannelConnector);
+		//server.addConnector(sslSocketConnector);
+		//System.out.println("####");
+		//server.
 		ServletHandler handler = new ServletHandler();
 		//handler.addServlet(new ServletHolder(ProxyServlet.class));
 		handler.addServletWithMapping(new ServletHolder(GaeProxyClientServlet.class), "/*");
