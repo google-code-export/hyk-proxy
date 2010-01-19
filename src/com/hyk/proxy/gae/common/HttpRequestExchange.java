@@ -37,7 +37,12 @@ public class HttpRequestExchange extends HttpMessageExhange
 	
 	public void setURL(String url)
 	{
+//		if(url.startsWith("http"))
+//		{
+//			url = "https" + url.substring(4);
+//		}
 		this.url = url;
+		//System.out.println(url);
 	}
 	
 	public void setMethod(String method)
@@ -62,8 +67,9 @@ public class HttpRequestExchange extends HttpMessageExhange
 	
 	public HTTPRequest toHTTPRequest() throws MalformedURLException
 	{
+		//if()
 		URL requrl = new URL(url);
-		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(method), FetchOptions.Builder.disallowTruncate().followRedirects());
+		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(method), FetchOptions.Builder.disallowTruncate().doNotFollowRedirects());
 		for(String[] header:headers)
 		{
 			req.addHeader(new HTTPHeader(header[0], header[1]));

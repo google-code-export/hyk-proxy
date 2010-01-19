@@ -22,12 +22,11 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory {
         //SSLEngine engine = SecureChatSslContextFactory.getServerContext().createSSLEngine();
         //engine.setUseClientMode(false);
         //pipeline.addLast("ssl", new SslHandler(engine));
-
         pipeline.addLast("decoder", new HttpRequestDecoder());
         // Uncomment the following line if you don't want to handle HttpChunks.
         //pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
         pipeline.addLast("encoder", new HttpResponseEncoder());
-        pipeline.addLast("handler", new HttpRequestHandler());
+        pipeline.addLast("handler", new HttpRequestHandler(pipeline));
         return pipeline;
     }
 }

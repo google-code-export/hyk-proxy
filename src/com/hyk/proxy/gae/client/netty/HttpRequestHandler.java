@@ -3,13 +3,23 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -18,6 +28,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -28,11 +39,13 @@ import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.ssl.SslHandler;
 
 import com.hyk.compress.Compressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
@@ -51,14 +64,50 @@ import com.hyk.serializer.Serializer;
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 	static Compressor 	compressor = new SevenZipCompressor();
 	static Serializer serializer = new HykSerializer();
+	static SSLContext sslContext;
+	
+	static
+	{
+		try {
+			String password = "hykproxy";
+			sslContext = SSLContext.getInstance("TLS");
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			ks.load(new FileInputStream("hykproxykeystore"), password.toCharArray());
+			kmf.init(ks, password.toCharArray());
+			KeyManager[] km = kmf.getKeyManagers();
+			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			tmf.init(ks);
+			TrustManager[] tm = tmf.getTrustManagers();
+			sslContext.init(km, tm, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
     private volatile HttpRequest request;
     private volatile boolean readingChunks;
     private final StringBuilder responseContent = new StringBuilder();
+    private ChannelPipeline channelPipeline;
+    
+    private boolean ishttps = false;
+    private String httpspath = null;
+    
+    public HttpRequestHandler(ChannelPipeline channelPipeline)
+    {
+    	this.channelPipeline = channelPipeline;
+    }
     
     protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
 	{
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
 		StringBuffer urlbuffer = new StringBuffer();
+		if(ishttps)
+		{
+			urlbuffer.append("https://").append(httpspath);
+		}
 		urlbuffer.append(request.getUri());
 		//urlbuffer.append("?").append(request.getQueryString());
 		gaeRequest.setURL(urlbuffer.toString());
@@ -109,8 +158,27 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (!readingChunks) {
+        	
             HttpRequest request = this.request = (HttpRequest) e.getMessage();
+            System.out.println("####" + request.getMethod() + " " + request.getUri());
+            if(request.getMethod().equals(HttpMethod.CONNECT))
+            {
+            	ishttps = true;
+            	httpspath = request.getHeader("Host");
+            	HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            	e.getChannel().write(response).await(10000);
+            	if(channelPipeline.get("ssl") == null)
+            	{
+            		InetSocketAddress remote = (InetSocketAddress) e.getRemoteAddress();
+            		SSLEngine engine = sslContext.createSSLEngine(remote.getAddress().getHostAddress(), remote.getPort());
+            		engine.setUseClientMode(false);
+            		channelPipeline.addBefore("decoder", "ssl", new SslHandler(engine));
+            		
+            	}
+            	return;
+            }
             HttpRequestExchange forwardRequest = buildForwardRequest(request);
+            //forwardRequest.printMessage();
             byte[] data = serializer.serialize(forwardRequest);
 			data = compressor.compress(data);
 
@@ -118,6 +186,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 			resContent = compressor.decompress(resContent);
 			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, resContent);
 			HttpResponse response = buildHttpServletResponse(forwardResponse);
+			//forwardResponse.printMessage();
 			ChannelFuture future = e.getChannel().write(response);
 
 	        // Close the connection after the write operation is done if necessary.

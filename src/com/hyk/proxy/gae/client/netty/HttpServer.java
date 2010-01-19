@@ -29,10 +29,6 @@ public class HttpServer {
         // Set up the event pipeline factory.
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         Map<String, Object> connectionParams = new HashMap<String, Object>();
-
-        //connectionParams.put(org.jboss.messaging.integration.transports.netty.PORT_PROP_NAME, 5446);
-
-
         bootstrap.bind(new InetSocketAddress(48100));
 
 	}
