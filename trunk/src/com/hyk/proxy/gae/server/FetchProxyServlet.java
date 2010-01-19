@@ -43,18 +43,5 @@ public class FetchProxyServlet extends HttpServlet
 			resp.setContentType("text/plain");
 			resp.getWriter().println("####Failed " + Arrays.toString(e.getStackTrace()));
 		}
-		
-	}
-	
-	public static void main(String[] args) throws NotSerializableException, IOException
-	{
-		HTTPRequest req = new HTTPRequest(new URL("http://www.google.com"));
-		Field[] fs = req.getClass().getDeclaredFields();
-		Serializer serializer = new HykSerializer();
-		System.out.println("####" + serializer.serialize(req).length);
-		for(Field f:fs)
-		{
-			System.out.println("####" + f);
-		}
 	}
 }

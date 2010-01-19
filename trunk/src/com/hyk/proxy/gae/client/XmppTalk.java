@@ -50,7 +50,7 @@ public class XmppTalk {
 				// System.out.println("####forward processMessage! ");
 				talker.processResponse(response);
 			} else {
-				System.out.println("####discard message! ");
+				System.out.println("####discard message! " + response.body);
 			}
 		}
 
