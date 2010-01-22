@@ -20,10 +20,12 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 
-import com.google.appengine.repackaged.com.google.common.util.Base64;
-import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
+//import com.google.appengine.repackaged.com.google.common.util.Base64;
+//import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
 import com.hyk.proxy.gae.common.XmppMeaageUtil;
 import com.hyk.proxy.gae.common.XmppMeaageUtil.HykProxyXmppResponse;
+import com.hyk.util.buffer.ByteArray;
+import com.hyk.util.codec.Base64;
 
 /**
  * @author Administrator
@@ -40,7 +42,6 @@ public class XmppTalk {
 
 	private static class ResponseMessageListener implements MessageListener {
 
-		@Override
 		public void processMessage(Chat chat, Message message) {
 			// System.out.println("####processMessage! ");
 			HykProxyXmppResponse response = XmppMeaageUtil
@@ -86,15 +87,18 @@ public class XmppTalk {
 
 	}
 
-	public byte[] talk(byte[] req) throws XMPPException, InterruptedException,
-			Base64DecoderException, TalkException {
+	public ByteArray talk(ByteArray req) throws XMPPException, InterruptedException,
+			TalkException {
 
 		StringBuffer msgBuffer = new StringBuffer();
 		int sessionID = sessionIDSeed.getAndIncrement();
 		xmppTalkerTable.put(sessionID, this);
 		try {
 			msgBuffer.append("[").append(sessionID).append("]");
-			msgBuffer.append(Base64.encode(req));
+			//Base64.e
+			//msgBuffer.append
+			//Base64.byteArrayToBase64(req.rawbuffer(), req.position(), req.size());
+			msgBuffer.append(Base64.byteArrayBufferToBase64(req));
 			// Chat chat = xmppConnection.getChatManager().createChat(
 			// "hykserver@appspot.com", this);
 			// chat.
@@ -109,7 +113,7 @@ public class XmppTalk {
 			if (null == response) {
 				throw new TalkException(408,"Timeout!");
 			}
-			return Base64.decode(response);
+			return Base64.base64ToByteArrayBuffer(response);
 		} finally {
 			xmppTalkerTable.remove(sessionID);
 		}

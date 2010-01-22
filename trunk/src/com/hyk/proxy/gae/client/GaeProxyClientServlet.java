@@ -48,6 +48,7 @@ import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
 import com.hyk.serializer.StandardSerializer;
+import com.hyk.util.buffer.ByteArray;
 
 /**
  *
@@ -120,11 +121,12 @@ public class GaeProxyClientServlet extends HttpServlet
 		}
 	}
 	
-	protected byte[] talkByHttp(byte[] request) throws TalkException, IOException, InterruptedException
+	protected ByteArray talkByHttp(ByteArray request) throws TalkException, IOException, InterruptedException
 	{
 		HttpClient	client	= new DefaultHttpClient();
 		HttpPost post = new HttpPost("http://hykserver.appspot.com/fetchproxy");
-		HttpEntity e = new ByteArrayEntity(request);
+		//HttpPost post = new HttpPost("http://127.0.0.1:8888/fetchproxy");
+		HttpEntity e = new ByteArrayEntity(request.toByteArray());
 		//System.out.println("####" + e.getContentType());
 		post.setEntity(e);
 		HttpResponse response = client.execute(post);
@@ -147,10 +149,10 @@ public class GaeProxyClientServlet extends HttpServlet
 		{
 			throw new TalkException(response.getStatusLine().getStatusCode(), new String(resContent));
 		}
-		return resContent;
+		return ByteArray.wrap(resContent);
 	}
 	
-	protected byte[] talkByXmpp(byte[] request) throws XMPPException, InterruptedException, Base64DecoderException, TalkException
+	protected ByteArray talkByXmpp(ByteArray request) throws XMPPException, InterruptedException, Base64DecoderException, TalkException
 	{
 		return new XmppTalk().talk(request);
 	}
@@ -162,13 +164,13 @@ public class GaeProxyClientServlet extends HttpServlet
 		try
 		{
 			HttpRequestExchange forwardRequest = buildForwardRequest(request);
-			byte[] data = serializer.serialize(forwardRequest);
+			ByteArray data = serializer.serialize(forwardRequest);
 			data = compressor.compress(data);
 			
-			byte[] responseContent;
+			ByteArray responseContent;
 			try {
-				//responseContent = talkByHttp(data);
-				responseContent = talkByXmpp(data);
+				responseContent = talkByHttp(data);
+				//responseContent = talkByXmpp(data);
 				//System.out.println("####Res len:" + responseContent.length);
 			} catch (TalkException e) {
 				response.sendError(e.getResCode(), e.getResCause());

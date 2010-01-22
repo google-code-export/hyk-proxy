@@ -54,6 +54,7 @@ import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
+import com.hyk.util.buffer.ByteArray;
 
 
 /**
@@ -179,12 +180,17 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
             }
             HttpRequestExchange forwardRequest = buildForwardRequest(request);
             //forwardRequest.printMessage();
-            byte[] data = serializer.serialize(forwardRequest);
-			data = compressor.compress(data);
-
-			byte[] resContent = new XmppTalk().talk(data);
-			resContent = compressor.decompress(resContent);
+            //byte[] data = serializer.serialize(forwardRequest);
+			//data = compressor.compress(data);
+            
+            ByteArray data = serializer.serialize(forwardRequest);
+            data = compressor.compress(data);
+            ByteArray initResContent = new XmppTalk().talk(data);
+            data.free();
+            ByteArray resContent = compressor.decompress(initResContent);
+            initResContent.free();
 			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, resContent);
+			resContent.free();
 			HttpResponse response = buildHttpServletResponse(forwardResponse);
 			//forwardResponse.printMessage();
 			ChannelFuture future = e.getChannel().write(response);

@@ -30,7 +30,7 @@ public class HttpServer {
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         Map<String, Object> connectionParams = new HashMap<String, Object>();
         bootstrap.bind(new InetSocketAddress(48100));
-
+        //bootstrap.
 	}
 
 }

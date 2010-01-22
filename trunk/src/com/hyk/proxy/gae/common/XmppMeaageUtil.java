@@ -31,7 +31,7 @@ public class XmppMeaageUtil {
 			this.seq = seq;
 			this.body = body;
 		}
-		@Override
+		//@Override
 		public int compareTo(HykProxyXmppResponse o) {
 			// TODO Auto-generated method stub
 			return seq - o.seq;

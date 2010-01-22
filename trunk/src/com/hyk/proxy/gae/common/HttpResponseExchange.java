@@ -18,6 +18,8 @@ import java.util.List;
 
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.hyk.serializer.SerializerInput;
+import com.hyk.serializer.SerializerOutput;
 
 /**
  *
@@ -67,23 +69,23 @@ public class HttpResponseExchange extends HttpMessageExhange
 	
 	
 	
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	public void readExternal(SerializerInput in) throws IOException
 	{
 		responseCode = in.readInt();
 		if(in.readBoolean())
 		{
-			redirectURL = in.readUTF();
+			redirectURL = in.readString();
 		}
 		super.readExternal(in);
 	}
 
-	public void writeExternal(ObjectOutput out) throws IOException
+	public void writeExternal(SerializerOutput out) throws IOException
 	{
 		out.writeInt(responseCode);
 		out.writeBoolean(null != redirectURL);
 		if(null != redirectURL)
 		{
-			out.writeUTF(redirectURL);
+			out.writeString(redirectURL);
 		}
 		super.writeExternal(out);
 	}
