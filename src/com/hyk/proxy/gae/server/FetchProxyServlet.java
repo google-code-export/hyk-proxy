@@ -1,26 +1,13 @@
 package com.hyk.proxy.gae.server;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
-import com.google.appengine.api.users.UserServiceFactory;
-import com.hyk.compress.Compressor;
-import com.hyk.compress.gz.GZipCompressor;
-import com.hyk.compress.sevenzip.SevenZipCompressor;
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.serializer.HykSerializer;
-import com.hyk.serializer.Serializer;
-import com.hyk.serializer.StandardSerializer;
+import com.hyk.util.buffer.ByteArray;
 
 
 @SuppressWarnings("serial")
@@ -33,8 +20,8 @@ public class FetchProxyServlet extends HttpServlet
 		req.getInputStream().read(buffer);
 		try
 		{
-			byte[] rawRes = FatchServiceWrapper.fetch(buffer);
-			resp.getOutputStream().write(rawRes);
+			ByteArray rawRes = FatchServiceWrapper.fetch(ByteArray.wrap(buffer));
+			resp.getOutputStream().write(rawRes.rawbuffer(), rawRes.position(), rawRes.size());
 		}
 		catch(Throwable e)
 		{

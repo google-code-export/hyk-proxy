@@ -21,7 +21,6 @@ import com.google.appengine.api.xmpp.MessageBuilder;
 import com.google.appengine.api.xmpp.SendResponse;
 import com.google.appengine.api.xmpp.XMPPService;
 import com.google.appengine.api.xmpp.XMPPServiceFactory;
-import com.google.appengine.repackaged.com.google.common.util.Base64;
 import com.hyk.compress.Compressor;
 import com.hyk.compress.gz.GZipCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
@@ -32,6 +31,8 @@ import com.hyk.proxy.gae.common.XmppMeaageUtil.HykProxyXmppRequest;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
 import com.hyk.serializer.StandardSerializer;
+import com.hyk.util.buffer.ByteArray;
+import com.hyk.util.codec.Base64;
 
 @SuppressWarnings("serial")
 public class XmppProxyServlet extends HttpServlet {
@@ -73,9 +74,9 @@ public class XmppProxyServlet extends HttpServlet {
 		String body = message.getBody();
 		try {
 			HykProxyXmppRequest xmppReq = XmppMeaageUtil.parseRequest(body);
-			byte[] buffer = Base64.decode(xmppReq.body);
-			byte[] rawRes = FatchServiceWrapper.fetch(buffer);
-			String msgBody = Base64.encode(rawRes);
+			ByteArray buffer = Base64.base64ToByteArrayBuffer(xmppReq.body);
+			ByteArray rawRes = FatchServiceWrapper.fetch(buffer);
+			String msgBody = Base64.byteArrayBufferToBase64(rawRes);
 			int size = msgBody.length();
 			String sent = null;
 			int seq = 1;

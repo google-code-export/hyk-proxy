@@ -36,8 +36,8 @@ public class GaeProxyClient
 		Server server = new Server();
 		SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
 		selectChannelConnector.setPort(48100);
-		SslSocketConnector sslSocketConnector = new SslSocketConnector();
-		sslSocketConnector.setPort(48103);
+//		SslSocketConnector sslSocketConnector = new SslSocketConnector();
+//		sslSocketConnector.setPort(48103);
 		//sslSocketConnector.set
 		server.addConnector(selectChannelConnector);
 		//server.addConnector(sslSocketConnector);

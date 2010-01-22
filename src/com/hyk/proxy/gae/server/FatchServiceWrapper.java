@@ -20,6 +20,7 @@ import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
+import com.hyk.util.buffer.ByteArray;
 
 /**
  * @author Administrator
@@ -82,7 +83,7 @@ public class FatchServiceWrapper {
 		//newReq.addHeader(getHeader(oldReq, "User-Agent"));
 	}
 
-	public static byte[] fetch(byte[] req) throws IOException,
+	public static ByteArray fetch(ByteArray req) throws IOException,
 			InstantiationException {
 		req = compressor.decompress(req);
 		HttpRequestExchange fetchReqEx = serializer.deserialize(
@@ -95,7 +96,7 @@ public class FatchServiceWrapper {
 		
 
 		HttpResponseExchange exchangeRes = new HttpResponseExchange(fetchRes);
-		byte[] rawRes = serializer.serialize(exchangeRes);
+		ByteArray rawRes = serializer.serialize(exchangeRes);
 		return compressor.compress(rawRes);
 	}
 }

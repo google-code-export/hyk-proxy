@@ -26,6 +26,8 @@ import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
+import com.hyk.serializer.SerializerInput;
+import com.hyk.serializer.SerializerOutput;
 
 /**
  *
@@ -50,17 +52,17 @@ public class HttpRequestExchange extends HttpMessageExhange
 		this.method = method;
 	}
 	
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	public void readExternal(SerializerInput in) throws IOException
 	{
-		url = in.readUTF();
-		method = in.readUTF();
+		url = in.readString();
+		method = in.readString();
 		super.readExternal(in);
 	}
 
-	public void writeExternal(ObjectOutput out) throws IOException
+	public void writeExternal(SerializerOutput out) throws IOException
 	{
-		out.writeUTF(url);
-		out.writeUTF(method);
+		out.writeString(url);
+		out.writeString(method);
 		super.writeExternal(out);
 	}
 	
@@ -78,19 +80,19 @@ public class HttpRequestExchange extends HttpMessageExhange
 		return req;
 	}
 	
-	public static void main(String[] args) throws NotSerializableException, IOException, InstantiationException
-	{
-		HykSerializer serializer = new HykSerializer();
-		HttpRequestExchange req = new HttpRequestExchange();
-		req.setBody("564994590@!#@!#!@$".getBytes());
-		req.setMethod("GET");
-		req.addHeader("asdasf", "sadsaa");
-		req.addHeader("sadasdas", "sadsafsaf");
-		req.setURL("http://twitter.com/fzhenghu");
-		byte[] data = serializer.serialize(req);
-		System.out.println("####data len " + data.length);
-		req = serializer.deserialize(HttpRequestExchange.class, data);
-	}
+//	public static void main(String[] args) throws NotSerializableException, IOException, InstantiationException
+//	{
+//		HykSerializer serializer = new HykSerializer();
+//		HttpRequestExchange req = new HttpRequestExchange();
+//		req.setBody("564994590@!#@!#!@$".getBytes());
+//		req.setMethod("GET");
+//		req.addHeader("asdasf", "sadsaa");
+//		req.addHeader("sadasdas", "sadsafsaf");
+//		req.setURL("http://twitter.com/fzhenghu");
+//		byte[] data = serializer.serialize(req);
+//		System.out.println("####data len " + data.length);
+//		req = serializer.deserialize(HttpRequestExchange.class, data);
+//	}
 
 	@Override
 	protected void print() {
