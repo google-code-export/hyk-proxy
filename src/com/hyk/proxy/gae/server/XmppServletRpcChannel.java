@@ -19,6 +19,7 @@ import com.google.appengine.api.xmpp.XMPPServiceFactory;
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.message.MessageFragment;
+import com.hyk.rpc.core.message.MessageID;
 import com.hyk.rpc.core.transport.RpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
@@ -40,8 +41,8 @@ public class XmppServletRpcChannel extends RpcChannel {
 	}
 
 	@Override
-	protected void deleteMessageFragments(long sessionID) {
-		//memcache.
+	protected void deleteMessageFragments(MessageID id) {
+		memcache.delete(id);
 	}
 
 	/* (non-Javadoc)
@@ -57,9 +58,9 @@ public class XmppServletRpcChannel extends RpcChannel {
 	 * @see com.hyk.rpc.core.transport.RpcChannel#loadMessageFragments(long)
 	 */
 	@Override
-	protected MessageFragment[] loadMessageFragments(long sessionID) {
-		// TODO Auto-generated method stub
-		return null;
+	protected MessageFragment[] loadMessageFragments(MessageID id) {
+		return (MessageFragment[]) memcache.get(id);
+		
 	}
 
 	/* (non-Javadoc)
@@ -87,8 +88,13 @@ public class XmppServletRpcChannel extends RpcChannel {
 	 */
 	@Override
 	protected void saveMessageFragment(MessageFragment fragment) {
-		// TODO Auto-generated method stub
-
+		MessageFragment[] fragments = (MessageFragment[]) memcache.get(fragment.getId());
+		if(null == fragments)
+		{
+			fragments = new MessageFragment[fragment.getTotalFragmentCount()];
+		}
+		fragments[fragment.getSequence()] = fragment;
+		memcache.put(fragment.getId(), fragments);
 	}
 
 	/* (non-Javadoc)
