@@ -40,7 +40,7 @@ public class XmppProxyServlet extends HttpServlet {
 	      Logger.getLogger(XmppProxyServlet.class.getName());
 
 	
-	private static final int MSG_SIZE = 2000;
+	private static final int MSG_SIZE = 10280;
 	private static final int RETRY = 10;
 	protected void sendMessage(JID fromJid, String body, int seq, int sessionID)
 	{
@@ -66,7 +66,6 @@ public class XmppProxyServlet extends HttpServlet {
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		//log.warning("#####Request!");
 		XMPPService xmpp = XMPPServiceFactory.getXMPPService();
 		Message message = xmpp.parseMessage(req);
 

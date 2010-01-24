@@ -43,7 +43,6 @@ public class XmppTalk {
 	private static class ResponseMessageListener implements MessageListener {
 
 		public void processMessage(Chat chat, Message message) {
-			// System.out.println("####processMessage! ");
 			HykProxyXmppResponse response = XmppMeaageUtil
 					.parseResponse(message.getBody());
 			XmppTalk talker = xmppTalkerTable.get(response.sessionId);
@@ -65,16 +64,15 @@ public class XmppTalk {
 	static {
 		try {
 			ConnectionConfiguration connConfig = new ConnectionConfiguration(
-			// "talk.google.com", 5222, "gmail.com");
-					"jabber.org", 5222, "jabber.org");
+			 "talk.google.com", 5222, "gmail.com");
+			//		"xmpp.jp", 5222, "xmpp.jp");
 			//connConfig.setCompressionEnabled(true);
 			//connConfig.
 			// connConfig.setDebuggerEnabled(true);
 			xmppConnection = new XMPPConnection(connConfig);
 			xmppConnection.connect();
-			// xmppConnection.login("yinqiwen@gmail.com", "Kingwon1983",
-			// "smack");
-			xmppConnection.login("hykproxy", "fuckgfw", "smack");
+			xmppConnection.login("yinqiwen@gmail.com", "Kingwon1983", "smack");
+			//xmppConnection.login("hykproxy", "fuckgfw", "smack");
 			Presence presence = new Presence(Presence.Type.available);
 			xmppConnection.sendPacket(presence);
 

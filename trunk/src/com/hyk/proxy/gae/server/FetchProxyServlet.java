@@ -25,7 +25,7 @@ public class FetchProxyServlet extends HttpServlet
 		}
 		catch(Throwable e)
 		{
-			//e.printStackTrace();
+			e.printStackTrace();
 			resp.setStatus(503);
 			resp.setContentType("text/plain");
 			resp.getWriter().println("####Failed " + Arrays.toString(e.getStackTrace()));

@@ -15,7 +15,10 @@ import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.hyk.compress.Compressor;
+import com.hyk.compress.NonCompressor;
+import com.hyk.compress.gz.GZipCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
+import com.hyk.compress.zip.ZipCompressor;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.serializer.HykSerializer;
@@ -31,7 +34,7 @@ public class FatchServiceWrapper {
 	      Logger.getLogger(XmppProxyServlet.class.getName());
 
 	static Serializer serializer = new HykSerializer();
-	static Compressor compressor = new SevenZipCompressor();
+	static Compressor compressor = new NonCompressor();
 
 	private static HTTPHeader getHeader(HTTPResponse res, String name) {
 		List<HTTPHeader> headers = new LinkedList<HTTPHeader>();
@@ -96,7 +99,9 @@ public class FatchServiceWrapper {
 		
 
 		HttpResponseExchange exchangeRes = new HttpResponseExchange(fetchRes);
+		//System.out.println("#######" + new String(exchangeRes.getBody()));
 		ByteArray rawRes = serializer.serialize(exchangeRes);
 		return compressor.compress(rawRes);
+		//return rawRes;
 	}
 }
