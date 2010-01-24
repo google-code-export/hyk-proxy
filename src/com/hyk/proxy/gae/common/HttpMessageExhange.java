@@ -27,7 +27,7 @@ import com.hyk.serializer.io.HykObjectInput;
 public abstract class HttpMessageExhange implements Externalizable
 {
 	protected ArrayList<String[]> headers = new ArrayList<String[]>();
-	protected byte[] body;
+	protected byte[] body = new byte[0];
 	
 	//protected transient Compressor 	compressor = new GZipCompressor();
 	

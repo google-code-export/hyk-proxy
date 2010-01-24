@@ -48,6 +48,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jboss.netty.handler.ssl.SslHandler;
 
 import com.hyk.compress.Compressor;
+import com.hyk.compress.NonCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
 import com.hyk.proxy.gae.client.XmppTalk;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
@@ -63,7 +64,7 @@ import com.hyk.util.buffer.ByteArray;
  */
 @ChannelPipelineCoverage("one")
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
-	static Compressor 	compressor = new SevenZipCompressor();
+	static Compressor 	compressor = new NonCompressor();
 	static Serializer serializer = new HykSerializer();
 	static SSLContext sslContext;
 	

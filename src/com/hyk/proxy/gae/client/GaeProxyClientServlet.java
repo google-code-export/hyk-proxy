@@ -40,8 +40,10 @@ import org.jivesoftware.smack.XMPPException;
 
 import com.google.appengine.repackaged.com.google.common.util.Base64DecoderException;
 import com.hyk.compress.Compressor;
+import com.hyk.compress.NonCompressor;
 import com.hyk.compress.gz.GZipCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
+import com.hyk.compress.zip.ZipCompressor;
 
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
@@ -57,7 +59,7 @@ public class GaeProxyClientServlet extends HttpServlet
 {
 	//static HttpClient	client	= new DefaultHttpClient();
 	static Serializer serializer;
-	static Compressor 	compressor = new SevenZipCompressor();
+	static Compressor 	compressor = new NonCompressor();
 	static
 	{
 		serializer = new HykSerializer();
@@ -124,8 +126,8 @@ public class GaeProxyClientServlet extends HttpServlet
 	protected ByteArray talkByHttp(ByteArray request) throws TalkException, IOException, InterruptedException
 	{
 		HttpClient	client	= new DefaultHttpClient();
-		HttpPost post = new HttpPost("http://hykserver.appspot.com/fetchproxy");
-		//HttpPost post = new HttpPost("http://127.0.0.1:8888/fetchproxy");
+		//HttpPost post = new HttpPost("http://hykserver.appspot.com/fetchproxy");
+		HttpPost post = new HttpPost("http://127.0.0.1:8888/fetchproxy");
 		HttpEntity e = new ByteArrayEntity(request.toByteArray());
 		//System.out.println("####" + e.getContentType());
 		post.setEntity(e);
@@ -133,7 +135,8 @@ public class GaeProxyClientServlet extends HttpServlet
 		
 		HttpEntity resEntity = response.getEntity();
 		InputStream entityIs = resEntity.getContent();
-		byte[] resContent = new byte[0];
+		byte[] resContent = null;
+		System.out.println("????" + resEntity.getContentLength());
 		if(resEntity.getContentLength() > 0)
 		{
 			resContent = new byte[(int) resEntity.getContentLength()];
@@ -145,8 +148,14 @@ public class GaeProxyClientServlet extends HttpServlet
 				length -= offset;
 			}
 		}
+		if(null == resContent)
+		{
+			
+			throw new TalkException(response.getStatusLine().getStatusCode(), "What a fuck!");
+		}
 		if(response.getStatusLine().getStatusCode() != 200)
 		{
+			
 			throw new TalkException(response.getStatusLine().getStatusCode(), new String(resContent));
 		}
 		return ByteArray.wrap(resContent);
@@ -164,6 +173,7 @@ public class GaeProxyClientServlet extends HttpServlet
 		try
 		{
 			HttpRequestExchange forwardRequest = buildForwardRequest(request);
+			//forwardRequest.printMessage();
 			ByteArray data = serializer.serialize(forwardRequest);
 			data = compressor.compress(data);
 			
@@ -173,14 +183,19 @@ public class GaeProxyClientServlet extends HttpServlet
 				//responseContent = talkByXmpp(data);
 				//System.out.println("####Res len:" + responseContent.length);
 			} catch (TalkException e) {
+				//System.out.println("#$$#@$@#");
+				forwardRequest.printMessage();
+				e.printStackTrace();
 				response.sendError(e.getResCode(), e.getResCause());
 				return;
 			}
 			
 			//System.out.println("###Response size: " + responseContent.length);
-			responseContent = compressor.decompress(responseContent);
-			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, responseContent);
-			//forwardResponse.printMessage();
+			ByteArray decomp = compressor.decompress(responseContent);
+			//responseContent = compressor.decompress(responseContent);
+			
+			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, decomp);
+			//System.out.println("#####" + new String(forwardResponse.getBody()));
 			if(null != forwardResponse.getRedirectURL())
 			{
 				//response.encodeRedirectURL(forwardResponse.getRedirectURL());
