@@ -70,6 +70,7 @@ public class XmppProxyServlet extends HttpServlet {
 		Message message = xmpp.parseMessage(req);
 
 		JID fromJid = message.getFromJid();
+		
 		String body = message.getBody();
 		try {
 			HykProxyXmppRequest xmppReq = XmppMeaageUtil.parseRequest(body);
