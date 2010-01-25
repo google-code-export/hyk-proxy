@@ -27,68 +27,56 @@ import com.hyk.util.codec.Base64;
 
 /**
  * @author Administrator
- *
+ * 
  */
-public class XmppServletRpcChannel extends RpcChannel {
+public class XmppServletRpcChannel extends RpcChannel
+{
 
-	XMPPService xmpp = XMPPServiceFactory.getXMPPService();
-	MemcacheService memcache = MemcacheServiceFactory.getMemcacheService();
-	private List<RpcChannelData> recvList = new LinkedList<RpcChannelData>();
-	private static final int RETRY = 10;
-	public XmppServletRpcChannel(Executor threadPool) {
-		super(threadPool);
-		// TODO Auto-generated constructor stub
+	XMPPService						xmpp		= XMPPServiceFactory.getXMPPService();
+	MemcacheService					memcache	= MemcacheServiceFactory.getMemcacheService();
+	//private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
+	private static final int		RETRY		= 10;
+	private XmppAddress				address;
+
+	public XmppServletRpcChannel(String jid)
+	{
+		super();
+		address = new XmppAddress(jid);
+		//super.start();
 	}
 
 	@Override
-	protected void deleteMessageFragments(MessageID id) {
+	protected void deleteMessageFragments(MessageID id)
+	{
 		memcache.delete(id);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.hyk.rpc.core.transport.RpcChannel#getRpcChannelAddress()
-	 */
+
 	@Override
-	public Address getRpcChannelAddress() {
+	public Address getRpcChannelAddress()
+	{
 		// TODO Auto-generated method stub
-		return null;
+		return address;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.hyk.rpc.core.transport.RpcChannel#loadMessageFragments(long)
-	 */
+	
 	@Override
-	protected MessageFragment[] loadMessageFragments(MessageID id) {
-		return (MessageFragment[]) memcache.get(id);
-		
+	protected MessageFragment[] loadMessageFragments(MessageID id)
+	{
+		return (MessageFragment[])memcache.get(id);
+
 	}
 
-	/* (non-Javadoc)
-	 * @see com.hyk.rpc.core.transport.RpcChannel#read()
-	 */
 	@Override
-	protected RpcChannelData read() throws IOException {
-		synchronized (recvList) {
-			if(recvList.isEmpty())
-			{
-				try {
-					recvList.wait();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					return null;
-				}
-			}
-			return recvList.remove(0);
-		}
+	protected RpcChannelData read() throws IOException
+	{
+		throw new IOException("Not supported!");
 	}
 
-	/* (non-Javadoc)
-	 * @see com.hyk.rpc.core.transport.RpcChannel#saveMessageFragment(com.hyk.rpc.core.message.MessageFragment)
-	 */
 	@Override
-	protected void saveMessageFragment(MessageFragment fragment) {
-		MessageFragment[] fragments = (MessageFragment[]) memcache.get(fragment.getId());
+	protected void saveMessageFragment(MessageFragment fragment)
+	{
+		MessageFragment[] fragments = (MessageFragment[])memcache.get(fragment.getId());
 		if(null == fragments)
 		{
 			fragments = new MessageFragment[fragment.getTotalFragmentCount()];
@@ -97,31 +85,36 @@ public class XmppServletRpcChannel extends RpcChannel {
 		memcache.put(fragment.getId(), fragments);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.hyk.rpc.core.transport.RpcChannel#send(com.hyk.rpc.core.transport.RpcChannelData)
-	 */
 	@Override
-	protected void send(RpcChannelData data) throws IOException {
-		
-		XmppAddress address = (XmppAddress) data.address;
-		JID jid = new JID(address.getJid());
-		Message msg = new MessageBuilder().withRecipientJids(jid).withBody(
-				Base64.byteArrayBufferToBase64(data.content)).build();
+	protected void send(RpcChannelData data) throws IOException
+	{
+		if(logger.isInfoEnabled())
+		{
+			logger.info("Send message to " + data.address.toPrintableString());
+		}
+		XmppAddress dataaddress = (XmppAddress)data.address;
+		JID jid = new JID(dataaddress.getJid());
+		Message msg = new MessageBuilder().withRecipientJids(jid).withBody(Base64.byteArrayBufferToBase64(data.content)).build();
 		{
 			int retry = RETRY;
 			SendResponse status = xmpp.sendMessage(msg);
-			while(status.getStatusMap().get(jid) != SendResponse.Status.SUCCESS && retry-- > 0);
+			while(status.getStatusMap().get(jid) != SendResponse.Status.SUCCESS && retry-- > 0)
+				;
 		}
 	}
 
-	public void processXmppMessage(Message msg)
-	{
+	public void processXmppMessage(Message msg) throws Exception
+	{	
 		JID fromJid = msg.getFromJid();
+		int index = fromJid.getId().indexOf('/');
+		String jid =  fromJid.getId().substring(0, index);
 		ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
-		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(fromJid.getId()));
-		synchronized (recvList) {
-			recvList.add(recv);
-			recvList.notify();
-		}
+		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
+		processIncomingData(recv);
+//		synchronized(recvList)
+//		{
+//			recvList.add(recv);
+//			recvList.notify();
+//		}
 	}
 }

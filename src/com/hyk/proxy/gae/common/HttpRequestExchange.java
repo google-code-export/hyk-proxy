@@ -39,12 +39,7 @@ public class HttpRequestExchange extends HttpMessageExhange
 	
 	public void setURL(String url)
 	{
-//		if(url.startsWith("http"))
-//		{
-//			url = "https" + url.substring(4);
-//		}
 		this.url = url;
-		//System.out.println(url);
 	}
 	
 	public void setMethod(String method)
@@ -79,20 +74,6 @@ public class HttpRequestExchange extends HttpMessageExhange
 		req.setPayload(body);
 		return req;
 	}
-	
-//	public static void main(String[] args) throws NotSerializableException, IOException, InstantiationException
-//	{
-//		HykSerializer serializer = new HykSerializer();
-//		HttpRequestExchange req = new HttpRequestExchange();
-//		req.setBody("564994590@!#@!#!@$".getBytes());
-//		req.setMethod("GET");
-//		req.addHeader("asdasf", "sadsaa");
-//		req.addHeader("sadasdas", "sadsafsaf");
-//		req.setURL("http://twitter.com/fzhenghu");
-//		byte[] data = serializer.serialize(req);
-//		System.out.println("####data len " + data.length);
-//		req = serializer.deserialize(HttpRequestExchange.class, data);
-//	}
 
 	@Override
 	protected void print() {

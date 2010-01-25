@@ -5,6 +5,7 @@ package com.hyk.proxy.gae.client.netty;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -46,13 +48,20 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jivesoftware.smack.XMPPException;
 
 import com.hyk.compress.Compressor;
 import com.hyk.compress.NonCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
+import com.hyk.proxy.gae.client.XmppRpcChannel;
 import com.hyk.proxy.gae.client.XmppTalk;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
+import com.hyk.proxy.gae.common.XmppAddress;
+import com.hyk.proxy.gae.server.core.service.FetchService;
+import com.hyk.rpc.core.RPC;
+import com.hyk.rpc.core.address.SimpleSockAddress;
+import com.hyk.rpc.core.service.NameService;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
 import com.hyk.util.buffer.ByteArray;
@@ -97,9 +106,24 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     private boolean ishttps = false;
     private String httpspath = null;
     
+    private RPC rpc;
+    private FetchService fetchService;
+    
     public HttpRequestHandler(ChannelPipeline channelPipeline)
     {
     	this.channelPipeline = channelPipeline;
+    	try
+		{
+			XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com");
+			rpc = new RPC(rpcchannle);
+			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
+			fetchService = (FetchService)serv.getObject("fetch");
+		}
+		catch(XMPPException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
     protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
@@ -184,14 +208,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
             //byte[] data = serializer.serialize(forwardRequest);
 			//data = compressor.compress(data);
             
-            ByteArray data = serializer.serialize(forwardRequest);
-            data = compressor.compress(data);
-            ByteArray initResContent = new XmppTalk().talk(data);
-            data.free();
-            ByteArray resContent = compressor.decompress(initResContent);
-            initResContent.free();
-			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, resContent);
-			resContent.free();
+//            ByteArray data = serializer.serialize(forwardRequest);
+//            data = compressor.compress(data);
+//            ByteArray initResContent = new XmppTalk().talk(data);
+//            data.free();
+//            ByteArray resContent = compressor.decompress(initResContent);
+//            initResContent.free();
+//			HttpResponseExchange forwardResponse = serializer.deserialize(HttpResponseExchange.class, resContent);
+//			resContent.free();
+            HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
 			HttpResponse response = buildHttpServletResponse(forwardResponse);
 			//forwardResponse.printMessage();
 			ChannelFuture future = e.getChannel().write(response);
