@@ -4,6 +4,7 @@
 package com.hyk.proxy.gae.common;
 
 import com.hyk.rpc.core.address.Address;
+import com.hyk.rpc.core.message.MessageID;
 
 /**
  * @author Administrator
@@ -29,5 +30,26 @@ public class XmppAddress implements Address {
 	public XmppAddress(String jid)
 	{
 		this.jid = jid;
+	}
+
+	public String toPrintableString()
+	{
+		return "[" + jid + "]";
+	}
+	
+	public boolean equals(Object anObject) {
+		if (this == anObject) {
+			return true;
+		}
+		if (anObject instanceof XmppAddress) {
+			XmppAddress anotherServerSessionID = (XmppAddress) anObject;
+
+			return jid.equals(anotherServerSessionID.jid);
+		}
+		return false;
+	}
+
+	public int hashCode() {
+		return jid.hashCode();
 	}
 }

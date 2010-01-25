@@ -18,6 +18,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.rpc.core.address.Address;
@@ -31,15 +33,16 @@ import com.hyk.util.codec.Base64;
  * 
  */
 public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener {
-
+	protected Logger								logger			= LoggerFactory.getLogger(getClass());
+	
 	XMPPConnection xmppConnection;
 	Map<String, Chat> chatTable = new HashMap<String, Chat>();
 	//Chat chat;
 	private XmppAddress address;
 	private List<RpcChannelData> recvList = new LinkedList<RpcChannelData>();
-	public XmppRpcChannel(Executor threadPool, XmppAddress address) throws XMPPException {
+	public XmppRpcChannel(Executor threadPool, String jid) throws XMPPException {
 		super(threadPool);
-		this.address = address;
+		this.address = new XmppAddress(jid);
 		ConnectionConfiguration connConfig = new ConnectionConfiguration(
 				"talk.google.com", 5222, "gmail.com");
 		xmppConnection = new XMPPConnection(connConfig);
@@ -47,6 +50,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		xmppConnection.login("yinqiwen@gmail.com", "Kingwon1983", "smack");
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);
+		super.start();
 	}
 
 	@Override
@@ -86,15 +90,25 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			}
 		}
 		try {
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Send message to " + address.toPrintableString());
+			}
 			chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
 		} catch (XMPPException e) {
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
 
-	@Override
 	public void processMessage(Chat chat, Message message) {
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Recv message from " + message.getFrom());
+		}
 		String jid = message.getFrom();
+		int index = jid.indexOf('/');
+		jid = jid.substring(0, index);
 		String content = message.getBody();
 		ByteArray buffer = Base64.base64ToByteArrayBuffer(content);
 		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));

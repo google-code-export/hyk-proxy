@@ -11,15 +11,12 @@ package com.hyk.proxy.gae.common;
 
 //import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.hyk.serializer.Externalizable;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
-import com.hyk.serializer.io.HykObjectInput;
 
 /**
  *
@@ -88,11 +85,6 @@ public abstract class HttpMessageExhange implements Externalizable
 		if(b)
 		{
 			body = in.readObject(byte[].class);
-//			int len = in.readInt();
-//			body = new byte[len];
-//			//System.out.println("####Expected read " + len);
-//			in.read(body);
-			//body = hin.readObject(byte[].class);
 		}
 	}
 
@@ -106,10 +98,6 @@ public abstract class HttpMessageExhange implements Externalizable
 		out.writeBoolean(null != body&& body.length > 0);
 		if(null != body && body.length > 0)
 		{
-//			byte[] compress = compressor.compress(body);
-//			out.writeObject(compress);
-			//out.writeObject(body);
-			//out.writeInt(body.length);
 			out.writeObject(body);
 		}
 	}

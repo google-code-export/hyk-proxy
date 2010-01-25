@@ -67,8 +67,6 @@ public class HttpResponseExchange extends HttpMessageExhange
 		}
 	}
 	
-	
-	
 	public void readExternal(SerializerInput in) throws IOException
 	{
 		responseCode = in.readInt();

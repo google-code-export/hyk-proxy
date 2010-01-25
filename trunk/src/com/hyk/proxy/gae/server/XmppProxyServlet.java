@@ -6,10 +6,11 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.servlet.http.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
@@ -28,6 +29,7 @@ import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.XmppMeaageUtil;
 import com.hyk.proxy.gae.common.XmppMeaageUtil.HykProxyXmppRequest;
+import com.hyk.proxy.gae.server.core.Launcher;
 import com.hyk.serializer.HykSerializer;
 import com.hyk.serializer.Serializer;
 import com.hyk.serializer.StandardSerializer;
@@ -36,8 +38,7 @@ import com.hyk.util.codec.Base64;
 
 @SuppressWarnings("serial")
 public class XmppProxyServlet extends HttpServlet {
-	 private static final Logger log =
-	      Logger.getLogger(XmppProxyServlet.class.getName());
+	protected Logger								logger			= LoggerFactory.getLogger(getClass());
 
 	
 	private static final int MSG_SIZE = 10280;
@@ -68,37 +69,51 @@ public class XmppProxyServlet extends HttpServlet {
 			throws IOException {
 		XMPPService xmpp = XMPPServiceFactory.getXMPPService();
 		Message message = xmpp.parseMessage(req);
-
-		JID fromJid = message.getFromJid();
 		
-		String body = message.getBody();
-		try {
-			HykProxyXmppRequest xmppReq = XmppMeaageUtil.parseRequest(body);
-			ByteArray buffer = Base64.base64ToByteArrayBuffer(xmppReq.body);
-			ByteArray rawRes = FatchServiceWrapper.fetch(buffer);
-			String msgBody = Base64.byteArrayBufferToBase64(rawRes);
-			int size = msgBody.length();
-			String sent = null;
-			int seq = 1;
-			while(size > MSG_SIZE)
-			{
-				sent = msgBody.substring(0, MSG_SIZE);
-				sendMessage(fromJid,sent,seq, xmppReq.sessionId);  
-				msgBody = msgBody.substring(MSG_SIZE);
-				size = msgBody.length();
-				seq++;
-			}
-			if(msgBody.length() > 0)
-			{
-				sendMessage(fromJid,msgBody, seq, xmppReq.sessionId);
-			}
-			sendMessage(fromJid, "finish", 0-seq, xmppReq.sessionId);
-
-		} catch (Throwable e) {
-			log.log(Level.WARNING, "Exception:", e);
-			sendMessage(fromJid, Arrays.toString(e.getStackTrace()), 0, -1);
-
+		if(logger.isInfoEnabled())
+		{
+			logger.info("Process message from " + message.getFromJid());
 		}
+		
+		try
+		{
+			Launcher.channel.processXmppMessage(message);
+		}
+		catch(Throwable e)
+		{
+			logger.warn("Failed to process message", e);
+		}
+		
+//		JID fromJid = message.getFromJid();
+//		
+//		String body = message.getBody();
+//		try {
+//			HykProxyXmppRequest xmppReq = XmppMeaageUtil.parseRequest(body);
+//			ByteArray buffer = Base64.base64ToByteArrayBuffer(xmppReq.body);
+//			ByteArray rawRes = FatchServiceWrapper.fetch(buffer);
+//			String msgBody = Base64.byteArrayBufferToBase64(rawRes);
+//			int size = msgBody.length();
+//			String sent = null;
+//			int seq = 1;
+//			while(size > MSG_SIZE)
+//			{
+//				sent = msgBody.substring(0, MSG_SIZE);
+//				sendMessage(fromJid,sent,seq, xmppReq.sessionId);  
+//				msgBody = msgBody.substring(MSG_SIZE);
+//				size = msgBody.length();
+//				seq++;
+//			}
+//			if(msgBody.length() > 0)
+//			{
+//				sendMessage(fromJid,msgBody, seq, xmppReq.sessionId);
+//			}
+//			sendMessage(fromJid, "finish", 0-seq, xmppReq.sessionId);
+//
+//		} catch (Throwable e) {
+//			log.log(Level.WARNING, "Exception:", e);
+//			sendMessage(fromJid, Arrays.toString(e.getStackTrace()), 0, -1);
+//
+//		}
 
 	}
 }
