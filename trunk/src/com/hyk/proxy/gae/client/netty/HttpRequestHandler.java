@@ -104,7 +104,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 		{
 			//XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "hykproxy@jabber.org");
     		//XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "hykproxy@xmpp.jp");
-    		XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com");
+    		XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com", "Kingwon1983");
 			rpc = new RPC(rpcchannle);
 			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
 			fetchService = (FetchService)serv.lookup("fetch");

@@ -22,8 +22,13 @@ public class Launcher extends HttpServlet{
 
 	protected Logger								logger			= LoggerFactory.getLogger(getClass());
 	
-	public static XmppServletRpcChannel channel = null;
+	private static XmppServletRpcChannel channel = null;
 	
+	
+	public static XmppServletRpcChannel getXmppServletRpcChannel()
+	{
+		return channel;
+	}
 	
 	@Override
 	public void init(ServletConfig config) throws ServletException {
