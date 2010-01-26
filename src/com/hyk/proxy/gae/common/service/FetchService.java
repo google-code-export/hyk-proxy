@@ -7,7 +7,7 @@
  * @author qiying.wang [ Jan 25, 2010 | 2:37:50 PM ]
  *
  */
-package com.hyk.proxy.gae.server.core.service;
+package com.hyk.proxy.gae.common.service;
 
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;

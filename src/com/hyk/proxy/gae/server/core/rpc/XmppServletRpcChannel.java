@@ -1,15 +1,12 @@
 /**
  * 
  */
-package com.hyk.proxy.gae.server;
+package com.hyk.proxy.gae.server.core.rpc;
 
+import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Executor;
+import java.io.PrintWriter;
 
-import com.google.appengine.api.memcache.MemcacheService;
-import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.appengine.api.xmpp.JID;
 import com.google.appengine.api.xmpp.Message;
 import com.google.appengine.api.xmpp.MessageBuilder;
@@ -18,10 +15,8 @@ import com.google.appengine.api.xmpp.XMPPService;
 import com.google.appengine.api.xmpp.XMPPServiceFactory;
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.rpc.core.address.Address;
-import com.hyk.rpc.core.message.MessageFragment;
-import com.hyk.rpc.core.message.MessageID;
-import com.hyk.rpc.core.transport.RpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
+import com.hyk.rpc.core.transport.RpcChannelException;
 import com.hyk.util.buffer.ByteArray;
 import com.hyk.util.codec.Base64;
 
@@ -29,11 +24,11 @@ import com.hyk.util.codec.Base64;
  * @author Administrator
  * 
  */
-public class XmppServletRpcChannel extends RpcChannel
+public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 {
 
 	XMPPService						xmpp		= XMPPServiceFactory.getXMPPService();
-	MemcacheService					memcache	= MemcacheServiceFactory.getMemcacheService();
+	
 	//private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
 	private static final int		RETRY		= 10;
 	private XmppAddress				address;
@@ -46,43 +41,10 @@ public class XmppServletRpcChannel extends RpcChannel
 	}
 
 	@Override
-	protected void deleteMessageFragments(MessageID id)
-	{
-		memcache.delete(id);
-	}
-
-
-	@Override
 	public Address getRpcChannelAddress()
 	{
 		// TODO Auto-generated method stub
 		return address;
-	}
-
-	
-	@Override
-	protected MessageFragment[] loadMessageFragments(MessageID id)
-	{
-		return (MessageFragment[])memcache.get(id);
-
-	}
-
-	@Override
-	protected RpcChannelData read() throws IOException
-	{
-		throw new IOException("Not supported!");
-	}
-
-	@Override
-	protected void saveMessageFragment(MessageFragment fragment)
-	{
-		MessageFragment[] fragments = (MessageFragment[])memcache.get(fragment.getId());
-		if(null == fragments)
-		{
-			fragments = new MessageFragment[fragment.getTotalFragmentCount()];
-		}
-		fragments[fragment.getSequence()] = fragment;
-		memcache.put(fragment.getId(), fragments);
 	}
 
 	@Override
@@ -103,19 +65,23 @@ public class XmppServletRpcChannel extends RpcChannel
 		}
 	}
 
-	public void processXmppMessage(Message msg) throws Exception
+	public void processXmppMessage(Message msg) 
 	{	
 		JID fromJid = msg.getFromJid();
-		//int index = fromJid.getId().indexOf('/');
-		//String jid =  fromJid.getId().substring(0, index);
 		String jid = fromJid.getId();
 		ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
 		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
-		processIncomingData(recv);
-//		synchronized(recvList)
-//		{
-//			recvList.add(recv);
-//			recvList.notify();
-//		}
+		try
+		{
+			processIncomingData(recv);
+		}
+		catch(RpcChannelException e)
+		{
+			CharArrayWriter writer = new CharArrayWriter();
+			e.printStackTrace(new PrintWriter(writer));
+			msg = new MessageBuilder().withRecipientJids(fromJid).withBody(writer.toString()).build();
+			xmpp.sendMessage(msg);
+		}
+
 	}
 }
