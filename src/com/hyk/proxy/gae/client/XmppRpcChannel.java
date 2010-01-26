@@ -17,6 +17,7 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,25 +35,35 @@ import com.hyk.util.codec.Base64;
 public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener
 {
 	protected Logger				logger		= LoggerFactory.getLogger(getClass());
+	
+	private static final int DEFAULT_PORT = 5222;
+	private static final String GTALK_SERVER = "talk.google.com";
+	private static final String GMAIL = "gmail.com";
 
-	XMPPConnection					xmppConnection;
-	Map<String, Chat>				chatTable	= new HashMap<String, Chat>();
+	private XMPPConnection					xmppConnection;
+	private Map<String, Chat>				chatTable	= new HashMap<String, Chat>();
 	private XmppAddress				address;
 	private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
-
-	public XmppRpcChannel(Executor threadPool, String jid) throws XMPPException
+	
+	public XmppRpcChannel(Executor threadPool, String jid, String passwd) throws XMPPException
 	{
 		super(threadPool);
 		this.address = new XmppAddress(jid);
-		ConnectionConfiguration connConfig = new ConnectionConfiguration(
-		// "jabber.org", 5222, "jabber.org");
-				// "xmpp.jp", 5222, "xmpp.jp");
-				"talk.google.com", 5222, "gmail.com");
-		//connConfig.setDebuggerEnabled(true);
+		String server = StringUtils.parseServer(jid);
+		String serviceName = server;
+		String user = jid;
+		if(server.equals(GMAIL))
+		{
+			server = GTALK_SERVER;
+		}
+		else
+		{
+			user =  StringUtils.parseName(jid);
+		}
+		ConnectionConfiguration connConfig = new ConnectionConfiguration(server, DEFAULT_PORT,serviceName);
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
-		xmppConnection.login("yinqiwen@gmail.com", "Kingwon1983", "smack");
-		// xmppConnection.login("hykproxy", "fuckgfw", "smack");
+		xmppConnection.login(user, passwd, "smack");
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);
 		super.start();
@@ -91,6 +102,13 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	protected void send(RpcChannelData data) throws IOException
 	{
 		XmppAddress address = (XmppAddress)data.address;
+		if(!xmppConnection.getRoster().contains(address.getJid()))
+		{
+			Presence presence = new Presence(Presence.Type.subscribe);
+			presence.setFrom(this.address.getJid());
+			presence.setTo(address.getJid());
+			xmppConnection.sendPacket(presence);
+		}
 		Chat chat = null;
 		synchronized(chatTable)
 		{
