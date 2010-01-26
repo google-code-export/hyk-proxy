@@ -3,8 +3,6 @@
  */
 package com.hyk.proxy.gae.server.core;
 
-import java.util.concurrent.Executors;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.gae.server.XmppServletRpcChannel;
+import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;
 import com.hyk.proxy.gae.server.core.service.FetchServiceImpl;
 import com.hyk.rpc.core.RPC;
 

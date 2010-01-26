@@ -16,8 +16,7 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.serializer.HykSerializer;
-import com.hyk.serializer.Serializer;
+import com.hyk.proxy.gae.common.service.FetchService;
 
 /**
  *
@@ -26,7 +25,6 @@ public class FetchServiceImpl implements FetchService
 {
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
-
 		try
 		{
 			HTTPRequest fetchReq = req.toHTTPRequest();
