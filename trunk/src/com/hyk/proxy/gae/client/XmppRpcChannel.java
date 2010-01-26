@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import org.jivesoftware.smack.Chat;
@@ -32,40 +31,52 @@ import com.hyk.util.codec.Base64;
  * @author Administrator
  * 
  */
-public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener {
-	protected Logger								logger			= LoggerFactory.getLogger(getClass());
-	
-	XMPPConnection xmppConnection;
-	Map<String, Chat> chatTable = new HashMap<String, Chat>();
-	//Chat chat;
-	private XmppAddress address;
-	private List<RpcChannelData> recvList = new LinkedList<RpcChannelData>();
-	public XmppRpcChannel(Executor threadPool, String jid) throws XMPPException {
+public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener
+{
+	protected Logger				logger		= LoggerFactory.getLogger(getClass());
+
+	XMPPConnection					xmppConnection;
+	Map<String, Chat>				chatTable	= new HashMap<String, Chat>();
+	private XmppAddress				address;
+	private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
+
+	public XmppRpcChannel(Executor threadPool, String jid) throws XMPPException
+	{
 		super(threadPool);
 		this.address = new XmppAddress(jid);
 		ConnectionConfiguration connConfig = new ConnectionConfiguration(
+		// "jabber.org", 5222, "jabber.org");
+				// "xmpp.jp", 5222, "xmpp.jp");
 				"talk.google.com", 5222, "gmail.com");
+		//connConfig.setDebuggerEnabled(true);
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
 		xmppConnection.login("yinqiwen@gmail.com", "Kingwon1983", "smack");
+		// xmppConnection.login("hykproxy", "fuckgfw", "smack");
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);
 		super.start();
 	}
 
 	@Override
-	public Address getRpcChannelAddress() {
+	public Address getRpcChannelAddress()
+	{
 		return address;
 	}
 
 	@Override
-	protected RpcChannelData read() throws IOException{
-		synchronized (recvList) {
+	protected RpcChannelData read() throws IOException
+	{
+		synchronized(recvList)
+		{
 			if(recvList.isEmpty())
 			{
-				try {
+				try
+				{
 					recvList.wait();
-				} catch (InterruptedException e) {
+				}
+				catch(InterruptedException e)
+				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					return null;
@@ -73,46 +84,50 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			}
 			return recvList.remove(0);
 		}
-		
+
 	}
 
 	@Override
-	protected void send(RpcChannelData data) throws IOException{
-		XmppAddress address = (XmppAddress) data.address;
+	protected void send(RpcChannelData data) throws IOException
+	{
+		XmppAddress address = (XmppAddress)data.address;
 		Chat chat = null;
-		synchronized (chatTable) {
+		synchronized(chatTable)
+		{
 			chat = chatTable.get(address.getJid());
 			if(null == chat)
 			{
-				chat = xmppConnection.getChatManager().createChat(
-						address.getJid(), this);
+				chat = xmppConnection.getChatManager().createChat(address.getJid(), this);
 				chatTable.put(address.getJid(), chat);
 			}
 		}
-		try {
+		try
+		{
 			if(logger.isDebugEnabled())
 			{
 				logger.debug("Send message to " + address.toPrintableString());
 			}
 			chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
-		} catch (XMPPException e) {
+		}
+		catch(XMPPException e)
+		{
 			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
 
-	public void processMessage(Chat chat, Message message) {
+	public void processMessage(Chat chat, Message message)
+	{
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Recv message from " + message.getFrom());
 		}
 		String jid = message.getFrom();
-		int index = jid.indexOf('/');
-		jid = jid.substring(0, index);
 		String content = message.getBody();
 		ByteArray buffer = Base64.base64ToByteArrayBuffer(content);
 		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
-		synchronized (recvList) {
+		synchronized(recvList)
+		{
 			recvList.add(recv);
 			recvList.notify();
 		}

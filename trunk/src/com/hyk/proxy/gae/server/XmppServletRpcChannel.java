@@ -106,8 +106,9 @@ public class XmppServletRpcChannel extends RpcChannel
 	public void processXmppMessage(Message msg) throws Exception
 	{	
 		JID fromJid = msg.getFromJid();
-		int index = fromJid.getId().indexOf('/');
-		String jid =  fromJid.getId().substring(0, index);
+		//int index = fromJid.getId().indexOf('/');
+		//String jid =  fromJid.getId().substring(0, index);
+		String jid = fromJid.getId();
 		ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
 		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
 		processIncomingData(recv);

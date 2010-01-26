@@ -54,7 +54,6 @@ import com.hyk.compress.Compressor;
 import com.hyk.compress.NonCompressor;
 import com.hyk.compress.sevenzip.SevenZipCompressor;
 import com.hyk.proxy.gae.client.XmppRpcChannel;
-import com.hyk.proxy.gae.client.XmppTalk;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.XmppAddress;
@@ -114,7 +113,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     	this.channelPipeline = channelPipeline;
     	try
 		{
-			XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com");
+			//XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "hykproxy@jabber.org");
+    		//XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "hykproxy@xmpp.jp");
+    		XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com");
 			rpc = new RPC(rpcchannle);
 			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
 			fetchService = (FetchService)serv.getObject("fetch");
