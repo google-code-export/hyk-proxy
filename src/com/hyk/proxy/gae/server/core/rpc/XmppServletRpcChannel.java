@@ -69,13 +69,14 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 	{	
 		JID fromJid = msg.getFromJid();
 		String jid = fromJid.getId();
-		ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
-		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
+		
 		try
 		{
+			ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
+			RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
 			processIncomingData(recv);
 		}
-		catch(RpcChannelException e)
+		catch(Exception e)
 		{
 			CharArrayWriter writer = new CharArrayWriter();
 			e.printStackTrace(new PrintWriter(writer));
