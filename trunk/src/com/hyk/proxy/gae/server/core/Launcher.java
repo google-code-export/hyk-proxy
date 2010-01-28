@@ -39,7 +39,6 @@ public class Launcher extends HttpServlet{
 		}
 		XmppServletRpcChannel transport = new XmppServletRpcChannel("hykserver@appspot.com");
 		channel = transport;
-		//TCPRpcChannel transport = new TCPRpcChannel(Executors.newFixedThreadPool(10), 48101);
 		RPC rpc = new RPC(transport);
 		rpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 	}
