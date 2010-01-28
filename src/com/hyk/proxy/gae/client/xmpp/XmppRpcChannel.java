@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.hyk.proxy.gae.client;
+package com.hyk.proxy.gae.client.xmpp;
 
 import java.io.IOException;
 import java.util.HashMap;
