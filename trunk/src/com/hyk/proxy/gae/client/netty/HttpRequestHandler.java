@@ -61,8 +61,8 @@ import com.hyk.serializer.Serializer;
 @ChannelPipelineCoverage("one")
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 {
-	static Compressor				compressor		= new NonCompressor();
-	static Serializer				serializer		= new HykSerializer();
+	//static Compressor				compressor		= new NonCompressor();
+	//static Serializer				serializer		= new HykSerializer();
 	static SSLContext				sslContext;
 
 	static
@@ -97,24 +97,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private boolean					ishttps			= false;
 	private String					httpspath		= null;
 
-	private RPC						rpc;
 	private FetchService			fetchService;
 
-	public HttpRequestHandler(ChannelPipeline channelPipeline)
+	public HttpRequestHandler(ChannelPipeline channelPipeline, FetchService	fetchService)
 	{
 		this.channelPipeline = channelPipeline;
-		try
-		{
-			XmppRpcChannel rpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com", "Kingwon1983");
-			rpc = new RPC(rpcchannle);
-			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
-			fetchService = (FetchService)serv.lookup("fetch");
-		}
-		catch(XMPPException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this.fetchService = fetchService;
 	}
 
 	protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
@@ -178,7 +166,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	{
 		if(!readingChunks)
 		{
-
 			HttpRequest request = this.request = (HttpRequest)e.getMessage();
 			System.out.println("####" + request.getMethod() + " " + request.getUri());
 			if(request.getMethod().equals(HttpMethod.CONNECT))
