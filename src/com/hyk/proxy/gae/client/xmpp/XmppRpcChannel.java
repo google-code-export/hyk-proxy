@@ -151,4 +151,10 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		}
 	}
 
+	@Override
+	public boolean isReliable()
+	{
+		return true;
+	}
+
 }
