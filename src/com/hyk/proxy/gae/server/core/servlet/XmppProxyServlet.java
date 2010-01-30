@@ -40,21 +40,21 @@ import com.hyk.util.buffer.ByteArray;
 import com.hyk.util.codec.Base64;
 
 @SuppressWarnings("serial")
-public class XmppProxyServlet extends HttpServlet {
-	protected Logger								logger			= LoggerFactory.getLogger(getClass());
+public class XmppProxyServlet extends HttpServlet
+{
+	protected Logger	logger	= LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws IOException {
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException
+	{
 		XMPPService xmpp = XMPPServiceFactory.getXMPPService();
 		Message message = xmpp.parseMessage(req);
-		
+
 		if(logger.isInfoEnabled())
 		{
 			logger.info("Process message from " + message.getFromJid());
 		}
-		
-		
+
 		try
 		{
 			Launcher.getXmppServletRpcChannel().processXmppMessage(message);
