@@ -144,6 +144,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 
 	protected HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException
 	{
+		
+		if(null == forwardResponse)
+		{
+			return new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
+		}
 		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(forwardResponse.getResponseCode()));
 		// response.setStatus(forwardResponse.getResponseCode());
 		List<String[]> headers = forwardResponse.getHeaders();
@@ -185,9 +190,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 				return;
 			}
 			HttpRequestExchange forwardRequest = buildForwardRequest(request);
+			//forwardRequest.printMessage();
 			HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
 			HttpResponse response = buildHttpServletResponse(forwardResponse);
-			// forwardResponse.printMessage();
+			//forwardResponse.printMessage();
 			ChannelFuture future = e.getChannel().write(response);
 
 			// Close the connection after the write operation is done if

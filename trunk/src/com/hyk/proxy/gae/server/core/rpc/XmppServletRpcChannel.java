@@ -85,4 +85,10 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 		}
 
 	}
+
+	@Override
+	public boolean isReliable()
+	{
+		return true;
+	}
 }
