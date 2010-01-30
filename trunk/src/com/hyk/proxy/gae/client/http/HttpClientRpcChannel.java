@@ -226,9 +226,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 				if(logger.isDebugEnabled())
 				{
-					// response.getHeaderNames()
 					logger.debug("Recv message with no body" + response.getHeaderNames());
-					// response.g
 				}
 			}
 		}

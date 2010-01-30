@@ -37,6 +37,11 @@ public class XmppAddress implements Address {
 		return "[" + jid + "]";
 	}
 	
+	public String toString()
+	{
+		return toPrintableString();
+	}
+	
 	public boolean equals(Object anObject) {
 		if (this == anObject) {
 			return true;

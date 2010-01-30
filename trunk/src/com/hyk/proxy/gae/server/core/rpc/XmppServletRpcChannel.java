@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import com.google.appengine.api.xmpp.JID;
 import com.google.appengine.api.xmpp.Message;
 import com.google.appengine.api.xmpp.MessageBuilder;
+import com.google.appengine.api.xmpp.MessageType;
 import com.google.appengine.api.xmpp.SendResponse;
 import com.google.appengine.api.xmpp.XMPPService;
 import com.google.appengine.api.xmpp.XMPPServiceFactory;
@@ -56,13 +57,18 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 		}
 		XmppAddress dataaddress = (XmppAddress)data.address;
 		JID jid = new JID(dataaddress.getJid());
-		Message msg = new MessageBuilder().withRecipientJids(jid).withBody(Base64.byteArrayBufferToBase64(data.content)).build();
+		Message msg = new MessageBuilder().withRecipientJids(jid).withMessageType(MessageType.CHAT).withBody(Base64.byteArrayBufferToBase64(data.content)).build();
 		{
 			int retry = RETRY;
 			SendResponse status = xmpp.sendMessage(msg);
-			while(status.getStatusMap().get(jid) != SendResponse.Status.SUCCESS && retry-- > 0)
-				;
+			if(SendResponse.Status.SUCCESS != status.getStatusMap().get(jid))
+			{
+				logger.error("Failed to send response!");
+			}
+//			while(status.getStatusMap().get(jid) != SendResponse.Status.SUCCESS && retry-- > 0)
+//				;
 		}
+		
 	}
 
 	public void processXmppMessage(Message msg) 

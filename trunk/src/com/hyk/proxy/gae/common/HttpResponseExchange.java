@@ -10,14 +10,7 @@
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.net.URL;
-import java.util.List;
 
-import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
 
@@ -26,47 +19,40 @@ import com.hyk.serializer.SerializerOutput;
  */
 public class HttpResponseExchange extends HttpMessageExhange
 {
-	public int responseCode;
-	private String redirectURL;
-	
-	public String getRedirectURL() {
+	public int		responseCode;
+	private String	redirectURL;
+
+	public void setRedirectURL(String redirectURL)
+	{
+		this.redirectURL = redirectURL;
+	}
+
+	public String getRedirectURL()
+	{
 		return redirectURL;
 	}
-	
-	protected void print() {
+
+	protected void print()
+	{
 
 		System.out.println(responseCode);
-		
+
 	}
-	
+
 	public void setResponseCode(int responseCode)
 	{
 		this.responseCode = responseCode;
 	}
-	
+
 	public int getResponseCode()
 	{
 		return this.responseCode;
 	}
-	
-	public HttpResponseExchange(){}
-	
-	public HttpResponseExchange(HTTPResponse res)
+
+	public HttpResponseExchange()
 	{
-		setResponseCode(res.getResponseCode());
-		List<HTTPHeader> headers = res.getHeaders();
-		for(HTTPHeader header : headers)
-		{
-			addHeader(header.getName(), header.getValue());
-		}
-		setBody(res.getContent());
-		URL url = res.getFinalUrl();
-		if(null != url)
-		{
-			redirectURL = url.toString();
-		}
 	}
-	
+
 	public void readExternal(SerializerInput in) throws IOException
 	{
 		responseCode = in.readInt();
@@ -87,6 +73,5 @@ public class HttpResponseExchange extends HttpMessageExhange
 		}
 		super.writeExternal(out);
 	}
-	
-	
+
 }

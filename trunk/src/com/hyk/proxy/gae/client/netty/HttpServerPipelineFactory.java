@@ -5,6 +5,8 @@ package com.hyk.proxy.gae.client.netty;
 
 import static org.jboss.netty.channel.Channels.*;
 
+import java.util.concurrent.Executor;
+
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
@@ -20,10 +22,12 @@ import com.hyk.proxy.gae.common.service.FetchService;
 public class HttpServerPipelineFactory implements ChannelPipelineFactory
 {
 	private FetchService	fetchService;
+	private Executor workerExecutor;
 
-	public HttpServerPipelineFactory(FetchService fetchService)
+	public HttpServerPipelineFactory(FetchService fetchService, Executor workerExecutor)
 	{
 		this.fetchService = fetchService;
+		this.workerExecutor = workerExecutor;
 	}
 
 	public ChannelPipeline getPipeline() throws Exception
@@ -40,7 +44,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		// Uncomment the following line if you don't want to handle HttpChunks.
 		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
-		pipeline.addLast("handler", new HttpRequestHandler(pipeline, fetchService));
+		pipeline.addLast("handler", new HttpRequestHandler(pipeline, fetchService, workerExecutor));
 		return pipeline;
 	}
 }

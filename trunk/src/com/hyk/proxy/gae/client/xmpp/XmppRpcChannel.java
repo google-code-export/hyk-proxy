@@ -17,6 +17,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.XMPPError;
+import org.jivesoftware.smack.packet.Message.Type;
 import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +63,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			user =  StringUtils.parseName(jid);
 		}
 		ConnectionConfiguration connConfig = new ConnectionConfiguration(server, DEFAULT_PORT,serviceName);
+		//connConfig.setDebuggerEnabled(true);
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
 		xmppConnection.login(user, passwd, "smack");
@@ -140,14 +143,36 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		{
 			logger.debug("Recv message from " + message.getFrom());
 		}
-		String jid = message.getFrom();
-		String content = message.getBody();
-		ByteArray buffer = Base64.base64ToByteArrayBuffer(content);
-		RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
-		synchronized(recvList)
+		
+		if(message.getType().equals(Type.chat))
 		{
-			recvList.add(recv);
-			recvList.notify();
+			String jid = message.getFrom();
+			String content = message.getBody();
+			ByteArray buffer = Base64.base64ToByteArrayBuffer(content);
+			RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
+			synchronized(recvList)
+			{
+				recvList.add(recv);
+				recvList.notify();
+			}
+		}
+		else
+		{
+			logger.error("Receive message:" + message.getType());
+			XMPPError error = message.getError();
+			if(null != error && error.getCode() == 503)
+			{
+				//retry
+				try
+				{
+					chat.sendMessage(message.getBody());
+				}
+				catch(XMPPException e)
+				{
+					logger.error("Retry failed", e);
+				}
+			}
+			System.out.println("%%%%" + error.toString());
 		}
 	}
 

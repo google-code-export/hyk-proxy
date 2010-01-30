@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManager;
@@ -41,6 +42,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jivesoftware.smack.XMPPException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hyk.compress.Compressor;
 import com.hyk.compress.NonCompressor;
@@ -61,8 +64,9 @@ import com.hyk.serializer.Serializer;
 @ChannelPipelineCoverage("one")
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 {
-	//static Compressor				compressor		= new NonCompressor();
-	//static Serializer				serializer		= new HykSerializer();
+	protected Logger				logger		= LoggerFactory.getLogger(getClass());
+	// static Compressor compressor = new NonCompressor();
+	// static Serializer serializer = new HykSerializer();
 	static SSLContext				sslContext;
 
 	static
@@ -98,11 +102,13 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private String					httpspath		= null;
 
 	private FetchService			fetchService;
+	private Executor				workerExecutor;
 
-	public HttpRequestHandler(ChannelPipeline channelPipeline, FetchService	fetchService)
+	public HttpRequestHandler(ChannelPipeline channelPipeline, FetchService fetchService, Executor workerExecutor)
 	{
 		this.channelPipeline = channelPipeline;
 		this.fetchService = fetchService;
+		this.workerExecutor = workerExecutor;
 	}
 
 	protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
@@ -144,7 +150,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 
 	protected HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException
 	{
-		
+
 		if(null == forwardResponse)
 		{
 			return new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
@@ -161,17 +167,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		{
 			ChannelBuffer bufer = ChannelBuffers.copiedBuffer(content);
 			response.setContent(bufer);
-			// response.getOutputStream().write(content);
 		}
 		return response;
 	}
 
 	@Override
-	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception
+	public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception
 	{
 		if(!readingChunks)
 		{
-			HttpRequest request = this.request = (HttpRequest)e.getMessage();
+			final HttpRequest request = this.request = (HttpRequest)e.getMessage();
 			System.out.println("####" + request.getMethod() + " " + request.getUri());
 			if(request.getMethod().equals(HttpMethod.CONNECT))
 			{
@@ -189,24 +194,44 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 				}
 				return;
 			}
-			HttpRequestExchange forwardRequest = buildForwardRequest(request);
-			//forwardRequest.printMessage();
-			HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
-			HttpResponse response = buildHttpServletResponse(forwardResponse);
-			//forwardResponse.printMessage();
-			ChannelFuture future = e.getChannel().write(response);
-
-			// Close the connection after the write operation is done if
-			// necessary.
-			future.addListener(ChannelFutureListener.CLOSE);
-			if(request.isChunked())
+			final HttpRequestExchange forwardRequest = buildForwardRequest(request);
+			final long start = System.currentTimeMillis();
+			//e.getChannel().getCloseFuture();
+			workerExecutor.execute(new Runnable()
 			{
-				readingChunks = true;
-			}
-			else
-			{
+				@Override
+				public void run()
+				{
+					try
+					{
+						HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
+						HttpResponse response = buildHttpServletResponse(forwardResponse);
+						System.out.println("####Response for " + request.getMethod() + " " + request.getUri());
+						if(e.getChannel().isConnected())
+						{
+							ChannelFuture future = e.getChannel().write(response);
+							future.addListener(ChannelFutureListener.CLOSE);
+						}
+						else
+						{
+							long end = System.currentTimeMillis();
+							System.out.println("####connection is already closed since it wait too long" + (end - start));
+							if(e.getChannel().isConnected())
+							if(logger.isDebugEnabled())
+							{
+								logger.debug("Connection is already closed since it wait too long");
+							}
+						}
+						
+					}
+					catch(Exception e1)
+					{
+						logger.error("Encounter error.", e1);
+					}
 
-			}
+				}
+			});
+
 		}
 		else
 		{

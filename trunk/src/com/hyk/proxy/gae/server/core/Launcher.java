@@ -3,12 +3,18 @@
  */
 package com.hyk.proxy.gae.server.core;
 
+import java.io.InputStream;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import com.hyk.proxy.gae.common.HttpServerAddress;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
@@ -27,6 +33,8 @@ public class Launcher extends HttpServlet{
 	private static XmppServletRpcChannel xmppServletRpcChannel = null;
 	private static HttpServletRpcChannel httpServletRpcChannel = null;
 	
+	private static String appid;
+	
 	
 	public static XmppServletRpcChannel getXmppServletRpcChannel()
 	{
@@ -41,16 +49,31 @@ public class Launcher extends HttpServlet{
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		try
+		{
+			InputStream is = config.getServletContext().getResourceAsStream("/WEB-INF/appengine-web.xml");
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document doc = builder.parse(is);
+			NodeList nodes = doc.getElementsByTagName("application");
+			appid = nodes.item(0).getTextContent();
+			is.close();
+		}
+		catch(Exception e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(logger.isInfoEnabled())
 		{
 			logger.info("Launcher init!");
 		}
-		XmppServletRpcChannel transport = new XmppServletRpcChannel("hykserver@appspot.com");
+		XmppServletRpcChannel transport = new XmppServletRpcChannel(appid + "@appspot.com");
 		xmppServletRpcChannel = transport;
 		RPC xmppRpc = new RPC(transport);
 		xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 		
-		httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress("localhost", 8888, "fetchproxy"));
+		httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(appid + ".appspot.com", "fetchproxy"));
 		RPC httpRpc = new RPC(httpServletRpcChannel);
 		httpServletRpcChannel.setMaxMessageSize(10240000);
 		httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
