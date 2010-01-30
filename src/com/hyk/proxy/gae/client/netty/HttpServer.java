@@ -39,31 +39,30 @@ public class HttpServer
 		FetchService fetchService = null;
 		try
 		{
-//			XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "yinqiwen@gmail.com", "Kingwon1983");
-//			RPC rpc = new RPC(xmppRpcchannle);
-//			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
-//			fetchService = (FetchService)serv.lookup("fetch");
+			XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(10), "hykproxy@jabber.org", "fuckgfw");
+			RPC rpc = new RPC(xmppRpcchannle);
+			NameService serv = rpc.getRemoteNaming(new XmppAddress("hykserver@appspot.com"));
+			fetchService = (FetchService)serv.lookup("fetch");
 			
 			//HttpServerAddress remoteAddress = new HttpServerAddress("127.0.0.1", 8888, "/fetchproxy");
-			HttpServerAddress remoteAddress = new HttpServerAddress("hykserver.appspot.com", "/fetchproxy");
-			HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 1048576);
-			//httpCleintRpcchannle.setMaxMessageSize(10240000);
-			RPC rpc = new RPC(httpCleintRpcchannle);
-			NameService serv = rpc.getRemoteNaming(remoteAddress);
-			fetchService = (FetchService)serv.lookup("fetch");
+//			HttpServerAddress remoteAddress = new HttpServerAddress("hykserver.appspot.com", "/fetchproxy");
+//			HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 1048576);
+//			RPC rpc = new RPC(httpCleintRpcchannle);
+//			NameService serv = rpc.getRemoteNaming(remoteAddress);
+//			fetchService = (FetchService)serv.lookup("fetch");
 		}
 		catch(Exception e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		Executor bossExecutor = Executors.newFixedThreadPool(50);
-		Executor workerExecutor = Executors.newFixedThreadPool(50);
+		System.out.println("#####");
+		Executor bossExecutor = Executors.newFixedThreadPool(15);
+		Executor workerExecutor = Executors.newFixedThreadPool(5);
 		ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
 		// Set up the event pipeline factory.
-		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchService));
+		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchService, workerExecutor));
 		Map<String, Object> connectionParams = new HashMap<String, Object>();
 		bootstrap.bind(new InetSocketAddress(48100));
 		// bootstrap.

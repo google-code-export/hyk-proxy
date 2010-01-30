@@ -10,22 +10,7 @@
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.google.appengine.api.urlfetch.FetchOptions;
-import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPMethod;
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.hyk.serializer.HykSerializer;
-import com.hyk.serializer.Serializer;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
 
@@ -60,20 +45,7 @@ public class HttpRequestExchange extends HttpMessageExhange
 		out.writeString(method);
 		super.writeExternal(out);
 	}
-	
-	
-	public HTTPRequest toHTTPRequest() throws MalformedURLException
-	{
-		//if()
-		URL requrl = new URL(url);
-		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(method), FetchOptions.Builder.disallowTruncate().doNotFollowRedirects());
-		for(String[] header:headers)
-		{
-			req.addHeader(new HTTPHeader(header[0], header[1]));
-		}
-		req.setPayload(body);
-		return req;
-	}
+
 
 	@Override
 	protected void print() {
