@@ -64,35 +64,9 @@ import com.hyk.serializer.Serializer;
 @ChannelPipelineCoverage("one")
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 {
-	protected Logger				logger		= LoggerFactory.getLogger(getClass());
-	// static Compressor compressor = new NonCompressor();
-	// static Serializer serializer = new HykSerializer();
-	static SSLContext				sslContext;
-
-	static
-	{
-		try
-		{
-			String password = "hykproxy";
-			sslContext = SSLContext.getInstance("TLS");
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			ks.load(new FileInputStream("hykproxykeystore"), password.toCharArray());
-			kmf.init(ks, password.toCharArray());
-			KeyManager[] km = kmf.getKeyManagers();
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-			tmf.init(ks);
-			TrustManager[] tm = tmf.getTrustManagers();
-			sslContext.init(km, tm, null);
-		}
-		catch(Exception e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
+	protected Logger				logger			= LoggerFactory.getLogger(getClass());
+	
+	private SSLContext				sslContext;
 	private volatile HttpRequest	request;
 	private volatile boolean		readingChunks;
 	private final StringBuilder		responseContent	= new StringBuilder();
@@ -101,16 +75,27 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private boolean					ishttps			= false;
 	private String					httpspath		= null;
 
-	private FetchService			fetchService;
+	private List<FetchService> fetchServices;
+	private int cursor;
 	private Executor				workerExecutor;
 
-	public HttpRequestHandler(ChannelPipeline channelPipeline, FetchService fetchService, Executor workerExecutor)
+	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor)
 	{
+		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
-		this.fetchService = fetchService;
+		this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
 	}
 
+	
+	protected synchronized FetchService selectFetchService()
+	{
+		if(cursor >= fetchServices.size())
+		{
+			cursor = 0;
+		}
+		return fetchServices.get(cursor++);
+	}
 	protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
 	{
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
@@ -196,7 +181,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			}
 			final HttpRequestExchange forwardRequest = buildForwardRequest(request);
 			final long start = System.currentTimeMillis();
-			//e.getChannel().getCloseFuture();
+			// e.getChannel().getCloseFuture();
 			workerExecutor.execute(new Runnable()
 			{
 				@Override
@@ -204,7 +189,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 				{
 					try
 					{
-						HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
+						HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
 						HttpResponse response = buildHttpServletResponse(forwardResponse);
 						System.out.println("####Response for " + request.getMethod() + " " + request.getUri());
 						if(e.getChannel().isConnected())
@@ -217,12 +202,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 							long end = System.currentTimeMillis();
 							System.out.println("####connection is already closed since it wait too long" + (end - start));
 							if(e.getChannel().isConnected())
-							if(logger.isDebugEnabled())
-							{
-								logger.debug("Connection is already closed since it wait too long");
-							}
+								if(logger.isDebugEnabled())
+								{
+									logger.debug("Connection is already closed since it wait too long");
+								}
 						}
-						
+
 					}
 					catch(Exception e1)
 					{
