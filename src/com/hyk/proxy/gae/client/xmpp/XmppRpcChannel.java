@@ -73,6 +73,13 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	}
 
 	@Override
+	public void close()
+	{
+		super.close();
+		xmppConnection.disconnect();
+	}
+	
+	@Override
 	public Address getRpcChannelAddress()
 	{
 		return address;

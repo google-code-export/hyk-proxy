@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.compress.Compressor;
 import com.hyk.compress.NonCompressor;
+import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.xmpp.XmppRpcChannel;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
@@ -78,13 +79,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private List<FetchService> fetchServices;
 	private int cursor;
 	private Executor				workerExecutor;
+	private HttpServer httpServer;
 
-	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor)
+	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor, HttpServer httpServer)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
 		this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
+		this.httpServer = httpServer;
 	}
 
 	
@@ -176,6 +179,18 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 					engine.setUseClientMode(false);
 					channelPipeline.addBefore("decoder", "ssl", new SslHandler(engine));
 
+				}
+				return;
+			}
+			else if(request.getMethod().equals(HttpMethod.OPTIONS))
+			{
+				if(request.getUri().equals(Config.STOP_COMMAND))
+				{
+					if(logger.isInfoEnabled())
+					{
+						logger.info("Received a close command to close local server.");
+					}
+					httpServer.stop();
 				}
 				return;
 			}
