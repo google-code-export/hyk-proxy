@@ -4,7 +4,7 @@
  *
  * Description: Config.java 
  *
- * @author Administrator [ 2010-1-31 | ÉÏÎç10:41:52 ]
+ * @author Administrator [ 2010-1-31 | am10:41:52 ]
  *
  */
 package com.hyk.proxy.gae.client.config;
@@ -20,17 +20,20 @@ import java.util.Properties;
  */
 public class Config
 {
-	private static final String	CONFIG_FILE			= "hyk-proxy-client.properties";
-	private static final String	APPID_CONFIG		= "remoteserver.appid";
-	private static final String	XMPP_USER_CONFIG	= "localserver.xmpp.user";
-	private static final String	XMPP_PASS_CONFIG	= "localserver.xmpp.passwd";
-	private static final String	IS_HTTP_ENABLE		= "localserver.http.enable";
-	private static final String	IS_XMPP_ENABLE		= "localserver.xmpp.enable";
-	private static final String	Local_Server_Host	= "localserver.host";
-	private static final String	Local_Server_Port	= "localserver.port";
+	private static final String	CONFIG_FILE						= "hyk-proxy-client.properties";
+	private static final String	APPID_CONFIG					= "remoteserver.appid";
+	private static final String	XMPP_USER_CONFIG				= "localserver.xmpp.user";
+	private static final String	XMPP_PASS_CONFIG				= "localserver.xmpp.passwd";
+	private static final String	IS_HTTP_ENABLE					= "localserver.http.enable";
+	private static final String	IS_XMPP_ENABLE					= "localserver.xmpp.enable";
+	private static final String	LOCAL_SERVER_HOST				= "localserver.host";
+	private static final String	LOCAL_SERVER_PORT				= "localserver.port";
+	private static final String	LOCAL_SERVER_SESSION_TIMEOUT	= "localserver.rpc.timeout";
 
-	private List<String>		appids				= new LinkedList<String>();
-	private List<XmppAccount>	accounts			= new LinkedList<XmppAccount>();
+	public static final String	STOP_COMMAND					= "StopLocalServer";
+
+	private List<String>		appids							= new LinkedList<String>();
+	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
 	public String getLocalServerHost()
 	{
@@ -44,6 +47,7 @@ public class Config
 
 	private String	localServerHost	= "127.0.0.1";
 	private int		localServerPort	= 48100;
+	private int		sessionTimeout	= 30 * 1000;
 
 	private boolean	isXmppEnable;
 	private boolean	isHttpEnable;
@@ -56,6 +60,11 @@ public class Config
 	public List<XmppAccount> getAccounts()
 	{
 		return accounts;
+	}
+
+	public int getSessionTimeout()
+	{
+		return sessionTimeout;
 	}
 
 	public boolean isXmppEnable()
@@ -102,13 +111,17 @@ public class Config
 			{
 				isXmppEnable = Boolean.parseBoolean(value);
 			}
-			else if(key.equals(Local_Server_Host))
+			else if(key.equals(LOCAL_SERVER_HOST))
 			{
 				localServerHost = value;
 			}
-			else if(key.equals(Local_Server_Port))
+			else if(key.equals(LOCAL_SERVER_PORT))
 			{
 				localServerPort = Integer.parseInt(value);
+			}
+			else if(key.equals(LOCAL_SERVER_SESSION_TIMEOUT))
+			{
+				sessionTimeout = Integer.parseInt(value) * 1000;
 			}
 		}
 

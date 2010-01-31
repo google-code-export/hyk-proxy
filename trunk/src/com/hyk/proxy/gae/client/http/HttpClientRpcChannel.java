@@ -95,6 +95,13 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	}
 
 	@Override
+	public void close()
+	{
+		super.close();
+		channel.close();
+	}
+	
+	@Override
 	public HttpServerAddress getRpcChannelAddress()
 	{
 		return null;

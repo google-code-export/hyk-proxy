@@ -27,12 +27,14 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 	private List<FetchService>	fetchServices;
 	private Executor workerExecutor;
 	private SSLContext sslContext;
+	private HttpServer httpServer;
 
-	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext)
+	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer)
 	{
 		this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
 		this.sslContext = sslContext;
+		this.httpServer = httpServer;
 	}
 
 	public ChannelPipeline getPipeline() throws Exception
@@ -49,7 +51,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		// Uncomment the following line if you don't want to handle HttpChunks.
 		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
-		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, fetchServices, workerExecutor));
+		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, fetchServices, workerExecutor, httpServer));
 		return pipeline;
 	}
 }

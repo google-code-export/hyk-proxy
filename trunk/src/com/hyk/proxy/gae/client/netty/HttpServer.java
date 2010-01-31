@@ -36,6 +36,7 @@ import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.service.NameService;
+import com.hyk.rpc.core.transport.RpcChannel;
 
 /**
  * @author Administrator
@@ -45,7 +46,9 @@ public class HttpServer
 {
 	protected static Logger	logger	= LoggerFactory.getLogger(HttpServer.class);
 
-	public static SSLContext initSSLContext() throws Exception
+	private List<RpcChannel> rpcChannels = new LinkedList<RpcChannel>();
+	
+	protected SSLContext initSSLContext() throws Exception
 	{
 		String password = "hykproxy";
 		SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -61,34 +64,36 @@ public class HttpServer
 		return sslContext;
 	}
 
-	private static RPC createXmppRpc(XmppAccount account) throws XMPPException
+	protected RPC createXmppRpc(XmppAccount account) throws XMPPException
 	{
 		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(3), account.getName(), account.getPasswd());
+		rpcChannels.add(xmppRpcchannle);
 		return new RPC(xmppRpcchannle);
 	}
 
-	private static RPC createHttpRpc(String appid)
+	protected RPC createHttpRpc(String appid)
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
 		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 1048576);
+		rpcChannels.add(httpCleintRpcchannle);
 		return new RPC(httpCleintRpcchannle);
 	}
 
-	private static FetchService initXmppFetchService(String appid, RPC rpc) throws XMPPException
+	protected FetchService initXmppFetchService(String appid, RPC rpc) throws XMPPException
 	{
 		NameService serv = rpc.getRemoteNaming(new XmppAddress(appid + "@appspot.com"));
 		FetchService fetchService = (FetchService)serv.lookup("fetch");
 		return fetchService;
 	}
 
-	private static FetchService initHttpFetchService(String appid, RPC rpc) throws XMPPException
+	protected FetchService initHttpFetchService(String appid, RPC rpc) throws XMPPException
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
 		NameService serv = rpc.getRemoteNaming(remoteAddress);
 		return (FetchService)serv.lookup("fetch");
 	}
-
-	public static void main(String[] args) throws UnknownHostException
+	
+	public void start() throws UnknownHostException
 	{
 		List<FetchService> fetchServices = new LinkedList<FetchService>();
 		SSLContext sslContext = null;
@@ -104,6 +109,7 @@ public class HttpServer
 				for(XmppAccount account : xmppAccounts)
 				{
 					RPC rpc = createXmppRpc(account);
+					rpc.setSessionTimeout(config.getSessionTimeout());
 					for(String appid : appids)
 					{
 						try
@@ -126,6 +132,7 @@ public class HttpServer
 					try
 					{
 						RPC rpc = createHttpRpc(appid);
+						rpc.setSessionTimeout(config.getSessionTimeout());
 						fetchServices.add(initHttpFetchService(appid, rpc));
 					}
 					catch(Exception e)
@@ -155,9 +162,18 @@ public class HttpServer
 		ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
 		// Set up the event pipeline factory.
-		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchServices, workerExecutor, sslContext));
+		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchServices, workerExecutor, sslContext, this));
 		Map<String, Object> connectionParams = new HashMap<String, Object>();
 		bootstrap.bind(new InetSocketAddress(InetAddress.getByName(config.getLocalServerHost()), config.getLocalServerPort()));
+	}
+	
+	public void stop()
+	{
+		for(RpcChannel rpcChannel:rpcChannels)
+		{
+			rpcChannel.close();
+		}
+		System.exit(1);
 	}
 
 }
