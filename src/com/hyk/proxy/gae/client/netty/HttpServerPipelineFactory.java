@@ -5,7 +5,10 @@ package com.hyk.proxy.gae.client.netty;
 
 import static org.jboss.netty.channel.Channels.*;
 
+import java.util.List;
 import java.util.concurrent.Executor;
+
+import javax.net.ssl.SSLContext;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -21,13 +24,15 @@ import com.hyk.proxy.gae.common.service.FetchService;
  */
 public class HttpServerPipelineFactory implements ChannelPipelineFactory
 {
-	private FetchService	fetchService;
+	private List<FetchService>	fetchServices;
 	private Executor workerExecutor;
+	private SSLContext sslContext;
 
-	public HttpServerPipelineFactory(FetchService fetchService, Executor workerExecutor)
+	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext)
 	{
-		this.fetchService = fetchService;
+		this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
+		this.sslContext = sslContext;
 	}
 
 	public ChannelPipeline getPipeline() throws Exception
@@ -44,7 +49,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		// Uncomment the following line if you don't want to handle HttpChunks.
 		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
-		pipeline.addLast("handler", new HttpRequestHandler(pipeline, fetchService, workerExecutor));
+		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, fetchServices, workerExecutor));
 		return pipeline;
 	}
 }
