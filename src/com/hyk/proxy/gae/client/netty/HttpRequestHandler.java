@@ -66,7 +66,7 @@ import com.hyk.serializer.Serializer;
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 {
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
-	
+
 	private SSLContext				sslContext;
 	private volatile HttpRequest	request;
 	private volatile boolean		readingChunks;
@@ -76,12 +76,13 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private boolean					ishttps			= false;
 	private String					httpspath		= null;
 
-	private List<FetchService> fetchServices;
-	private int cursor;
+	private List<FetchService>		fetchServices;
+	private int						cursor;
 	private Executor				workerExecutor;
-	private HttpServer httpServer;
+	private HttpServer				httpServer;
 
-	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor, HttpServer httpServer)
+	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor,
+			HttpServer httpServer)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
@@ -90,7 +91,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		this.httpServer = httpServer;
 	}
 
-	
 	protected synchronized FetchService selectFetchService()
 	{
 		if(cursor >= fetchServices.size())
@@ -99,6 +99,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		}
 		return fetchServices.get(cursor++);
 	}
+
 	protected HttpRequestExchange buildForwardRequest(HttpRequest request) throws IOException
 	{
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
@@ -165,7 +166,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		if(!readingChunks)
 		{
 			final HttpRequest request = this.request = (HttpRequest)e.getMessage();
-			System.out.println("####" + request.getMethod() + " " + request.getUri());
+			if(logger.isDebugEnabled())
+			{
+				logger.debug(request.getMethod() + " " + request.getUri());
+			}
 			if(request.getMethod().equals(HttpMethod.CONNECT))
 			{
 				ishttps = true;
@@ -206,7 +210,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 					{
 						HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
 						HttpResponse response = buildHttpServletResponse(forwardResponse);
-						System.out.println("####Response for " + request.getMethod() + " " + request.getUri());
+						if(logger.isDebugEnabled())
+						{
+							logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
+						}
 						if(e.getChannel().isConnected())
 						{
 							ChannelFuture future = e.getChannel().write(response);
@@ -215,14 +222,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 						else
 						{
 							long end = System.currentTimeMillis();
-							System.out.println("####connection is already closed since it wait too long" + (end - start));
-							if(e.getChannel().isConnected())
-								if(logger.isDebugEnabled())
-								{
-									logger.debug("Connection is already closed since it wait too long");
-								}
+							if(logger.isInfoEnabled())
+							{
+								logger.info("Warn:Browser connection is already closed by browser. It wait " + (end - start) + "ms");
+							}		
 						}
-
 					}
 					catch(Exception e1)
 					{

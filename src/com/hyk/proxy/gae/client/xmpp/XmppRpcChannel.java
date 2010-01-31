@@ -165,21 +165,8 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		}
 		else
 		{
-			logger.error("Receive message:" + message.getType());
-			XMPPError error = message.getError();
-			if(null != error && error.getCode() == 503)
-			{
-				//retry
-				try
-				{
-					chat.sendMessage(message.getBody());
-				}
-				catch(XMPPException e)
-				{
-					logger.error("Retry failed", e);
-				}
-			}
-			System.out.println("%%%%" + error.toString());
+			logger.error("Receive message:" + message.getType() + ", error" + message.getError());
+			//maybe retry sending request is better
 		}
 	}
 

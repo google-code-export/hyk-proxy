@@ -14,7 +14,7 @@
 	<property name="lib" value="${root}/lib" />
 	<property name="etc" value="${root}/etc" />
 	<property name="shell" value="${root}/shell" />
-	<property name="version" value="0.1.1" />
+	<property name="version" value="0.2.0" />
 	<property name="release" value="release" />
 	<property name="project_name" value="hyk-proxy" />
 
@@ -60,7 +60,7 @@
 	<target name="compile" depends="compile-client, compile-server" />
 
 
-	<target name="jarclient" depends="compile"> 
+	<target name="jarclient" depends="compile">
 		<jar destfile="${distroot}/${clientjar}" basedir="${clientclasses}">
 			<manifest>
 				<attribute name="Main-Class" value="com.hyk.proxy.gae.client.netty.StartProxyLocalServer"/>
@@ -97,8 +97,11 @@
 			<fileset dir="${shell}" />
 		</copy>
 		<copy todir="${releaseclientdir}/dist" file="${distroot}/${clientjar}" />
+		<copy todir="${releaseclientdir}" file="${root}/readme.txt" />
+		<copy todir="${releaseclientdir}" file="${root}/changelog.txt" />
+		<copy todir="${releaseclientdir}" file="${root}/COPYING.GPLv3" />
 		<zip destfile="${releaseclientname}.zip" basedir="${releasedir}"/>
-		<delete dir="${releasedir}"/>
+		<delete dir="${releasedir}" />
 	</target>
 
 	<target name="releaseserver" depends="compile">
@@ -108,10 +111,27 @@
 		<copy todir="${releaseserverdir}/war">
 			<fileset dir="${root}/war"/>
 		</copy>
+		<copy todir="${releaseserverdir}" file="${root}/readme.txt" />
+		<copy todir="${releaseserverdir}" file="${root}/changelog.txt" />
+		<copy todir="${releaseserverdir}" file="${root}/COPYING.GPLv3" />
 		<zip destfile="${releaseservername}.zip" basedir="${releasedir}"/>
 		<delete dir="${releasedir}"/>
 	</target>
 
-	<target name="release" depends="releaseserver, releaseclient" />
+	<target name="releaseproject" depends="compile">
+		<property name="releaseprojectdir" value="${releasedir}/${project_name}" />
+		<mkdir dir="${releaseprojectdir}" />
+		<copy todir="${releaseprojectdir}">
+			<fileset dir="${root}">
+				<exclude name="*.zip"/>
+				<exclude name="release/**"/>
+				<exclude name="build/**"/>
+			</fileset>
+		</copy>
+		<zip destfile="${project_name}-project-${version}.zip" basedir="${releasedir}" />
+		<delete dir="${releasedir}" />
+	</target>
+
+	<target name="release" depends="releaseserver, releaseclient, releaseproject" />
 
 </project>
