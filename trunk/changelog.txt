@@ -1,0 +1,17 @@
+hyk-proxy Changelog
+===================
+
+Changes in version 0.2.1 (2010.2.xx)
+-------------------------------------------
+
+** Bug
+
+** Improvement
+
+** Task
+  
+version 0.2.0 (2010.1.31)
+-------------
+Initial workable version
+
+

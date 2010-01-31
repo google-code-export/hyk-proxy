@@ -9,5 +9,11 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/hyk-rpc.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/hyk-util.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/slf4j-api-1.5.10.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.14.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.5.10.jar"/>
+	<classpathentry kind="lib" path="lib/jzlib.jar"/>
+	<classpathentry kind="lib" path="lib/smackx-jingle.jar"/>
+	<classpathentry kind="lib" path="lib/smackx.jar"/>
+	<classpathentry kind="lib" path="lib/xpp.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
