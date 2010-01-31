@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="hyk-proxy" default="">
+<project name="hyk-proxy" default="release">
 	<property name="root" value="." />
 
 	<property name='warlib' value='${root}/war/WEB-INF/lib' />
@@ -13,9 +13,7 @@
 	<property name="docdir" value="${root}/doc" />
 	<property name="lib" value="${root}/lib" />
 	<property name="etc" value="${root}/etc" />
-	<property name="src3rd-compress" value="${root}/3rd/compress" />
-	<property name="testroot" value="${root}/test" />
-	<property name="junit_jar" value="${root}/lib/junit.jar" />
+	<property name="shell" value="${root}/shell" />
 	<property name="version" value="0.1.1" />
 	<property name="release" value="release" />
 	<property name="project_name" value="hyk-proxy" />
@@ -23,18 +21,6 @@
 	<path id="classpath">
 		<pathelement location="${lib}/hyk-util.jar" />
 		<pathelement location="${lib}/slf4j-api-1.5.10.jar" />
-	</path>
-
-	<path id="serversrc">
-		<dirset dir="${srcroot}">
-			<exclude name="com/hyk/proxy/gae/server/**/*" />
-		</dirset>
-	</path>
-
-	<path id="clientsrc">
-		<dirset dir="${srcroot}">
-			<exclude name="com/hyk/proxy/gae/server/**/*" />
-		</dirset>
 	</path>
 
 	<target name="prepare">
@@ -56,10 +42,6 @@
 		</javac>
 	</target>
 
-	<target name="jarclient" depends="compile-client">
-		<jar destfile="${clientjar}" basedir="${clientclasses}" />
-	</target>
-
 	<target name="compile-client" depends="prepare">
 		<javac debug="on" target="1.5" destdir="${clientclasses}">
 			<src path="${srcroot}" />
@@ -70,6 +52,7 @@
 				</fileset>
 				<pathelement path="${warlib}/hyk-util.jar" />
 				<pathelement path="${warlib}/hyk-rpc.jar" />
+				<pathelement path="${warlib}/slf4j-api-1.5.10.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -77,23 +60,24 @@
 	<target name="compile" depends="compile-client, compile-server" />
 
 
-	<target name="dist" depends="compile">
+	<target name="jarclient" depends="compile"> 
 		<jar destfile="${distroot}/${clientjar}" basedir="${clientclasses}">
 			<manifest>
-				<attribute name="Main-Class" value="com.hyk.proxy.gae.client.netty.HttpServer"/>
+				<attribute name="Main-Class" value="com.hyk.proxy.gae.client.netty.StartProxyLocalServer"/>
 				<attribute name="Version" value="${version}"/>
 				<attribute name="Extension-Dirs" value="./etc"/>
-				<attribute name="Class-Path" value="./etc ./lib/hyk-rpc.jar 
-					./lib/hyk-util.jar  ./lib/smackx.jar 
-					./lib/smack.jar ./lib/jzlib.jar 
-					./lib/smackx-jingle.jar ./lib/xpp.jar
-					./lib/netty-3.1.5.GA.jar ./lib/log4j-1.2.14.jar
-					./lib/slf4j-log4j12-1.5.10.jar ./lib/slf4j-api-1.5.10.jar "/>
+				<attribute name="Class-Path" value="../etc ../lib/hyk-rpc.jar 
+					../lib/hyk-util.jar  ../lib/smackx.jar 
+					../lib/smack.jar ../lib/jzlib.jar 
+					../lib/smackx-jingle.jar ../lib/xpp.jar
+					../lib/netty-3.1.5.GA.jar ../lib/log4j-1.2.14.jar
+					../lib/slf4j-log4j12-1.5.10.jar ../lib/slf4j-api-1.5.10.jar "/>
 			</manifest>
 		</jar>
+		<delete dir="${clientclasses}"/>
 	</target>
 
-	<target name="releaseclient" depends="dist">
+	<target name="releaseclient" depends="jarclient">
 		<property name="releaseclientname" value="${project_name}-client-${version}"/>
 		<property name="releaseclientdir" value="${releasedir}/${releaseclientname}"/>
 		<mkdir dir="${releaseclientdir}"/>
@@ -103,14 +87,18 @@
 			</fileset>
 			<fileset dir="${warlib}">
 				<include name="hyk*"/>
+				<include name="slf4j-api*"/>
 			</fileset>
 		</copy>
 		<copy todir="${releaseclientdir}/etc">
 			<fileset dir="${etc}"/>
 		</copy>
-		<copy todir="${releaseclientdir}" file="${distroot}/${clientjar}" />
+		<copy todir="${releaseclientdir}/bin">
+			<fileset dir="${shell}" />
+		</copy>
+		<copy todir="${releaseclientdir}/dist" file="${distroot}/${clientjar}" />
 		<zip destfile="${releaseclientname}.zip" basedir="${releasedir}"/>
-
+		<delete dir="${releasedir}"/>
 	</target>
 
 	<target name="releaseserver" depends="compile">
@@ -123,5 +111,7 @@
 		<zip destfile="${releaseservername}.zip" basedir="${releasedir}"/>
 		<delete dir="${releasedir}"/>
 	</target>
+
+	<target name="release" depends="releaseserver, releaseclient" />
 
 </project>
