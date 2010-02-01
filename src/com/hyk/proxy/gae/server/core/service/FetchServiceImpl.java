@@ -20,7 +20,7 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.service.FetchService;
-import com.hyk.proxy.gae.server.core.util.Util;
+import com.hyk.proxy.gae.server.core.util.ServerUtils;
 
 /**
  *
@@ -32,10 +32,10 @@ public class FetchServiceImpl implements FetchService
 	{
 		try
 		{
-			HTTPRequest fetchReq = Util.toHTTPRequest(req);
+			HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
 			HTTPResponse fetchRes = URLFetchServiceFactory.getURLFetchService()
 					.fetch(fetchReq);
-			return Util.toHttpResponseExchange(fetchRes);
+			return ServerUtils.toHttpResponseExchange(fetchRes);
 		}
 		catch(IOException e)
 		{

@@ -3,21 +3,14 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -41,22 +34,14 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.ssl.SslHandler;
-import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.compress.Compressor;
-import com.hyk.compress.NonCompressor;
 import com.hyk.proxy.gae.client.config.Config;
-import com.hyk.proxy.gae.client.xmpp.XmppRpcChannel;
+import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
-import com.hyk.rpc.core.RPC;
-import com.hyk.rpc.core.service.NameService;
-import com.hyk.serializer.HykSerializer;
-import com.hyk.serializer.Serializer;
 
 /**
  * @author Administrator
@@ -109,7 +94,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			urlbuffer.append("https://").append(httpspath);
 		}
 		urlbuffer.append(request.getUri());
-		// urlbuffer.append("?").append(request.getQueryString());
 		gaeRequest.setURL(urlbuffer.toString());
 		gaeRequest.setMethod(request.getMethod().getName());
 		Set<String> headers = request.getHeaderNames();
@@ -137,28 +121,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		return gaeRequest;
 	}
 
-	protected HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException
-	{
-
-		if(null == forwardResponse)
-		{
-			return new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
-		}
-		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(forwardResponse.getResponseCode()));
-		// response.setStatus(forwardResponse.getResponseCode());
-		List<String[]> headers = forwardResponse.getHeaders();
-		for(String[] header : headers)
-		{
-			response.setHeader(header[0], header[1]);
-		}
-		byte[] content = forwardResponse.getBody();
-		if(null != content)
-		{
-			ChannelBuffer bufer = ChannelBuffers.copiedBuffer(content);
-			response.setContent(bufer);
-		}
-		return response;
-	}
+	
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception
@@ -200,41 +163,43 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			}
 			final HttpRequestExchange forwardRequest = buildForwardRequest(request);
 			final long start = System.currentTimeMillis();
-			// e.getChannel().getCloseFuture();
-			workerExecutor.execute(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					try
-					{
-						HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
-						HttpResponse response = buildHttpServletResponse(forwardResponse);
-						if(logger.isDebugEnabled())
-						{
-							logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
-						}
-						if(e.getChannel().isConnected())
-						{
-							ChannelFuture future = e.getChannel().write(response);
-							future.addListener(ChannelFutureListener.CLOSE);
-						}
-						else
-						{
-							long end = System.currentTimeMillis();
-							if(logger.isInfoEnabled())
-							{
-								logger.info("Warn:Browser connection is already closed by browser. It wait " + (end - start) + "ms");
-							}		
-						}
-					}
-					catch(Exception e1)
-					{
-						logger.error("Encounter error.", e1);
-					}
-
-				}
-			});
+			forwardRequest.printMessage();
+			workerExecutor.execute(new HttpFetchTask(e.getChannel(), selectFetchService(), forwardRequest));
+//			workerExecutor.execute(new Runnable()
+//			{
+//				@Override
+//				public void run()
+//				{
+//					try
+//					{
+//						HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
+//						forwardResponse.printMessage();
+//						HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
+//						if(logger.isDebugEnabled())
+//						{
+//							logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
+//						}
+//						if(e.getChannel().isConnected())
+//						{
+//							ChannelFuture future = e.getChannel().write(response);
+//							future.addListener(ChannelFutureListener.CLOSE);
+//						}
+//						else
+//						{
+//							long end = System.currentTimeMillis();
+//							if(logger.isInfoEnabled())
+//							{
+//								logger.info("Warn:Browser connection is already closed by browser. It wait " + (end - start) + "ms");
+//							}		
+//						}
+//					}
+//					catch(Exception e1)
+//					{
+//						logger.error("Encounter error.", e1);
+//					}
+//
+//				}
+//			});
 
 		}
 		else

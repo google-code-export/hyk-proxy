@@ -23,30 +23,45 @@ import com.hyk.serializer.SerializerOutput;
  */
 public abstract class HttpMessageExhange implements Externalizable
 {
-	protected ArrayList<String[]> headers = new ArrayList<String[]>();
-	protected byte[] body = new byte[0];
+	protected ArrayList<String[]>	headers	= new ArrayList<String[]>();
+	protected byte[]				body	= new byte[0];
 	
-	//protected transient Compressor 	compressor = new GZipCompressor();
-	
+
+	// protected transient Compressor compressor = new GZipCompressor();
+
 	public void addHeader(String name, String value)
 	{
-		headers.add(new String[]{name, value});
+		headers.add(new String[] {name, value});
 	}
 	
+	public void setHeader(String name, String value)
+	{
+		for(String[] header : headers)
+		{
+			if(header[0].equalsIgnoreCase(name))
+			{
+				header[1] = value;
+				return;
+			}
+		}
+		addHeader(name, value);
+	}
+
 	public void setBody(byte[] data)
 	{
 		this.body = data;
 	}
-	
+
 	public byte[] getBody()
 	{
 		return body;
 	}
-	
+
 	public int getContentLength()
 	{
-		for (String[] header : headers) {
-			if(header[0].equals("Content-Length"))
+		for(String[] header : headers)
+		{
+			if(header[0].equalsIgnoreCase("Content-Length"))
 			{
 				return Integer.parseInt(header[1]);
 			}
@@ -54,17 +69,56 @@ public abstract class HttpMessageExhange implements Externalizable
 		return 0;
 	}
 	
+	public boolean containsHeader(String name)
+	{
+		for(String[] header : headers)
+		{
+			if(header[0].equals(name))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public String getHeaderValue(String name)
+	{
+		for(String[] header : headers)
+		{
+			if(header[0].equalsIgnoreCase(name))
+			{
+				return header[1];
+			}
+		}
+		return null;
+	}
+	
+	public void removeHeader(String name)
+	{
+		for(int i = 0; i< headers.size(); i++)
+		{
+			String[] header = headers.get(i);
+			if(header[0].equalsIgnoreCase(name))
+			{
+				headers.remove(i);
+				return;
+			}
+		}
+	}
+
 	public List<String[]> getHeaders()
 	{
 		return headers;
 	}
-	
+
 	protected abstract void print();
+
 	public void printMessage()
 	{
 		System.out.println("#########");
 		print();
-		for (String[] header : headers) {
+		for(String[] header : headers)
+		{
 			System.out.println(header[0] + ": " + header[1]);
 		}
 		System.out.println("#########");
@@ -89,13 +143,13 @@ public abstract class HttpMessageExhange implements Externalizable
 	}
 
 	public void writeExternal(SerializerOutput out) throws IOException
-	{	
+	{
 		out.writeInt(headers.size());
-		for(String[] header:headers)
+		for(String[] header : headers)
 		{
 			out.writeObject(header);
 		}
-		out.writeBoolean(null != body&& body.length > 0);
+		out.writeBoolean(null != body && body.length > 0);
 		if(null != body && body.length > 0)
 		{
 			out.writeObject(body);
