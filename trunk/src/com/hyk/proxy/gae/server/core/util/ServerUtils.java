@@ -24,13 +24,39 @@ import com.hyk.proxy.gae.common.HttpResponseExchange;
 /**
  *
  */
-public class Util
+public class ServerUtils
 {
+	
+	private static long getContentLength(List<HTTPHeader> headers )
+	{
+		for(HTTPHeader header:headers)
+		{
+			if(header.getName().equalsIgnoreCase("content-length"))
+			{
+				String length = header.getValue().trim();
+				return Long.parseLong(length);
+			}
+		}
+		return 0;
+	}
+	
+	public static long getContentLength(HTTPRequest request)
+	{
+		List<HTTPHeader> headers = request.getHeaders();
+		return getContentLength(headers);
+	}
+	
+	public static long getContentLength(HTTPResponse response)
+	{
+		List<HTTPHeader> headers = response.getHeaders();
+		return getContentLength(headers);
+	}
+	
 	public static HTTPRequest toHTTPRequest(HttpRequestExchange exchange) throws MalformedURLException
 	{
 		//if()
 		URL requrl = new URL(exchange.url);
-		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), FetchOptions.Builder.disallowTruncate().doNotFollowRedirects());
+		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), FetchOptions.Builder.allowTruncate().doNotFollowRedirects());
 		for(String[] header:exchange.getHeaders())
 		{
 			req.addHeader(new HTTPHeader(header[0], header[1]));

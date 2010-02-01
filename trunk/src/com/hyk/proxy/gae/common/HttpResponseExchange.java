@@ -34,7 +34,6 @@ public class HttpResponseExchange extends HttpMessageExhange
 
 	protected void print()
 	{
-
 		System.out.println(responseCode);
 
 	}
