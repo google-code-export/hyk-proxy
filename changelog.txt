@@ -1,17 +1,24 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.2.1 (2010.2.xx)
+Changes in version 0.2.1 (2010.2.2)
 -------------------------------------------
 
 ** Bug
-
+   * A bug fix for  
+   
 ** Improvement
-
+   * Support big file(over 1m) downloading  Issue 2
+   * Set-Cookies split some login problem
+   * A performance improvement(memory)
+   * Change default RPC timeout value from 30s to 60s
+   * Return 408 response when a fetch invocation timeout
+   
 ** Task
-  
+   * Support file upload in next release
+   
 version 0.2.0 (2010.1.31)
 -------------
-Initial workable version
+Initial version
 
 
