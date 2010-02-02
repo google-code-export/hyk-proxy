@@ -50,7 +50,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		// pipeline.addLast("ssl", new SslHandler(engine));
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// Uncomment the following line if you don't want to handle HttpChunks.
-		pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
+		pipeline.addLast("aggregator", new HttpChunkAggregator(10485760));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
 		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, fetchServices, workerExecutor, httpServer));
