@@ -22,6 +22,11 @@ public class HttpRequestExchange extends HttpMessageExhange
 	public String url;
 	public String method;
 	
+	public String getMethod()
+	{
+		return method;
+	}
+
 	public void setURL(String url)
 	{
 		this.url = url;

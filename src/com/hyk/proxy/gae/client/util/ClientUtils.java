@@ -15,6 +15,7 @@ import java.util.List;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
@@ -35,7 +36,7 @@ public class ClientUtils
 		{
 			return new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
 		}
-		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(200));
+		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(forwardResponse.getResponseCode()));
 		// response.setStatus(forwardResponse.getResponseCode());
 		List<String[]> headers = forwardResponse.getHeaders();
 		for(String[] header : headers)
@@ -70,5 +71,20 @@ public class ClientUtils
 		ret[1] =  Long.parseLong(split2[1].trim());
 		ret[2] =  Long.parseLong(split[1].trim());
 		return ret;
+	}
+	
+	public static boolean isCompleteResponse(HttpResponseExchange response)
+	{
+		String contentRange = response.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE);
+		if(null == contentRange)
+		{
+			return true;
+		}
+		long[] lens = parseContentRange(contentRange);
+		if(lens[1] >= (lens[2] - 1))
+		{
+			return true;
+		}
+		return false;
 	}
 }
