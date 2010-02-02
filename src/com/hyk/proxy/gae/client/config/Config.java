@@ -15,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
+import com.sun.swing.internal.plaf.synth.resources.synth;
+
 /**
  *
  */
@@ -29,12 +31,29 @@ public class Config
 	private static final String	LOCAL_SERVER_HOST				= "localserver.host";
 	private static final String	LOCAL_SERVER_PORT				= "localserver.port";
 	private static final String	LOCAL_SERVER_SESSION_TIMEOUT	= "localserver.rpc.timeout";
+	private static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
 
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
 	private List<String>		appids							= new LinkedList<String>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
+	private static Config instance = null;
+	
+	public synchronized static Config getInstance() throws IOException
+	{
+		if(null == instance)
+		{
+			instance = new Config();
+		}
+		return instance;
+	}
+	
+	private Config() throws IOException
+	{
+		loadConfig();
+	}
+	
 	public String getLocalServerHost()
 	{
 		return localServerHost;
@@ -48,6 +67,8 @@ public class Config
 	private String	localServerHost	= "127.0.0.1";
 	private int		localServerPort	= 48100;
 	private int		sessionTimeout	= 30 * 1000;
+	
+	private int fetchLimitSize = 327680;
 
 	private boolean	isXmppEnable;
 	private boolean	isHttpEnable;
@@ -66,6 +87,11 @@ public class Config
 	{
 		return sessionTimeout;
 	}
+	
+	public int getFetchLimitSize()
+	{
+		return fetchLimitSize;
+	}
 
 	public boolean isXmppEnable()
 	{
@@ -77,7 +103,7 @@ public class Config
 		return isHttpEnable;
 	}
 
-	public void loadConfig() throws IOException
+	private void loadConfig() throws IOException
 	{
 		Properties props = new Properties();
 		props.load(Config.class.getResourceAsStream("/" + CONFIG_FILE));
@@ -122,6 +148,10 @@ public class Config
 			else if(key.equals(LOCAL_SERVER_SESSION_TIMEOUT))
 			{
 				sessionTimeout = Integer.parseInt(value) * 1000;
+			}
+			else if(key.equals(LOCAL_SERVER_HTTP_FETCH_LIMIT))
+			{
+				fetchLimitSize = Integer.parseInt(value) * 1000;
 			}
 		}
 

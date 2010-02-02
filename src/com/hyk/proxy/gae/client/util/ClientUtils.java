@@ -21,6 +21,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import com.hyk.proxy.gae.common.HttpResponseExchange;
+import com.hyk.proxy.gae.common.http.HttpCookie;
 
 /**
  *
@@ -37,13 +38,28 @@ public class ClientUtils
 			return new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
 		}
 		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(forwardResponse.getResponseCode()));
-		// response.setStatus(forwardResponse.getResponseCode());
+		
 		List<String[]> headers = forwardResponse.getHeaders();
 		for(String[] header : headers)
 		{
 			try
 			{
-				response.setHeader(header[0], header[1]);
+//				if(header[0].equalsIgnoreCase(HttpHeaders.Names.SET_COOKIE)
+//						|| header[0].equalsIgnoreCase(HttpHeaders.Names.SET_COOKIE2))
+//				{
+//					List<HttpCookie> cookies = HttpCookie.parse(header[1]);
+//					for(HttpCookie cookie:cookies)
+//					{
+//						response.addHeader(header[0], cookie.toString());
+//						System.out.println("#####" + cookie.toString());
+//						System.out.println("$$$$$" + header[1]);
+//					}
+//				}
+//				else
+				{
+					response.addHeader(header[0], header[1]);
+				}
+				
 			}
 			catch(Exception e)
 			{
@@ -54,7 +70,7 @@ public class ClientUtils
 		byte[] content = forwardResponse.getBody();
 		if(null != content)
 		{
-			ChannelBuffer bufer = ChannelBuffers.copiedBuffer(content);
+			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(content);
 			response.setContent(bufer);
 		}
 		

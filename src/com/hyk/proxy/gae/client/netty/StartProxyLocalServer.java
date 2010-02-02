@@ -9,6 +9,7 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
@@ -18,7 +19,7 @@ public class StartProxyLocalServer
 {
 
 
-	public static void main(String[] args) throws UnknownHostException
+	public static void main(String[] args) throws IOException
 	{
 		new HttpServer().start();
 	}

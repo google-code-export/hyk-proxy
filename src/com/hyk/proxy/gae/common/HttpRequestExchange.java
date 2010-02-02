@@ -19,9 +19,9 @@ import com.hyk.serializer.SerializerOutput;
  */
 public class HttpRequestExchange extends HttpMessageExhange
 {
-	public String url;
-	public String method;
-	
+	public String	url;
+	public String	method;
+
 	public String getMethod()
 	{
 		return method;
@@ -31,12 +31,12 @@ public class HttpRequestExchange extends HttpMessageExhange
 	{
 		this.url = url;
 	}
-	
+
 	public void setMethod(String method)
 	{
 		this.method = method;
 	}
-	
+
 	public void readExternal(SerializerInput in) throws IOException
 	{
 		url = in.readString();
@@ -51,12 +51,9 @@ public class HttpRequestExchange extends HttpMessageExhange
 		super.writeExternal(out);
 	}
 
-
 	@Override
-	protected void print() {
-		System.out.print(method);
-		System.out.print("  ");
-		System.out.println(url);
-		
+	protected void print(StringBuffer buffer)
+	{
+		buffer.append(method).append("  ").append(url).append("\r\n");
 	}
 }

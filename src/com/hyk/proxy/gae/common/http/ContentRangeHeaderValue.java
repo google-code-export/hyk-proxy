@@ -12,7 +12,7 @@ package com.hyk.proxy.gae.common.http;
 /**
  *
  */
-public class ContentRangeHeaderValue
+public class ContentRangeHeaderValue implements HttpHeaderValue
 {
 
 	private static final String BYTES_UNIT = "bytes";
@@ -33,10 +33,9 @@ public class ContentRangeHeaderValue
 		String left = value.substring(BYTES_UNIT.length()).trim();
 		String[] split = left.split("/");
 		String[] split2 = split[0].split("-");
-		long[] ret = new long[3];
-		ret[0] =  Long.parseLong(split2[0].trim());
-		ret[1] =  Long.parseLong(split2[1].trim());
-		ret[2] =  Long.parseLong(split[1].trim());
+		firstBytePos =  Long.parseLong(split2[0].trim());
+		lastBytePos =  Long.parseLong(split2[1].trim());
+		instanceLength =  Long.parseLong(split[1].trim());
 	}
 	
 	public long getFirstBytePos()
