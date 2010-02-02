@@ -38,8 +38,8 @@ public class Config
 	private List<String>		appids							= new LinkedList<String>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
-	private static Config instance = null;
-	
+	private static Config		instance						= null;
+
 	public synchronized static Config getInstance() throws IOException
 	{
 		if(null == instance)
@@ -48,12 +48,12 @@ public class Config
 		}
 		return instance;
 	}
-	
+
 	private Config() throws IOException
 	{
 		loadConfig();
 	}
-	
+
 	public String getLocalServerHost()
 	{
 		return localServerHost;
@@ -67,8 +67,8 @@ public class Config
 	private String	localServerHost	= "127.0.0.1";
 	private int		localServerPort	= 48100;
 	private int		sessionTimeout	= 30 * 1000;
-	
-	private int fetchLimitSize = 327680;
+
+	private int		fetchLimitSize	= 327680;
 
 	private boolean	isXmppEnable;
 	private boolean	isHttpEnable;
@@ -87,7 +87,7 @@ public class Config
 	{
 		return sessionTimeout;
 	}
-	
+
 	public int getFetchLimitSize()
 	{
 		return fetchLimitSize;
@@ -151,7 +151,7 @@ public class Config
 			}
 			else if(key.equals(LOCAL_SERVER_HTTP_FETCH_LIMIT))
 			{
-				fetchLimitSize = Integer.parseInt(value) * 1000;
+				fetchLimitSize = Integer.parseInt(value);
 			}
 		}
 

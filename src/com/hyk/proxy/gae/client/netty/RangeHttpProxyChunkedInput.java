@@ -9,12 +9,15 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
+import java.io.IOException;
+
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;
@@ -30,14 +33,16 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	private HttpRequestExchange	forwardRequest;
 
 	private long					totalLen;
-	private long					step	= 640000;
-	private long					cursor	= step;
+	private long					step;
+	private long					cursor;
 
-	public RangeHttpProxyChunkedInput(FetchService fetchService, HttpRequestExchange forwardRequest, long total)
+	public RangeHttpProxyChunkedInput(FetchService fetchService, HttpRequestExchange forwardRequest, long total) throws IOException
 	{
 		this.fetchService = fetchService;
 		this.forwardRequest = forwardRequest;
 		totalLen = total;
+		step = Config.getInstance().getFetchLimitSize();
+		cursor = step;
 	}
 	
 	@Override

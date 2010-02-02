@@ -10,6 +10,8 @@
 package com.hyk.proxy.gae.common.http;
 
 import java.nio.CharBuffer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -20,56 +22,39 @@ import java.util.Map.Entry;
  */
 public class SetCookieHeaderValue implements HttpHeaderValue
 {
-	private Properties props;
-	private String expires;
-	private String domain;
-	private String path;
-	private boolean isSecure;
-	private boolean isHttpOnly;
+	private String value;
 	
-	public static SetCookieHeaderValue parse(CharBuffer value)
+	public SetCookieHeaderValue(String value)
 	{
-		return null;
+		this.value = value;
+	}
+
+	public static List<SetCookieHeaderValue> parse(String value)
+	{
+		LinkedList<String> headerValues = new LinkedList<String>();
+		String[] temp = value.split(",");
+		for(String v:temp)
+		{
+			if(v.indexOf("=") == -1
+					|| (v.indexOf("=") > v.indexOf(";")))
+			{
+				headerValues.add(headerValues.removeLast() + "," + v);
+			}
+			else
+			{
+				headerValues.add(v);
+			}
+		}
+		List<SetCookieHeaderValue> hvs = new LinkedList<SetCookieHeaderValue>();
+		for(String v:headerValues)
+		{
+			hvs.add(new SetCookieHeaderValue(v.trim()));
+		}
+		return hvs;
 	}
 	
 	public String toString()
 	{
-		StringBuilder buffer = new StringBuilder();
-		Set<Entry<Object, Object>> entries = props.entrySet();
-		boolean isFirst = true;
-		for(Entry<Object, Object> entry:entries)
-		{
-			if(isFirst)
-			{
-				isFirst = false;
-			}
-			else
-			{
-				buffer.append(";");
-			}
-			buffer.append(entry.getKey()).append("=").append(entry.getValue());
-		}
-		if(null != expires)
-		{
-			buffer.append(";expires").append(expires);
-		}
-		if(null != domain)
-		{
-			buffer.append(";domain").append(domain);
-		}
-		if(null != path)
-		{
-			buffer.append(";path").append(path);
-		}
-		if(isSecure)
-		{
-			buffer.append(";secure");
-		}
-		if(isHttpOnly)
-		{
-			buffer.append(";httponly");
-		}
-		
-		return buffer.toString();
+		return value;
 	}
 }
