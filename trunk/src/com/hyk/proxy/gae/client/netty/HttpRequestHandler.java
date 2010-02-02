@@ -43,6 +43,8 @@ import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
+import com.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
+import com.hyk.proxy.gae.common.http.RangeHeaderValue;
 import com.hyk.proxy.gae.common.service.FetchService;
 
 /**
@@ -114,6 +116,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				}
 			}
 		}
+		
+		gaeRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, 640000-1));
 
 		int bodyLen = (int)request.getContentLength();
 
@@ -252,11 +256,34 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		FetchService fetchService =  selectFetchService();
 		try
 		{
-			forwardRequest.printMessage();
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Send proxy request");
+				logger.debug(forwardRequest.toPrintableString());
+			}
 			HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
+			if(null == forwardResponse)
+			{
+				return;
+			}
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Recv proxy response");
+				logger.debug(forwardResponse.toPrintableString());
+			}
 			if(channel.isConnected())
 			{	
-				forwardResponse.printMessage();
+				//forwardResponse.printMessage();
+				String contentRangeValue =  forwardResponse.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE);
+				ContentRangeHeaderValue contentRange = null;
+				if(null != contentRangeValue)
+				{
+					contentRange = new ContentRangeHeaderValue(contentRangeValue);
+					forwardResponse.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+					forwardResponse.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
+					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(contentRange.getInstanceLength()));
+					forwardResponse.setResponseCode(200);
+				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
 				boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))
 						|| request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
@@ -266,7 +293,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
 				}
 				ChannelFuture future = channel.write(response);
-				if(close)
+				future.await();
+				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
+				{
+					future = channel.write(new RangeHttpProxyChunkedInput(fetchService, forwardRequest, contentRange.getInstanceLength()));
+				}
+				//if(close)
 				{
 					future.addListener(ChannelFutureListener.CLOSE);
 				}

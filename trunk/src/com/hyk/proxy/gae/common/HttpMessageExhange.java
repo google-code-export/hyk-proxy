@@ -100,7 +100,7 @@ public abstract class HttpMessageExhange implements Externalizable
 		return null;
 	}
 	
-	public void removeHeader(String name)
+	public String removeHeader(String name)
 	{
 		for(int i = 0; i< headers.size(); i++)
 		{
@@ -108,9 +108,10 @@ public abstract class HttpMessageExhange implements Externalizable
 			if(header[0].equalsIgnoreCase(name))
 			{
 				headers.remove(i);
-				return;
+				return header[1];
 			}
 		}
+		return null;
 	}
 
 	public List<String[]> getHeaders()
@@ -118,18 +119,19 @@ public abstract class HttpMessageExhange implements Externalizable
 		return headers;
 	}
 
-	protected abstract void print();
+	protected abstract void print(StringBuffer buffer);
 
-	public void printMessage()
+	public String toPrintableString()
 	{
-		System.out.println("#########");
-		print();
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("\n============================================\n");
+		print(buffer);
 		for(String[] header : headers)
 		{
-			System.out.println(header[0] + ": " + header[1]);
+			buffer.append(header[0]).append(":").append(header[1]).append("\r\n");
 		}
-		System.out.println("#########");
-		System.out.println();
+		buffer.append("============================================\r\n");
+		return buffer.toString();
 	}
 
 	public void readExternal(SerializerInput in) throws IOException

@@ -28,8 +28,7 @@ public class StopProxyLocalServer
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException
 	{
-		Config config = new Config();
-		config.loadConfig();
+		Config config = Config.getInstance();
 		
 		Socket socket = new Socket();
 		socket.connect(new InetSocketAddress(config.getLocalServerHost(), config.getLocalServerPort()));

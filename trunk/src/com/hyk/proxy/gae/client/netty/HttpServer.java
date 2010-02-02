@@ -4,6 +4,7 @@
 package com.hyk.proxy.gae.client.netty;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -93,15 +94,15 @@ public class HttpServer
 		return (FetchService)serv.lookup("fetch");
 	}
 	
-	public void start() throws UnknownHostException
+	public void start() throws IOException
 	{
 		List<FetchService> fetchServices = new LinkedList<FetchService>();
 		SSLContext sslContext = null;
-		Config config = new Config();
+		Config config = Config.getInstance();
 		try
 		{
 			sslContext = initSSLContext();
-			config.loadConfig();
+			
 			List<String> appids = config.getAppids();
 			if(config.isXmppEnable())
 			{

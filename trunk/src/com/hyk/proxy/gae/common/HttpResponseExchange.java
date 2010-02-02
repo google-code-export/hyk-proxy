@@ -11,6 +11,8 @@ package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
 
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
 
@@ -32,9 +34,9 @@ public class HttpResponseExchange extends HttpMessageExhange
 		return redirectURL;
 	}
 
-	protected void print()
+	protected void print(StringBuffer buffer)
 	{
-		System.out.println(responseCode);
+		buffer.append(HttpResponseStatus.valueOf(responseCode)).append("\r\n");
 
 	}
 
