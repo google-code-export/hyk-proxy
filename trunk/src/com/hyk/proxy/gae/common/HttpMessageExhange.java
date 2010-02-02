@@ -9,11 +9,11 @@
  */
 package com.hyk.proxy.gae.common;
 
-//import java.io.Externalizable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hyk.proxy.gae.common.http.HttpHeaderValue;
 import com.hyk.serializer.Externalizable;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
@@ -25,13 +25,20 @@ public abstract class HttpMessageExhange implements Externalizable
 {
 	protected ArrayList<String[]>	headers	= new ArrayList<String[]>();
 	protected byte[]				body	= new byte[0];
-	
-
-	// protected transient Compressor compressor = new GZipCompressor();
 
 	public void addHeader(String name, String value)
 	{
 		headers.add(new String[] {name, value});
+	}
+	
+	public void addHeader(String name, HttpHeaderValue value)
+	{
+		headers.add(new String[] {name, value.toString()});
+	}
+	
+	public void setHeader(String name, HttpHeaderValue value)
+	{
+		setHeader(name, value.toString());
 	}
 	
 	public void setHeader(String name, String value)

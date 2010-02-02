@@ -12,8 +12,10 @@ import java.util.concurrent.Executor;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.apache.tools.ant.taskdefs.Sleep;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -48,7 +50,7 @@ import com.hyk.proxy.gae.common.service.FetchService;
  * 
  */
 @ChannelPipelineCoverage("one")
-public class HttpRequestHandler extends SimpleChannelUpstreamHandler
+public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements Runnable
 {
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 
@@ -65,6 +67,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private int						cursor;
 	private Executor				workerExecutor;
 	private HttpServer				httpServer;
+	
+	private HttpRequestExchange forwardRequest;
+
+	private Channel	channel;
 
 	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor,
 			HttpServer httpServer)
@@ -145,7 +151,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 					SSLEngine engine = sslContext.createSSLEngine(remote.getAddress().getHostAddress(), remote.getPort());
 					engine.setUseClientMode(false);
 					channelPipeline.addBefore("decoder", "ssl", new SslHandler(engine));
-
 				}
 				return;
 			}
@@ -161,46 +166,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 				}
 				return;
 			}
-			final HttpRequestExchange forwardRequest = buildForwardRequest(request);
-			final long start = System.currentTimeMillis();
-			forwardRequest.printMessage();
-			workerExecutor.execute(new HttpFetchTask(e.getChannel(), selectFetchService(), forwardRequest));
-//			workerExecutor.execute(new Runnable()
-//			{
-//				@Override
-//				public void run()
-//				{
-//					try
-//					{
-//						HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
-//						forwardResponse.printMessage();
-//						HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
-//						if(logger.isDebugEnabled())
-//						{
-//							logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
-//						}
-//						if(e.getChannel().isConnected())
-//						{
-//							ChannelFuture future = e.getChannel().write(response);
-//							future.addListener(ChannelFutureListener.CLOSE);
-//						}
-//						else
-//						{
-//							long end = System.currentTimeMillis();
-//							if(logger.isInfoEnabled())
-//							{
-//								logger.info("Warn:Browser connection is already closed by browser. It wait " + (end - start) + "ms");
-//							}		
-//						}
-//					}
-//					catch(Exception e1)
-//					{
-//						logger.error("Encounter error.", e1);
-//					}
-//
-//				}
-//			});
-
+			this.forwardRequest = buildForwardRequest(request);
+			this.channel = e.getChannel();
+			workerExecutor.execute(this);
 		}
 		else
 		{
@@ -271,7 +239,51 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
 	{
-		e.getCause().printStackTrace();
+		logger.error("exceptionCaught.", e.getCause());
 		e.getChannel().close();
+	}
+
+	
+	
+	@Override
+	public void run()
+	{
+		long startTime = System.currentTimeMillis();
+		FetchService fetchService =  selectFetchService();
+		try
+		{
+			forwardRequest.printMessage();
+			HttpResponseExchange forwardResponse = fetchService.fetch(forwardRequest);
+			if(channel.isConnected())
+			{	
+				forwardResponse.printMessage();
+				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
+				boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))
+						|| request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
+						&& !HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION));
+				if(logger.isDebugEnabled())
+				{
+					logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
+				}
+				ChannelFuture future = channel.write(response);
+				if(close)
+				{
+					future.addListener(ChannelFutureListener.CLOSE);
+				}
+			}
+			else
+			{
+				long current = System.currentTimeMillis();
+				if(logger.isInfoEnabled())
+				{
+					logger.info("Warn:Browser connection is already closed by browser. It wait " + (current - startTime) + "ms");
+				}	
+			}
+		}
+		catch(Exception e)
+		{
+			logger.error("Encounter error.", e);
+		}
+		
 	}
 }
