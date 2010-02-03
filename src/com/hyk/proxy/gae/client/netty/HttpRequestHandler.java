@@ -161,11 +161,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		}
 		
 		int fetchLimit = Config.getInstance().getFetchLimitSize();
-		if(recvReq.getMethod().equals(HttpMethod.GET))
-		{
-			//just add this header 
-			gaeRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, fetchLimit-1));
-		}
 		
 		if(recvReq.getContentLength() > fetchLimit)
 		{
@@ -208,7 +203,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				ishttps = true;
 				httpspath = request.getHeader("Host");
 				HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-				e.getChannel().write(response).await(10000);
+				e.getChannel().write(response).await();
 				if(channelPipeline.get("ssl") == null)
 				{
 					InetSocketAddress remote = (InetSocketAddress)e.getRemoteAddress();
@@ -328,13 +323,23 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			{
 				return;
 			}
+			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
+			if(forwardResponse.isResponseTooLarge())
+			{
+				if(logger.isInfoEnabled())
+				{
+					logger.info("Start range fetch!");
+				}
+				forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, fetchSizeLimit-1));
+				forwardResponse = selectFetchService().fetch(forwardRequest);
+			}
 			if(logger.isDebugEnabled())
 			{
 				logger.debug("Recv proxy response");
 				logger.debug(forwardResponse.toPrintableString());
 			}
 		
-			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
+			
 			while(leftChannelBuffer != null && !proxyRequestBody.isEmpty())
 			{
 				forwardRequest.setBody(null);
