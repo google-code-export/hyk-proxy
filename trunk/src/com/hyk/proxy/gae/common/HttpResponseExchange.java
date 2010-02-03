@@ -23,6 +23,18 @@ public class HttpResponseExchange extends HttpMessageExhange
 {
 	public int		responseCode;
 	private String	redirectURL;
+	private boolean isResponseTooLarge;
+
+	public boolean isResponseTooLarge()
+	{
+		return isResponseTooLarge;
+	}
+
+	public HttpResponseExchange setResponseTooLarge(boolean isResponseTooLarge)
+	{
+		this.isResponseTooLarge = isResponseTooLarge;
+		return this;
+	}
 
 	public void setRedirectURL(String redirectURL)
 	{
@@ -56,6 +68,7 @@ public class HttpResponseExchange extends HttpMessageExhange
 
 	public void readExternal(SerializerInput in) throws IOException
 	{
+		isResponseTooLarge = in.readBoolean();
 		responseCode = in.readInt();
 		if(in.readBoolean())
 		{
@@ -66,6 +79,7 @@ public class HttpResponseExchange extends HttpMessageExhange
 
 	public void writeExternal(SerializerOutput out) throws IOException
 	{
+		out.writeBoolean(isResponseTooLarge);
 		out.writeInt(responseCode);
 		out.writeBoolean(null != redirectURL);
 		if(null != redirectURL)

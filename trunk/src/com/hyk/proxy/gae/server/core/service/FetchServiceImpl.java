@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
@@ -36,6 +37,10 @@ public class FetchServiceImpl implements FetchService
 			HTTPResponse fetchRes = URLFetchServiceFactory.getURLFetchService()
 					.fetch(fetchReq);
 			return ServerUtils.toHttpResponseExchange(fetchRes);
+		}
+		catch(ResponseTooLargeException e)
+		{
+			return new HttpResponseExchange().setResponseTooLarge(true);
 		}
 		catch(IOException e)
 		{
