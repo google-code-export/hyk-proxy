@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.jivesoftware.smack.Chat;
@@ -49,8 +50,9 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	private Map<String, Chat>				chatTable	= new HashMap<String, Chat>();
 	private XmppAddress				address;
 	private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
+	private Semaphore semaphore = new Semaphore(1);
 	
-	private ScheduledExecutorService	resendService	= new ScheduledThreadPoolExecutor(2);
+	private static ScheduledExecutorService	resendService	= new ScheduledThreadPoolExecutor(2);
 	
 	public XmppRpcChannel(Executor threadPool, String jid, String passwd) throws XMPPException
 	{
@@ -140,12 +142,22 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			{
 				logger.debug("Send message to " + address.toPrintableString());
 			}
+			semaphore.acquire();
 			chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
+			Thread.sleep(500);
 		}
 		catch(XMPPException e)
 		{
 			logger.error("Failed to send XMPP message", e);
 			throw new IOException(e);
+		}
+		catch(Exception e)
+		{
+			logger.error("Failed to send XMPP message", e);
+		}
+		finally
+		{
+			semaphore.release();
 		}
 	}
 
