@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -47,11 +50,13 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	private XmppAddress				address;
 	private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
 	
+	private ScheduledExecutorService	resendService	= new ScheduledThreadPoolExecutor(2);
+	
 	public XmppRpcChannel(Executor threadPool, String jid, String passwd) throws XMPPException
 	{
 		super(threadPool);
 		this.address = new XmppAddress(jid);
-		String server = StringUtils.parseServer(jid);
+		String server = StringUtils.parseServer(jid).trim();
 		String serviceName = server;
 		String user = jid;
 		if(server.equals(GMAIL))
@@ -139,12 +144,12 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		}
 		catch(XMPPException e)
 		{
-			e.printStackTrace();
+			logger.error("Failed to send XMPP message", e);
 			throw new IOException(e);
 		}
 	}
 
-	public void processMessage(Chat chat, Message message)
+	public void processMessage(final Chat chat, final Message message)
 	{
 		if(logger.isDebugEnabled())
 		{
@@ -166,7 +171,22 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		else
 		{
 			logger.error("Receive message:" + message.getType() + ", error" + message.getError());
-			//maybe retry sending request is better
+			resendService.schedule(new Runnable()
+			{
+				
+				@Override
+				public void run()
+				{
+					try
+					{
+						chat.sendMessage(message.getBody());
+					}
+					catch(XMPPException e)
+					{
+						logger.error("Failed to send XMPP message", e);
+					}
+				}
+			}, 2000, TimeUnit.MICROSECONDS);
 		}
 	}
 

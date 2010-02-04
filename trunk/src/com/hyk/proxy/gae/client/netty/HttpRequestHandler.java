@@ -74,6 +74,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private HttpServer				httpServer;
 	
 	private HttpRequestExchange forwardRequest;
+	private HttpResponseExchange forwardResponse;
 	
 	private ContentRangeHeaderValue lastContentRange = null;
 	private ChannelBuffer leftChannelBuffer;
@@ -91,6 +92,22 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		this.httpServer = httpServer;
 	}
 
+	protected void fetch() throws InterruptedException
+	{
+		waitForwardBodyComplete();
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Send proxy request");
+			logger.debug(forwardRequest.toPrintableString());
+		}
+		forwardResponse = selectFetchService().fetch(forwardRequest);
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Recv proxy response");
+			logger.debug(forwardResponse.toPrintableString());
+		}
+	}
+	
 	protected synchronized FetchService selectFetchService()
 	{
 		if(cursor >= fetchServices.size())
@@ -135,7 +152,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			forwardRequest.setBody(body);
 		}
 	}
-	
+		
 	protected HttpRequestExchange buildForwardRequest(HttpRequest recvReq) throws IOException, InterruptedException
 	{
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
@@ -317,8 +334,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				logger.debug("Send proxy request");
 				logger.debug(forwardRequest.toPrintableString());
 			}
-			waitForwardBodyComplete();
-			HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
+			//waitForwardBodyComplete();
+			//HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
+			fetch();
 			if(null == forwardResponse)
 			{
 				return;
@@ -331,16 +349,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					logger.info("Start range fetch!");
 				}
 				forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, fetchSizeLimit-1));
-				forwardResponse = selectFetchService().fetch(forwardRequest);
+				//forwardResponse = selectFetchService().fetch(forwardRequest);
+				fetch();
 			}
-			if(logger.isDebugEnabled())
-			{
-				logger.debug("Recv proxy response");
-				logger.debug(forwardResponse.toPrintableString());
-			}
-		
-			
-			while(leftChannelBuffer != null && !proxyRequestBody.isEmpty())
+
+			while(null != lastContentRange)
 			{
 				forwardRequest.setBody(null);
 				ContentRangeHeaderValue old = lastContentRange;
@@ -353,19 +366,20 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				{
 					break;
 				}
-				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, sendSize, old.getInstanceLength());
+				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, old.getLastBytePos()  + sendSize, old.getInstanceLength());
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(sendSize));
-				waitForwardBodyComplete();
-				if(logger.isDebugEnabled())
+//				waitForwardBodyComplete();
+//				if(logger.isDebugEnabled())
+//				{
+//					logger.debug("Send proxy request");
+//					logger.debug(forwardRequest.toPrintableString());
+//				}
+//				forwardResponse = selectFetchService().fetch(forwardRequest);
+				fetch();
+				if(sendSize < fetchSizeLimit)
 				{
-					logger.debug("Send proxy request");
-					logger.debug(forwardRequest.toPrintableString());
-				}
-				forwardResponse = selectFetchService().fetch(forwardRequest);
-				if(logger.isDebugEnabled())
-				{
-					logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
+					lastContentRange = null;
 				}
 			}
 			
