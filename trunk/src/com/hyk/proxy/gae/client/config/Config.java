@@ -15,6 +15,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.persistence.EnumType;
+
+import com.hyk.compress.CompressorType;
 import com.sun.swing.internal.plaf.synth.resources.synth;
 
 /**
@@ -32,12 +35,18 @@ public class Config
 	private static final String	LOCAL_SERVER_PORT				= "localserver.port";
 	private static final String	LOCAL_SERVER_SESSION_TIMEOUT	= "localserver.rpc.timeout";
 	private static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
-
+	private static final String	LOCAL_SERVER_COMPRESSOR_TYPE			= "localserver.rpc.compressor.type";
+	private static final String	LOCAL_SERVER_COMPRESSOR_TRIGGER			= "localserver.rpc.compressor.trigger";
+	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
 	private List<String>		appids							= new LinkedList<String>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
+
+
+	private CompressorType		compressorType					= CompressorType.SevenZip;
+	private int compressorTrigger = 256;
 	private static Config		instance						= null;
 
 	public synchronized static Config getInstance() throws IOException
@@ -102,6 +111,16 @@ public class Config
 	{
 		return isHttpEnable;
 	}
+	
+	public CompressorType getCompressorType()
+	{
+		return compressorType;
+	}
+
+	public int getCompressorTrigger()
+	{
+		return compressorTrigger;
+	}
 
 	private void loadConfig() throws IOException
 	{
@@ -152,6 +171,14 @@ public class Config
 			else if(key.equals(LOCAL_SERVER_HTTP_FETCH_LIMIT))
 			{
 				fetchLimitSize = Integer.parseInt(value);
+			}
+			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TYPE))
+			{
+				compressorType = CompressorType.valueOfName(value.trim());
+			}
+			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TRIGGER))
+			{
+				compressorTrigger = Integer.parseInt(value);
 			}
 		}
 

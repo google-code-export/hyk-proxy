@@ -65,17 +65,21 @@ public class HttpServer
 		return sslContext;
 	}
 
-	protected RPC createXmppRpc(XmppAccount account) throws XMPPException
+	protected RPC createXmppRpc(XmppAccount account, Config config) throws XMPPException
 	{
 		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(3), account.getName(), account.getPasswd());
+		xmppRpcchannle.setCompressorType(config.getCompressorType());
+		xmppRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(xmppRpcchannle);
 		return new RPC(xmppRpcchannle);
 	}
 
-	protected RPC createHttpRpc(String appid)
+	protected RPC createHttpRpc(String appid, Config config)
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
 		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 10485760);
+		httpCleintRpcchannle.setCompressorType(config.getCompressorType());
+		httpCleintRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(httpCleintRpcchannle);
 		return new RPC(httpCleintRpcchannle);
 	}
@@ -109,7 +113,7 @@ public class HttpServer
 				List<XmppAccount> xmppAccounts = config.getAccounts();
 				for(XmppAccount account : xmppAccounts)
 				{
-					RPC rpc = createXmppRpc(account);
+					RPC rpc = createXmppRpc(account, config);
 					rpc.setSessionTimeout(config.getSessionTimeout());
 					for(String appid : appids)
 					{
@@ -132,7 +136,7 @@ public class HttpServer
 				{					
 					try
 					{
-						RPC rpc = createHttpRpc(appid);
+						RPC rpc = createHttpRpc(appid, config);
 						rpc.setSessionTimeout(config.getSessionTimeout());
 						fetchServices.add(initHttpFetchService(appid, rpc));
 					}
