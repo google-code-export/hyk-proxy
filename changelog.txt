@@ -1,11 +1,25 @@
 hyk-proxy Changelog
 ===================
 
+Changes in version 0.2.2 (2010.2.xx)
+-------------------------------------------
+
+** Bug
+   * A bug fix for set-cookie
+   
+** Improvement
+   * Support uploading big file(over 1m) to doc.google.com
+   * Optimize big file(over 1m) downloading
+   * Upgrade RPC framework which support compressing setting
+
+** Task
+   * performace
+
 Changes in version 0.2.1 (2010.2.2)
 -------------------------------------------
 
 ** Bug
-   * A bug fix for  
+   * A bug fix for xmpp error message parse
    
 ** Improvement
    * Support big file(over 1m) downloading  Issue 2
