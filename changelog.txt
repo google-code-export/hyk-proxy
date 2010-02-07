@@ -1,7 +1,7 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.2.2 (2010.2.xx)
+Changes in version 0.2.2 (2010.2.7)
 -------------------------------------------
 
 ** Bug
@@ -13,7 +13,7 @@ Changes in version 0.2.2 (2010.2.xx)
    * Upgrade RPC framework which support compressing setting
 
 ** Task
-   * performace
+   * 
 
 Changes in version 0.2.1 (2010.2.2)
 -------------------------------------------
