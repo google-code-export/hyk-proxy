@@ -363,10 +363,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				else
 				{
 					String hv = forwardRequest.getHeaderValue(HttpHeaders.Names.RANGE);
-					System.out.println("####containedRange: " + hv);
 					containedRange = new RangeHeaderValue(hv);
 					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(containedRange.getFirstBytePos(), fetchSizeLimit-1));
-					System.out.println("####containedRange " + containedRange.getFirstBytePos());
 				}
 				
 				//forwardResponse = selectFetchService().fetch(forwardRequest);
