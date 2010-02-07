@@ -77,7 +77,7 @@ public class HttpServer
 	protected RPC createHttpRpc(String appid, Config config)
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
-		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 10485760);
+		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 2048000);
 		httpCleintRpcchannle.setCompressorType(config.getCompressorType());
 		httpCleintRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(httpCleintRpcchannle);

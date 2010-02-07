@@ -45,7 +45,9 @@ public class FetchServiceImpl implements FetchService
 		catch(IOException e)
 		{
 			logger.error("Faile to fetch", e);
-			return null;
+			HttpResponseExchange res = new HttpResponseExchange();
+			res.setResponseCode(408);
+			return res;
 		}
 	}
 

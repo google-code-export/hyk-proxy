@@ -55,7 +55,9 @@ public class ServerUtils
 	public static HTTPRequest toHTTPRequest(HttpRequestExchange exchange) throws MalformedURLException
 	{
 		URL requrl = new URL(exchange.url);
-		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), FetchOptions.Builder.disallowTruncate().doNotFollowRedirects());
+		FetchOptions fetchOptions = FetchOptions.Builder.disallowTruncate().doNotFollowRedirects();
+		fetchOptions.setDeadline(10.0);
+		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), fetchOptions);
 	
 		for(String[] header:exchange.getHeaders())
 		{
