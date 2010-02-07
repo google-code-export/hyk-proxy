@@ -37,15 +37,14 @@ public class Config
 	private static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
 	private static final String	LOCAL_SERVER_COMPRESSOR_TYPE			= "localserver.rpc.compressor.type";
 	private static final String	LOCAL_SERVER_COMPRESSOR_TRIGGER			= "localserver.rpc.compressor.trigger";
+	private static final String LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
 	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
 	private List<String>		appids							= new LinkedList<String>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
-
-
-	private CompressorType		compressorType					= CompressorType.SevenZip;
+	private CompressorType		compressorType					= CompressorType.GZ;
 	private int compressorTrigger = 256;
 	private static Config		instance						= null;
 
@@ -78,10 +77,17 @@ public class Config
 	private int		sessionTimeout	= 30 * 1000;
 
 	private int		fetchLimitSize	= 327680;
+	private int     maxFetcherForBigFile = 5;
 
 	private boolean	isXmppEnable;
 	private boolean	isHttpEnable;
 
+	public int getMaxFetcherForBigFile() 
+	{
+		return maxFetcherForBigFile;
+	}
+
+	
 	public List<String> getAppids()
 	{
 		return appids;
@@ -132,6 +138,11 @@ public class Config
 		{
 			String key = (String)keys.next();
 			String value = props.getProperty(key);
+			if(null == value || value.trim().isEmpty())
+			{
+				continue;
+			}
+			value = value.trim();
 			if(key.startsWith(APPID_CONFIG))
 			{
 				appids.add(value);
@@ -174,11 +185,15 @@ public class Config
 			}
 			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TYPE))
 			{
-				compressorType = CompressorType.valueOfName(value.trim());
+				compressorType = CompressorType.valueOfName(value);
 			}
 			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TRIGGER))
 			{
 				compressorTrigger = Integer.parseInt(value);
+			}
+			else if(key.equals(LOCAL_SERVER_HTTP_MAX_FETCHER))
+			{
+				maxFetcherForBigFile = Integer.parseInt(value);
 			}
 		}
 

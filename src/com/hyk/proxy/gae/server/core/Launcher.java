@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import com.hyk.compress.CompressorType;
 import com.hyk.proxy.gae.common.HttpServerAddress;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
 import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;
@@ -51,6 +52,7 @@ public class Launcher extends HttpServlet{
 		super.init(config);
 		try
 		{
+			
 			InputStream is = config.getServletContext().getResourceAsStream("/WEB-INF/appengine-web.xml");
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
@@ -68,12 +70,19 @@ public class Launcher extends HttpServlet{
 		{
 			logger.info("Launcher init!");
 		}
+		String type = config.getInitParameter("remoteserver.rpc.compressor.type").trim();
+		String trigger = config.getInitParameter("remoteserver.rpc.compressor.trigger").trim();
+		
 		XmppServletRpcChannel transport = new XmppServletRpcChannel(appid + "@appspot.com");
 		xmppServletRpcChannel = transport;
+		xmppServletRpcChannel.setCompressorType(CompressorType.valueOfName(type));
+		xmppServletRpcChannel.setCompressTrigger(Integer.parseInt(trigger));
 		RPC xmppRpc = new RPC(transport);
 		xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 		
 		httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(appid + ".appspot.com", "fetchproxy"));
+		httpServletRpcChannel.setCompressorType(CompressorType.valueOfName(type));
+		httpServletRpcChannel.setCompressTrigger(Integer.parseInt(trigger));
 		RPC httpRpc = new RPC(httpServletRpcChannel);
 		httpServletRpcChannel.setMaxMessageSize(10240000);
 		httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());

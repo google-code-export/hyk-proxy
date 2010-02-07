@@ -23,9 +23,10 @@ import com.hyk.serializer.SerializerOutput;
  */
 public abstract class HttpMessageExhange implements Externalizable
 {
-	protected ArrayList<String[]>	headers	= new ArrayList<String[]>();
+	protected List<String[]>	headers	= new ArrayList<String[]>();
 	protected byte[]				body	= new byte[0];
 
+	
 	public void addHeader(String name, String value)
 	{
 		headers.add(new String[] {name, value});
@@ -39,6 +40,11 @@ public abstract class HttpMessageExhange implements Externalizable
 	public void setHeader(String name, HttpHeaderValue value)
 	{
 		setHeader(name, value.toString());
+	}
+	
+	public void setHeaders(List<String[]> headers)
+	{
+		this.headers = headers;
 	}
 	
 	public void setHeader(String name, String value)
@@ -117,6 +123,16 @@ public abstract class HttpMessageExhange implements Externalizable
 	public List<String[]> getHeaders()
 	{
 		return headers;
+	}
+	
+	public List<String[]> getCloneHeaders()
+	{
+		ArrayList<String[]> newHeaders = new ArrayList<String[]>();
+		for(String[] header:headers)
+		{
+			newHeaders.add(new String[]{header[0], header[1]});
+		}
+		return newHeaders;
 	}
 
 	protected abstract void print(StringBuffer buffer);

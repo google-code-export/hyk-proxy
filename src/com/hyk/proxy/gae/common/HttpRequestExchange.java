@@ -20,6 +20,9 @@ import com.hyk.serializer.SerializerOutput;
 public class HttpRequestExchange extends HttpMessageExhange
 {
 	public String	url;
+	
+
+
 	public String	method;
 
 	public String getMethod()
@@ -27,7 +30,12 @@ public class HttpRequestExchange extends HttpMessageExhange
 		return method;
 	}
 
-	public void setURL(String url)
+	public String getUrl() 
+	{
+		return url;
+	}
+	
+	public void setUrl(String url)
 	{
 		this.url = url;
 	}
@@ -36,6 +44,7 @@ public class HttpRequestExchange extends HttpMessageExhange
 	{
 		this.method = method;
 	}
+	
 
 	public void readExternal(SerializerInput in) throws IOException
 	{

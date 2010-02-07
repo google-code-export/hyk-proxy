@@ -39,6 +39,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,8 +69,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private boolean					ishttps			= false;
 	private String					httpspath		= null;
 
-	private List<FetchService>		fetchServices;
-	private int						cursor;
+	//private List<FetchService>		fetchServices;
+	//private int						cursor;
+	private FetchServiceSelector fetchServiceSelector;
 	private Executor				workerExecutor;
 	private HttpServer				httpServer;
 	
@@ -81,13 +83,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private BlockingQueue<ChannelBuffer> proxyRequestBody = new LinkedBlockingQueue<ChannelBuffer>();
 
 	private Channel	channel;
+	private ChunkedInput chunkedInput;
 
 	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor,
 			HttpServer httpServer)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
-		this.fetchServices = fetchServices;
+		this.fetchServiceSelector = new FetchServiceSelector(fetchServices);
 		this.workerExecutor = workerExecutor;
 		this.httpServer = httpServer;
 	}
@@ -100,7 +103,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			logger.debug("Send proxy request");
 			logger.debug(forwardRequest.toPrintableString());
 		}
-		forwardResponse = selectFetchService().fetch(forwardRequest);
+		forwardResponse = fetchServiceSelector.select().fetch(forwardRequest);
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Recv proxy response");
@@ -108,14 +111,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		}
 	}
 	
-	protected synchronized FetchService selectFetchService()
-	{
-		if(cursor >= fetchServices.size())
-		{
-			cursor = 0;
-		}
-		return fetchServices.get(cursor++);
-	}
+//	protected synchronized FetchService selectFetchService()
+//	{
+//		if(cursor >= fetchServices.size())
+//		{
+//			cursor = 0;
+//		}
+//		return fetchServices.get(cursor++);
+//	}
 
 	protected void waitForwardBodyComplete() throws InterruptedException
 	{
@@ -162,7 +165,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			urlbuffer.append("https://").append(httpspath);
 		}
 		urlbuffer.append(recvReq.getUri());
-		gaeRequest.setURL(urlbuffer.toString());
+		gaeRequest.setUrl(urlbuffer.toString());
 		gaeRequest.setMethod(recvReq.getMethod().getName());
 		Set<String> headers = recvReq.getHeaderNames();
 		for(String headerName : headers)
@@ -318,6 +321,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
 	{
 		logger.error("exceptionCaught.", e.getCause());
+		if(chunkedInput != null)
+		{
+			chunkedInput.close();
+		}
 		e.getChannel().close();
 	}
 
@@ -342,13 +349,26 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				return;
 			}
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
+			RangeHeaderValue containedRange = new RangeHeaderValue(fetchSizeLimit, (fetchSizeLimit*2)-1);
 			if(forwardResponse.isResponseTooLarge())
 			{
 				if(logger.isInfoEnabled())
 				{
 					logger.info("Start range fetch!");
 				}
-				forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, fetchSizeLimit-1));
+				if(!forwardRequest.containsHeader(HttpHeaders.Names.RANGE))
+				{
+					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(0, fetchSizeLimit-1));
+				}
+				else
+				{
+					String hv = forwardRequest.getHeaderValue(HttpHeaders.Names.RANGE);
+					System.out.println("####containedRange: " + hv);
+					containedRange = new RangeHeaderValue(hv);
+					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(containedRange.getFirstBytePos(), fetchSizeLimit-1));
+					System.out.println("####containedRange " + containedRange.getFirstBytePos());
+				}
+				
 				//forwardResponse = selectFetchService().fetch(forwardRequest);
 				fetch();
 			}
@@ -408,7 +428,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
 				{
-					future = channel.write(new RangeHttpProxyChunkedInput(selectFetchService(), forwardRequest, contentRange.getInstanceLength()));
+					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, containedRange.getFirstBytePos(), contentRange.getInstanceLength());
+					future = channel.write(chunkedInput);
 				}
 				//if(close)
 				{
