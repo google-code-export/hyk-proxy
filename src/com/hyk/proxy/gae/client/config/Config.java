@@ -15,10 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-import javax.persistence.EnumType;
 
 import com.hyk.compress.CompressorType;
-import com.sun.swing.internal.plaf.synth.resources.synth;
 
 /**
  *
