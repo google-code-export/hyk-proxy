@@ -19,7 +19,7 @@ public class RangeHeaderValue  implements HttpHeaderValue
 
 	private long firstBytePos;
 
-	private long lastBytePos;
+	private long lastBytePos = -1;
 	
 	public RangeHeaderValue(long firstBytePos, long lastBytePos)
 	{
@@ -32,8 +32,12 @@ public class RangeHeaderValue  implements HttpHeaderValue
 		String left = value.substring(BYTES_UNIT.length()).trim();
 		left = left.substring("=".length()).trim();
 		String[] split = left.split("-");
+		
 		firstBytePos = Integer.parseInt(split[0]);
-		lastBytePos = Integer.parseInt(split[1]);
+		if(split.length > 1)
+		{
+			lastBytePos = Integer.parseInt(split[1]);
+		}	
 	}
 	
 	public long getFirstBytePos() 
