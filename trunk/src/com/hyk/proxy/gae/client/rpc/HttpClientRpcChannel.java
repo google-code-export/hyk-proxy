@@ -7,7 +7,7 @@
  * @author qiying.wang [ Jan 28, 2010 | 5:41:08 PM ]
  *
  */
-package com.hyk.proxy.gae.client.http;
+package com.hyk.proxy.gae.client.rpc;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 

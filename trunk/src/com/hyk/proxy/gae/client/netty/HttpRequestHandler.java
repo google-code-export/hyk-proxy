@@ -336,11 +336,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		long startTime = System.currentTimeMillis();
 		try
 		{
-			if(logger.isDebugEnabled())
-			{
-				logger.debug("Send proxy request");
-				logger.debug(forwardRequest.toPrintableString());
-			}
 			//waitForwardBodyComplete();
 			//HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
 			fetch();
@@ -387,13 +382,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, old.getLastBytePos()  + sendSize, old.getInstanceLength());
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(sendSize));
-//				waitForwardBodyComplete();
-//				if(logger.isDebugEnabled())
-//				{
-//					logger.debug("Send proxy request");
-//					logger.debug(forwardRequest.toPrintableString());
-//				}
-//				forwardResponse = selectFetchService().fetch(forwardRequest);
 				fetch();
 				if(sendSize < fetchSizeLimit)
 				{

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.hyk.proxy.gae.client.xmpp;
+package com.hyk.proxy.gae.client.rpc;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -144,7 +144,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			}
 			semaphore.acquire();
 			chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
-			Thread.sleep(500);
+			Thread.sleep(1000);
 		}
 		catch(XMPPException e)
 		{
@@ -198,7 +198,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 						logger.error("Failed to send XMPP message", e);
 					}
 				}
-			}, 2000, TimeUnit.MICROSECONDS);
+			}, 5000, TimeUnit.MICROSECONDS);
 		}
 	}
 
