@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
-import com.hyk.proxy.gae.client.http.HttpClientRpcChannel;
-import com.hyk.proxy.gae.client.xmpp.XmppRpcChannel;
+import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
+import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
 import com.hyk.proxy.gae.common.HttpServerAddress;
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
