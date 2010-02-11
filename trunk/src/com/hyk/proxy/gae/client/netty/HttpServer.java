@@ -65,19 +65,19 @@ public class HttpServer
 		return sslContext;
 	}
 
-	protected RPC createXmppRpc(XmppAccount account, Config config) throws XMPPException
+	protected RPC createXmppRpc(XmppAccount account, Config config, Executor workerExecutor) throws XMPPException
 	{
-		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(Executors.newFixedThreadPool(3), account.getName(), account.getPasswd());
+		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account.getName(), account.getPasswd());
 		xmppRpcchannle.setCompressorType(config.getCompressorType());
 		xmppRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(xmppRpcchannle);
 		return new RPC(xmppRpcchannle);
 	}
 
-	protected RPC createHttpRpc(String appid, Config config)
+	protected RPC createHttpRpc(String appid, Config config, Executor workerExecutor)
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
-		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(Executors.newFixedThreadPool(10), remoteAddress, 2048000);
+		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress, 2048000);
 		httpCleintRpcchannle.setCompressorType(config.getCompressorType());
 		httpCleintRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(httpCleintRpcchannle);
@@ -103,6 +103,10 @@ public class HttpServer
 		List<FetchService> fetchServices = new LinkedList<FetchService>();
 		SSLContext sslContext = null;
 		Config config = Config.getInstance();
+		
+		Executor bossExecutor = Executors.newFixedThreadPool(5);
+		Executor workerExecutor = Executors.newFixedThreadPool(50);
+		
 		try
 		{
 			sslContext = initSSLContext();
@@ -113,7 +117,7 @@ public class HttpServer
 				List<XmppAccount> xmppAccounts = config.getAccounts();
 				for(XmppAccount account : xmppAccounts)
 				{
-					RPC rpc = createXmppRpc(account, config);
+					RPC rpc = createXmppRpc(account, config, workerExecutor);
 					rpc.setSessionTimeout(config.getSessionTimeout());
 					for(String appid : appids)
 					{
@@ -136,7 +140,7 @@ public class HttpServer
 				{					
 					try
 					{
-						RPC rpc = createHttpRpc(appid, config);
+						RPC rpc = createHttpRpc(appid, config, workerExecutor);
 						rpc.setSessionTimeout(config.getSessionTimeout());
 						fetchServices.add(initHttpFetchService(appid, rpc));
 					}
@@ -161,9 +165,6 @@ public class HttpServer
 		{
 			logger.info("Found " + fetchServices.size() + " remote fetch service for this proxy.");
 		}
-
-		Executor bossExecutor = Executors.newFixedThreadPool(5);
-		Executor workerExecutor = Executors.newFixedThreadPool(15);
 		ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
 
 		// Set up the event pipeline factory.

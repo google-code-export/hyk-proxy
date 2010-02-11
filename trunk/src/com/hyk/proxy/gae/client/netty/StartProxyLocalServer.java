@@ -12,16 +12,28 @@ package com.hyk.proxy.gae.client.netty;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *
  */
 public class StartProxyLocalServer
 {
+	protected static Logger				logger			= LoggerFactory.getLogger(StartProxyLocalServer.class);
 
-
-	public static void main(String[] args) throws IOException
+	public static void main(String[] args)
 	{
-		new HttpServer().start();
+		try 
+		{
+			new HttpServer().start();
+		} 
+		catch (Exception e) 
+		{
+			logger.error("Failed to start local server.", e);
+			System.exit(-1);
+		}
+		
 	}
 
 }
