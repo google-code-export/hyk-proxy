@@ -32,9 +32,9 @@ public class HttpProxyServlet extends HttpServlet
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException
 	{
-		if(logger.isInfoEnabled())
+		if(logger.isDebugEnabled())
 		{
-			logger.info("Process message");
+			logger.debug("Process message");
 		}
 
 		try
