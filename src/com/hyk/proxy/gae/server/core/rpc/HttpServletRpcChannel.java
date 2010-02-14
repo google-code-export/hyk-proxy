@@ -50,9 +50,12 @@ public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 		{
 			logger.debug("Send result back with body len:" + data.content.size());
 		}
-		httpServletResponseCache.get().setStatus(200);
-		httpServletResponseCache.get().setContentLength(data.content.size());
-		httpServletResponseCache.get().getOutputStream().write(content.rawbuffer(), content.position(), content.size());
+		HttpServletResponse out = httpServletResponseCache.get();
+		out.setStatus(200);
+		out.setContentLength(content.size());
+		out.getOutputStream().write(content.rawbuffer(), content.position(), content.size());
+		out.getOutputStream().flush();
+		
 	}
 
 	public void processHttpRequest(HttpServletRequest request, HttpServletResponse response) throws IOException
