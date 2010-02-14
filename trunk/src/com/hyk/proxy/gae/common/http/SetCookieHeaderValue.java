@@ -17,11 +17,16 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Set-Cookie: <name>=<value>[; <name>=<value>]... [; expires=<date>][;domain=<domain_name>] [; path=<some_path>][; secure][; httponly]
  */
 public class SetCookieHeaderValue implements HttpHeaderValue
 {
+	protected static Logger				logger			= LoggerFactory.getLogger(SetCookieHeaderValue.class);
+	
 	private String value;
 	
 	public SetCookieHeaderValue(String value)
@@ -31,26 +36,44 @@ public class SetCookieHeaderValue implements HttpHeaderValue
 
 	public static List<SetCookieHeaderValue> parse(String value)
 	{
-		LinkedList<String> headerValues = new LinkedList<String>();
-		String[] temp = value.split(",");
-		for(String v:temp)
+		List<SetCookieHeaderValue> hvs = new LinkedList<SetCookieHeaderValue>();
+		try 
 		{
-			if(v.indexOf("=") == -1
-					|| (v.indexOf("=") > v.indexOf(";")))
+			LinkedList<String> headerValues = new LinkedList<String>();
+			String[] temp = value.split(",");
+			if(temp.length > 1)
 			{
-				headerValues.add(headerValues.removeLast() + "," + v);
+				for(String v:temp)
+				{
+					if((v.indexOf("=") == -1
+							|| (v.indexOf("=") > v.indexOf(";"))) && !headerValues.isEmpty())
+					{
+						headerValues.add(headerValues.removeLast() + "," + v);
+					}
+					else
+					{
+						headerValues.add(v);
+					}
+				}
 			}
 			else
 			{
-				headerValues.add(v);
+				headerValues.add(value.trim());
 			}
-		}
-		List<SetCookieHeaderValue> hvs = new LinkedList<SetCookieHeaderValue>();
-		for(String v:headerValues)
+			
+			
+			for(String v:headerValues)
+			{
+				hvs.add(new SetCookieHeaderValue(v.trim()));
+			}
+			return hvs;
+		} 
+		catch (Exception e) 
 		{
-			hvs.add(new SetCookieHeaderValue(v.trim()));
+			logger.error("Failed to parse SetCookie header:" + value, e);
+			return hvs;
 		}
-		return hvs;
+		
 	}
 	
 	public String toString()

@@ -19,6 +19,8 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
@@ -28,6 +30,8 @@ import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
  */
 public class ClientUtils
 {
+	protected static Logger				logger			= LoggerFactory.getLogger(ClientUtils.class);
+	
 	private static final String	ContentRangeValueHeader	= "bytes";
 
 	public static HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException
@@ -55,7 +59,6 @@ public class ClientUtils
 			{
 				response.addHeader(header[0], header[1]);
 			}
-
 		}
 		byte[] content = forwardResponse.getBody();
 		if(null != content)
