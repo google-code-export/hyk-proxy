@@ -67,7 +67,7 @@ public class HttpServer
 
 	protected RPC createXmppRpc(XmppAccount account, Config config, Executor workerExecutor) throws XMPPException
 	{
-		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account.getName(), account.getPasswd());
+		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
 		xmppRpcchannle.setCompressorType(config.getCompressorType());
 		xmppRpcchannle.setCompressTrigger(config.getCompressorTrigger());
 		rpcChannels.add(xmppRpcchannle);
@@ -113,7 +113,8 @@ public class HttpServer
 			sslContext = initSSLContext();
 			
 			List<String> appids = config.getAppids();
-			if(config.isXmppEnable())
+			//Only effect when HTTP mode is disable
+			if(config.isXmppEnable() && !config.isHttpEnable())
 			{
 				List<XmppAccount> xmppAccounts = config.getAccounts();
 				for(XmppAccount account : xmppAccounts)

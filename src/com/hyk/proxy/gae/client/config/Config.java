@@ -27,6 +27,10 @@ public class Config
 	private static final String	APPID_CONFIG					= "remoteserver.appid";
 	private static final String	XMPP_USER_CONFIG				= "localserver.xmpp.user";
 	private static final String	XMPP_PASS_CONFIG				= "localserver.xmpp.passwd";
+	private static final String	XMPP_SERVER_HOST_CONFIG			= "localserver.xmpp.server.host";
+	private static final String	XMPP_SERVER_PORT_CONFIG			= "localserver.xmpp.server.port";
+	private static final String	XMPP_SERVER_OLDSSL_CONFIG		= "localserver.xmpp.oldssl.enable";
+	
 	private static final String	IS_HTTP_ENABLE					= "localserver.http.enable";
 	private static final String	IS_XMPP_ENABLE					= "localserver.xmpp.enable";
 	private static final String	LOCAL_SERVER_HOST				= "localserver.host";
@@ -155,7 +159,23 @@ public class Config
 				{
 					throw new IOException("Configuration:" + passwdkey + " is missing.");
 				}
-				accounts.add(new XmppAccount(name, passwd));
+				XmppAccount account = new XmppAccount(name, passwd);
+				String host = props.getProperty(XMPP_SERVER_HOST_CONFIG + id);
+				if(null != host && !host.trim().isEmpty())
+				{
+					account.setServerHost(host);
+				}
+				String port = props.getProperty(XMPP_SERVER_PORT_CONFIG + id);
+				if(null != port && !port.trim().isEmpty())
+				{
+					account.setServerPort(Integer.parseInt(port.trim()));
+				}
+				String oldssl = props.getProperty(XMPP_SERVER_OLDSSL_CONFIG + id);
+				if(null != oldssl && !oldssl.trim().isEmpty())
+				{
+					account.setOldSSLEnable(Boolean.parseBoolean(oldssl.trim()));
+				}
+				accounts.add(account.init());
 			}
 			else if(key.equals(IS_HTTP_ENABLE))
 			{
