@@ -27,6 +27,7 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
@@ -41,10 +42,6 @@ import com.hyk.util.codec.Base64;
 public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener
 {
 	protected Logger				logger		= LoggerFactory.getLogger(getClass());
-	
-	private static final int DEFAULT_PORT = 5222;
-	private static final String GTALK_SERVER = "talk.google.com";
-	private static final String GMAIL = "gmail.com";
 
 	private XMPPConnection					xmppConnection;
 	private Map<String, Chat>				chatTable	= new HashMap<String, Chat>();
@@ -54,26 +51,14 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	
 	private static ScheduledExecutorService	resendService	= new ScheduledThreadPoolExecutor(2);
 	
-	public XmppRpcChannel(Executor threadPool, String jid, String passwd) throws XMPPException
+	public XmppRpcChannel(Executor threadPool, XmppAccount account) throws XMPPException
 	{
 		super(threadPool);
-		this.address = new XmppAddress(jid);
-		String server = StringUtils.parseServer(jid).trim();
-		String serviceName = server;
-		String user = jid;
-		if(server.equals(GMAIL))
-		{
-			server = GTALK_SERVER;
-		}
-		else
-		{
-			user =  StringUtils.parseName(jid);
-		}
-		ConnectionConfiguration connConfig = new ConnectionConfiguration(server, DEFAULT_PORT,serviceName);
-		//connConfig.setDebuggerEnabled(true);
+		this.address = new XmppAddress(account.getJid());
+		ConnectionConfiguration connConfig = account.getConnectionConfig();
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
-		xmppConnection.login(user, passwd, "smack");
+		xmppConnection.login(account.getName(), account.getPasswd(), "smack");
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);
 		super.start();
@@ -140,7 +125,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		{
 			if(logger.isDebugEnabled())
 			{
-				logger.debug("Send message to " + address.toPrintableString());
+				logger.debug("Send message from " + this.address + " to " + address.toPrintableString());
 			}
 			semaphore.acquire();
 			chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
@@ -165,7 +150,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 	{
 		if(logger.isDebugEnabled())
 		{
-			logger.debug("Recv message from " + message.getFrom());
+			logger.debug("Recv message from " + message.getFrom() + " to " + message.getTo());
 		}
 		
 		if(message.getType().equals(Type.chat))
