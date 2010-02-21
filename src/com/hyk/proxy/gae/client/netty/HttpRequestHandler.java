@@ -110,15 +110,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			logger.debug(forwardResponse.toPrintableString());
 		}
 	}
-	
-//	protected synchronized FetchService selectFetchService()
-//	{
-//		if(cursor >= fetchServices.size())
-//		{
-//			cursor = 0;
-//		}
-//		return fetchServices.get(cursor++);
-//	}
 
 	protected void waitForwardBodyComplete() throws InterruptedException
 	{
@@ -336,8 +327,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		long startTime = System.currentTimeMillis();
 		try
 		{
-			//waitForwardBodyComplete();
-			//HttpResponseExchange forwardResponse = selectFetchService().fetch(forwardRequest);
 			fetch();
 			if(null == forwardResponse)
 			{

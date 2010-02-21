@@ -28,6 +28,9 @@ import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.compress.CompressorFactory;
+import com.hyk.compress.CompressorPreference;
+import com.hyk.compress.CompressorType;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
@@ -68,8 +71,11 @@ public class HttpServer
 	protected RPC createXmppRpc(XmppAccount account, Config config, Executor workerExecutor) throws XMPPException
 	{
 		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
-		xmppRpcchannle.setCompressorType(config.getCompressorType());
-		xmppRpcchannle.setCompressTrigger(config.getCompressorTrigger());
+		CompressorPreference preference = new CompressorPreference();
+		preference.setEnable(true);
+		preference.setCompressor(CompressorFactory.getCompressor(config.getCompressorType()));
+		preference.setTrigger(config.getCompressorTrigger());
+		xmppRpcchannle.setCompressorPreference(preference);
 		rpcChannels.add(xmppRpcchannle);
 		return new RPC(xmppRpcchannle);
 	}
@@ -79,8 +85,11 @@ public class HttpServer
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
 		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost",8888, "/fetchproxy");
 		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress, 2048000);
-		httpCleintRpcchannle.setCompressorType(config.getCompressorType());
-		httpCleintRpcchannle.setCompressTrigger(config.getCompressorTrigger());
+		CompressorPreference preference = new CompressorPreference();
+		preference.setEnable(true);
+		preference.setCompressor(CompressorFactory.getCompressor(config.getCompressorType()));
+		preference.setTrigger(config.getCompressorTrigger());
+		httpCleintRpcchannle.setCompressorPreference(preference);
 		rpcChannels.add(httpCleintRpcchannle);
 		return new RPC(httpCleintRpcchannle);
 	}

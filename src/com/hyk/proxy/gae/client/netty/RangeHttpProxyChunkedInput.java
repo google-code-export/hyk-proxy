@@ -24,6 +24,7 @@ import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;
+import com.hyk.rpc.core.Rpctimeout;
 
 /**
  *
@@ -33,8 +34,8 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 	private final FetchServiceSelector fetchServiceSelector;
 	private HttpRequestExchange	forwardRequest;
-	//private List<HttpResponseExchange> fetchedResponses = new LinkedList<HttpResponseExchange>();
-
+	private final int retryTimes = 3;
+	
 	
 	private LinkedList<FetchResponse> fetchedResponses;
 	private long					step;
@@ -171,7 +172,24 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 						logger.debug("Send range proxy request");
 						logger.debug(rangeReq.toPrintableString());
 					}
-					HttpResponseExchange res = fetchServiceSelector.select().fetch(rangeReq);
+					HttpResponseExchange res = null;
+					int retry = retryTimes;
+					while(null == res && retry > 0)
+					{
+						try 
+						{
+							res = fetchServiceSelector.select().fetch(rangeReq);
+						} 
+						catch (Rpctimeout e) 
+						{
+							if(logger.isDebugEnabled())
+							{
+								logger.debug("Fetch encounter timeout, retry one time.");
+							}
+							retry--;
+						}
+					}
+					
 					if(logger.isDebugEnabled())
 					{
 						logger.debug("Recv range proxy response");
