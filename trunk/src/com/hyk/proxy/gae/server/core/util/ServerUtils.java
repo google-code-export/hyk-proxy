@@ -52,6 +52,24 @@ public class ServerUtils
 		return getContentLength(headers);
 	}
 	
+	public static String getContentType(HTTPResponse response)
+	{
+		List<HTTPHeader> headers = response.getHeaders();
+		return getContentType(headers);
+	}
+	
+	public static String getContentType(List<HTTPHeader> headers)
+	{
+		for(HTTPHeader header:headers)
+		{
+			if(header.getName().equalsIgnoreCase("content-type"))
+			{
+				return header.getValue().trim();
+			}
+		}
+		return null;
+	}
+	
 	public static HTTPRequest toHTTPRequest(HttpRequestExchange exchange) throws MalformedURLException
 	{
 		URL requrl = new URL(exchange.url);

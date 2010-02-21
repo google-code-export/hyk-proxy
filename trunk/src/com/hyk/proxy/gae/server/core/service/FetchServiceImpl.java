@@ -10,6 +10,7 @@
 package com.hyk.proxy.gae.server.core.service;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,11 +18,14 @@ import org.slf4j.LoggerFactory;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.ResponseTooLargeException;
+import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.hyk.compress.CompressorPreference;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.server.core.util.ServerUtils;
+import com.hyk.util.thread.ThreadLocalUtil;
 
 /**
  *
@@ -29,13 +33,19 @@ import com.hyk.proxy.gae.server.core.util.ServerUtils;
 public class FetchServiceImpl implements FetchService
 {
 	protected Logger	logger	= LoggerFactory.getLogger(getClass());
+	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
 		try
 		{
+			
 			HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
-			HTTPResponse fetchRes = URLFetchServiceFactory.getURLFetchService()
-					.fetch(fetchReq);
+			HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
+			String contentType = ServerUtils.getContentType(fetchRes);
+//			if(null != contentType && !contentType.startsWith("text"))
+//			{
+//				ThreadLocalUtil.getThreadLocalUtil(CompressorPreference.class).setThreadLocalObject(new CompressorPreference());
+//			}
 			return ServerUtils.toHttpResponseExchange(fetchRes);
 		}
 		catch(ResponseTooLargeException e)
