@@ -18,11 +18,11 @@ import com.hyk.proxy.gae.server.core.Launcher;
 public class XmppProxyServlet extends HttpServlet
 {
 	protected Logger	logger	= LoggerFactory.getLogger(getClass());
+	protected XMPPService xmpp = XMPPServiceFactory.getXMPPService();
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException
 	{
-		XMPPService xmpp = XMPPServiceFactory.getXMPPService();
 		Message message = xmpp.parseMessage(req);
 
 		if(logger.isInfoEnabled())

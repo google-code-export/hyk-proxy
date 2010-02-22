@@ -47,16 +47,4 @@ public class HttpProxyServlet extends HttpServlet
 		}
 	}
 	
-//	@Override
-//	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
-//	{
-//		Enumeration<String> names = req.getHeaderNames();
-//		while(names.hasMoreElements())
-//		{
-//			String name = names.nextElement();
-//			System.out.println(name + ": " + req.getHeader(name));
-//		}
-//		resp.setStatus(200);
-//		resp.getWriter().println("Receive request");
-//	}
 }

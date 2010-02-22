@@ -327,13 +327,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		long startTime = System.currentTimeMillis();
 		try
 		{
+			HttpRequestExchange originalRequest = forwardRequest.clone();
 			fetch();
 			if(null == forwardResponse)
 			{
 				return;
 			}
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
-			RangeHeaderValue containedRange = new RangeHeaderValue(fetchSizeLimit, (fetchSizeLimit*2)-1);
+			RangeHeaderValue containedRange = new RangeHeaderValue(fetchSizeLimit, -1);
 			if(forwardResponse.isResponseTooLarge())
 			{
 				if(logger.isInfoEnabled())
@@ -348,7 +349,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				{
 					String hv = forwardRequest.getHeaderValue(HttpHeaders.Names.RANGE);
 					containedRange = new RangeHeaderValue(hv);
-					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(containedRange.getFirstBytePos(), fetchSizeLimit-1));
+					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(containedRange.getFirstBytePos(), containedRange.getFirstBytePos() + fetchSizeLimit-1));
 				}
 				
 				//forwardResponse = selectFetchService().fetch(forwardRequest);
@@ -386,10 +387,30 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				if(null != contentRangeValue)
 				{
 					contentRange = new ContentRangeHeaderValue(contentRangeValue);
-					forwardResponse.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
-					forwardResponse.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
 					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(contentRange.getInstanceLength()));
-					forwardResponse.setResponseCode(200);
+					if(!originalRequest.containsHeader(HttpHeaders.Names.RANGE))
+					{
+						forwardResponse.setResponseCode(200);
+						forwardResponse.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+						forwardResponse.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
+					}
+					else
+					{
+						String originalRangeValue = originalRequest.getHeaderValue(HttpHeaders.Names.RANGE);
+						RangeHeaderValue originalRange  = new RangeHeaderValue(originalRangeValue);
+						forwardResponse.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+						ContentRangeHeaderValue returnContentRange = new ContentRangeHeaderValue(contentRange.toString());
+						if(originalRange.getLastBytePos()  > 0)
+						{
+							returnContentRange.setLastBytePos(originalRange.getLastBytePos());
+						}
+						else
+						{
+							returnContentRange.setLastBytePos(contentRange.getInstanceLength() - 1);
+						}		
+						forwardResponse.setHeader(HttpHeaders.Names.CONTENT_RANGE, returnContentRange);
+					}
+					
 				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
 				boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))

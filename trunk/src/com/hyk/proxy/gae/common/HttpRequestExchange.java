@@ -11,6 +11,7 @@ package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
 
+import com.hyk.compress.CompressorPreference;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
 
@@ -21,10 +22,18 @@ public class HttpRequestExchange extends HttpMessageExhange
 {
 	public String	url;
 	
-
-
 	public String	method;
 
+	public HttpRequestExchange clone()
+	{
+		HttpRequestExchange ret = new HttpRequestExchange();
+		ret.url = url;
+		ret.method = method;
+		ret.headers = getCloneHeaders();
+		ret.body = body;
+		return ret;
+	}
+	
 	public String getMethod()
 	{
 		return method;
