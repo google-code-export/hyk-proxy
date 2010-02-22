@@ -31,7 +31,7 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 	XMPPService						xmpp		= XMPPServiceFactory.getXMPPService();
 	
 	//private List<RpcChannelData>	recvList	= new LinkedList<RpcChannelData>();
-	private static final int		RETRY		= 10;
+	private static final int		RETRY		= 3;
 	private XmppAddress				address;
 
 	public XmppServletRpcChannel(String jid)
@@ -60,13 +60,10 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 		Message msg = new MessageBuilder().withRecipientJids(jid).withMessageType(MessageType.CHAT).withBody(Base64.byteArrayBufferToBase64(data.content)).build();
 		{
 			int retry = RETRY;
-			SendResponse status = xmpp.sendMessage(msg);
-			if(SendResponse.Status.SUCCESS != status.getStatusMap().get(jid))
+			while(SendResponse.Status.SUCCESS != xmpp.sendMessage(msg).getStatusMap().get(jid) && retry-- > 0)
 			{
-				logger.error("Failed to send response!");
+				logger.error("Failed to send response, try again!");
 			}
-//			while(status.getStatusMap().get(jid) != SendResponse.Status.SUCCESS && retry-- > 0)
-//				;
 		}
 		
 	}

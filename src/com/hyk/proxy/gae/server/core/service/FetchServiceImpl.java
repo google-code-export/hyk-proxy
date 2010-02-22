@@ -37,15 +37,9 @@ public class FetchServiceImpl implements FetchService
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
 		try
-		{
-			
+		{		
 			HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
 			HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
-			String contentType = ServerUtils.getContentType(fetchRes);
-//			if(null != contentType && !contentType.startsWith("text"))
-//			{
-//				ThreadLocalUtil.getThreadLocalUtil(CompressorPreference.class).setThreadLocalObject(new CompressorPreference());
-//			}
 			return ServerUtils.toHttpResponseExchange(fetchRes);
 		}
 		catch(ResponseTooLargeException e)

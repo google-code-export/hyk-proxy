@@ -28,6 +28,11 @@ public class ContentRangeHeaderValue implements HttpHeaderValue
 		this.instanceLength = instanceLength;
 	}
 	
+	public void setLastBytePos(long lastBytePos)
+	{
+		this.lastBytePos = lastBytePos;
+	}
+
 	public ContentRangeHeaderValue(String value)
 	{
 		String left = value.substring(BYTES_UNIT.length()).trim();

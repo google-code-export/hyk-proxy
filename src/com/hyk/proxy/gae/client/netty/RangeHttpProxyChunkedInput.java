@@ -46,10 +46,12 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	private ExecutorService workers = Executors.newFixedThreadPool(5);
 	private boolean isClose  = false;
 	private final long offset;
+	private final long total;
 
 	
 	public RangeHttpProxyChunkedInput(FetchServiceSelector fetchServiceSelector, HttpRequestExchange forwardRequest, long offset, long total) throws IOException
 	{
+		this.total = total;
 		this.fetchServiceSelector = fetchServiceSelector;
 		this.forwardRequest = forwardRequest;
 		this.offset = offset;
@@ -163,8 +165,16 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 				while(hasFetchedAll() && nextFetcherSequence <= fetchnum && !isClose)
 				{
 					long start = (sequence )* step + offset;
-					
-					RangeHeaderValue headerValue = new RangeHeaderValue(start, start += (step - 1));
+					if(start >= total)
+					{
+						return;
+					}
+					long nextPos = start += (step - 1);
+					if(nextPos >= total)
+					{
+						nextPos =  total-1;
+					}
+					RangeHeaderValue headerValue = new RangeHeaderValue(start, nextPos);
 					HttpRequestExchange rangeReq =  getCloneForwardHttpRequestExchange();
 					rangeReq.setHeader(HttpHeaders.Names.RANGE, headerValue);
 					if(logger.isDebugEnabled())
