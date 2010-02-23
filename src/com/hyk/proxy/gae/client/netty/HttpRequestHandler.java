@@ -388,9 +388,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				{
 					contentRange = new ContentRangeHeaderValue(contentRangeValue);
 					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(contentRange.getInstanceLength()));
+					forwardResponse.setResponseCode(200);
 					if(!originalRequest.containsHeader(HttpHeaders.Names.RANGE))
-					{
-						forwardResponse.setResponseCode(200);
+					{	
 						forwardResponse.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 						forwardResponse.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
 					}
@@ -424,7 +424,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
 				{
-					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, containedRange.getFirstBytePos(), contentRange.getInstanceLength());
+					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
 				//if(close)

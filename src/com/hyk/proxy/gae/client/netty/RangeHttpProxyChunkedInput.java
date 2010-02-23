@@ -56,15 +56,19 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		this.forwardRequest = forwardRequest;
 		this.offset = offset;
 		step = Config.getInstance().getFetchLimitSize();
-		this.fetchnum = (total - step) /step;
-		if((total - step)%step != 0)
+		this.fetchnum = (total - offset) /step;
+		if((total - offset)%step != 0)
 		{
 			fetchnum++;
+		}
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Total fetch number is " + fetchnum);
 		}
 		fetchedResponses  = new LinkedList<FetchResponse>();
 		chunkSequence = 0;
 		workers = Executors.newFixedThreadPool(Config.getInstance().getMaxFetcherForBigFile());
-		for (int i = 0; i < 5 && i < fetchnum ; i++) 
+		for (int i = 0; i < Config.getInstance().getMaxFetcherForBigFile() && i < fetchnum ; i++) 
 		{
 			workers.execute(new RangeFetch(i));
 			nextFetcherSequence++;
@@ -123,9 +127,13 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 				}
 				fetchedResponses.wait();
 			}
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Write chunk with sequnce " + chunkSequence);
+			}
 			chunkSequence++;
-			
 			response = fetchedResponses.removeFirst().response;
+			
 			
 		}
 		return ChannelBuffers.wrappedBuffer(response.getBody());
@@ -164,12 +172,12 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 			{
 				while(hasFetchedAll() && nextFetcherSequence <= fetchnum && !isClose)
 				{
-					long start = (sequence )* step + offset;
+					long start = (sequence)* step + offset;
 					if(start >= total)
 					{
 						return;
 					}
-					long nextPos = start += (step - 1);
+					long nextPos = start + step - 1;
 					if(nextPos >= total)
 					{
 						nextPos =  total-1;
