@@ -3,11 +3,9 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.LinkedList;
