@@ -53,8 +53,7 @@ public class Launcher extends HttpServlet{
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		try
-		{
-			
+		{	
 			InputStream is = config.getServletContext().getResourceAsStream("/WEB-INF/appengine-web.xml");
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
