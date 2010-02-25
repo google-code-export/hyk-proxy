@@ -57,6 +57,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	private HttpServerAddress				remoteAddress;
 
 	private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
+	
+	//private List<SocketChannel>            clientChannels;
 	private SocketChannel					channel;
 
 	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress, final int maxMessageSize)
@@ -70,10 +72,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 	private synchronized SocketChannel connectProxyServer()
 	{
-		if(null != channel && channel.isConnected())
-		{
-			return channel;
-		}
+		//if(null != channel && channel.isConnected())
+		//{
+		//	return channel;
+		//}
 		
 		if(logger.isDebugEnabled())
 		{
@@ -136,7 +138,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			logger.debug("send  data to:" + data.address.toPrintableString());
 		}
-		if(!channel.isConnected())
+		//if(!channel.isConnected())
 		{
 			channel = connectProxyServer();
 		}
@@ -145,7 +147,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.getPath());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			//
-			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
+			request.setHeader(HttpHeaders.Names.CONNECTION, "close");
 			// request.setHeader(HttpHeaders.Names.TRANSFER_ENCODING,
 			// HttpHeaders.Values.CHUNKED);
 			request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
