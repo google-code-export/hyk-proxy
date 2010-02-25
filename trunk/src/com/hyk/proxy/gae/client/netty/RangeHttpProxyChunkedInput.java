@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -39,9 +40,9 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	
 	private LinkedList<FetchResponse> fetchedResponses;
 	private long					step;
-	private long                    fetchnum;
-	private volatile int            nextFetcherSequence;
-	private long                    fetchCounter;
+	private int                    fetchnum;
+	private AtomicInteger            nextFetcherSequence  = new AtomicInteger(0);
+	private AtomicInteger                    fetchCounter   = new AtomicInteger(0);
 	private int                     chunkSequence;
 	private ExecutorService workers = Executors.newFixedThreadPool(5);
 	private boolean isClose  = false;
@@ -56,7 +57,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		this.forwardRequest = forwardRequest;
 		this.offset = offset;
 		step = Config.getInstance().getFetchLimitSize();
-		this.fetchnum = (total - offset) /step;
+		this.fetchnum = (int)((total - offset) /step);
 		if((total - offset)%step != 0)
 		{
 			fetchnum++;
@@ -71,7 +72,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		for (int i = 0; i < Config.getInstance().getMaxFetcherForBigFile() && i < fetchnum ; i++) 
 		{
 			workers.execute(new RangeFetch(i));
-			nextFetcherSequence++;
+			nextFetcherSequence.set(i + 1);
 		}
 		//worke
 	}
@@ -143,7 +144,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	
 	private boolean hasFetchedAll()
 	{
-		return fetchCounter < fetchnum;
+		return fetchCounter.get() >= fetchnum;
 	}
 	
 	class FetchResponse
@@ -170,7 +171,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		{
 			try 
 			{
-				while(hasFetchedAll() && nextFetcherSequence <= fetchnum && !isClose)
+				while(!hasFetchedAll() && !isClose)
 				{
 					long start = (sequence)* step + offset;
 					if(start >= total)
@@ -237,15 +238,14 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 						{
 							logger.debug("Fetch success with sequence = "+sequence + "@" +  Thread.currentThread());
 						}
-						fetchCounter++;
-						sequence = nextFetcherSequence;
-						nextFetcherSequence++;
+						fetchCounter.incrementAndGet();
+						sequence = nextFetcherSequence.getAndIncrement();
 					}
 				}
 			} 
 			catch (Exception e1) 
 			{
-				fetchCounter = fetchnum;
+				fetchCounter.set(fetchnum);
 				logger.error("Failed for this fetch thread!", e1);
 				
 			}	

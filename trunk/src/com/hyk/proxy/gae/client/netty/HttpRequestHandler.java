@@ -316,7 +316,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		{
 			chunkedInput.close();
 		}
-		e.getChannel().close();
+		if(e.getChannel().isOpen())
+		{
+			e.getChannel().close();
+		}
+		
 	}
 
 	
@@ -427,7 +431,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
-				//if(close)
+				if(close)
 				{
 					future.addListener(ChannelFutureListener.CLOSE);
 				}

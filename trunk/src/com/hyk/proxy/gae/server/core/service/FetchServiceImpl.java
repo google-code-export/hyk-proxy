@@ -20,6 +20,7 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.apphosting.api.ApiProxy.OverQuotaException;
 import com.hyk.compress.CompressorPreference;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
@@ -45,6 +46,10 @@ public class FetchServiceImpl implements FetchService
 		catch(ResponseTooLargeException e)
 		{
 			return new HttpResponseExchange().setResponseTooLarge(true);
+		}
+		catch(OverQuotaException e)
+		{
+			throw e;
 		}
 		catch(IOException e)
 		{
