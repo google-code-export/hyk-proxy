@@ -26,7 +26,7 @@ import com.hyk.proxy.gae.server.core.service.FetchServiceImpl;
 import com.hyk.rpc.core.RPC;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  *
  */
 public class Launcher extends HttpServlet{

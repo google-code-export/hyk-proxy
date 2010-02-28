@@ -4,7 +4,7 @@
  *
  * Description: FetchService.java 
  *
- * @author qiying.wang [ Jan 25, 2010 | 2:37:50 PM ]
+ * @author yinqiwen [ Jan 25, 2010 | 2:37:50 PM ]
  *
  */
 package com.hyk.proxy.gae.common.service;

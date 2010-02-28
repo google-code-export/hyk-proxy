@@ -4,7 +4,7 @@
  *
  * Description: RangeChunkedInput.java 
  *
- * @author qiying.wang [ Feb 2, 2010 | 10:53:27 AM ]
+ * @author yinqiwen [ Feb 2, 2010 | 10:53:27 AM ]
  *
  */
 package com.hyk.proxy.gae.client.netty;
@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +38,14 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	private HttpRequestExchange	forwardRequest;
 	private final int retryTimes = 3;
 	
-	
 	private LinkedList<FetchResponse> fetchedResponses;
 	private long					step;
 	private int                    fetchnum;
 	private AtomicInteger            nextFetcherSequence  = new AtomicInteger(0);
 	private AtomicInteger                    fetchCounter   = new AtomicInteger(0);
-	private int                     chunkSequence;
+	private AtomicInteger                     chunkSequence = new AtomicInteger(0);
 	private ExecutorService workers = Executors.newFixedThreadPool(5);
-	private boolean isClose  = false;
+	private volatile boolean isClose  = false;
 	private final long offset;
 	private final long total;
 
@@ -67,7 +67,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 			logger.debug("Total fetch number is " + fetchnum);
 		}
 		fetchedResponses  = new LinkedList<FetchResponse>();
-		chunkSequence = 0;
 		workers = Executors.newFixedThreadPool(Config.getInstance().getMaxFetcherForBigFile());
 		for (int i = 0; i < Config.getInstance().getMaxFetcherForBigFile() && i < fetchnum ; i++) 
 		{
@@ -88,20 +87,24 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	}
 	
 	@Override
-	public void close() throws Exception
+	public synchronized void close() throws Exception
 	{
-		if(logger.isDebugEnabled())
+		if(!isClose)
 		{
-			logger.debug("Close this RangeHttpProxyChunkedInput");
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Close this RangeHttpProxyChunkedInput");
+			}
+			closeChunkInput();
+			workers.shutdown();
 		}
-		isClose = true;
-		workers.shutdown();
+		
 	}
 
 	@Override
 	public synchronized boolean hasNextChunk() throws Exception
 	{
-		return chunkSequence < fetchnum;
+		return chunkSequence.get() < fetchnum;
 	}
 
 	
@@ -112,34 +115,34 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		//List<byte[]> rawBodys = new LinkedList<byte[]>();
 		synchronized (fetchedResponses) 
 		{
-			while(fetchedResponses.isEmpty())
+			while(!isClose && (fetchedResponses.isEmpty() || chunkSequence.get() != fetchedResponses.getFirst().sequence))
 			{
 				if(logger.isDebugEnabled())
 				{
-					logger.debug("Wait for next chunk since recv list is null.");
+					if(fetchedResponses.isEmpty())
+					{
+						logger.debug("Wait for next chunk since recv list is null.");
+					}
+					else
+					{
+						logger.debug("Wait recv list is null or latest sequence = "+fetchedResponses.getFirst().sequence + " and chunkSequence = " + chunkSequence);
+					}			
 				}
-				fetchedResponses.wait();
+				fetchedResponses.wait(30000);
 			}
-			while(chunkSequence != fetchedResponses.getFirst().sequence)
+			if(isClose || fetchedResponses.isEmpty() || chunkSequence.get() != fetchedResponses.getFirst().sequence)
 			{
-				if(logger.isDebugEnabled())
-				{
-					logger.debug("Wait since latest sequence = "+fetchedResponses.getFirst().sequence + " and chunkSequence = " + chunkSequence);
-				}
-				fetchedResponses.wait();
+				return ChannelBuffers.EMPTY_BUFFER;
 			}
+			
 			if(logger.isDebugEnabled())
 			{
-				logger.debug("Write chunk with sequnce " + chunkSequence);
+				logger.debug("Write chunk with sequnce " + chunkSequence.get());
 			}
-			chunkSequence++;
+			chunkSequence.incrementAndGet();
 			response = fetchedResponses.removeFirst().response;
-			
-			
 		}
 		return ChannelBuffers.wrappedBuffer(response.getBody());
-		
-		
 	}
 	
 	private boolean hasFetchedAll()
@@ -155,6 +158,16 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		{
 			this.sequence = sequence;
 			this.response = response;
+		}
+	}
+	
+	protected void closeChunkInput()
+	{
+		isClose = true;
+		chunkSequence.set(fetchnum);
+		synchronized (fetchedResponses) 
+		{
+			fetchedResponses.notify();
 		}
 	}
 	
@@ -193,7 +206,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 					}
 					HttpResponseExchange res = null;
 					int retry = retryTimes;
-					while(null == res && retry > 0)
+					while((null == res || res.getResponseCode() == HttpResponseStatus.REQUEST_TIMEOUT.getCode()) && retry > 0)
 					{
 						try 
 						{
@@ -204,11 +217,16 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 							if(logger.isDebugEnabled())
 							{
 								logger.debug("Fetch encounter timeout, retry one time.");
-							}
-							retry--;
+							}	
 						}
+						retry--;
 					}
 					
+					if(null == res)
+					{
+						closeChunkInput();
+						return;
+					}
 					if(logger.isDebugEnabled())
 					{
 						logger.debug("Recv range proxy response");
@@ -223,17 +241,15 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 							if(other.sequence > sequence)
 							{
 								fetchedResponses.add(i, new FetchResponse(sequence,res));
-								fetchedResponses.notify();
 								hasAdd = true;
 								break;
 							}
-							
 						}
 						if(!hasAdd)
 						{
 							fetchedResponses.add(new FetchResponse(sequence,res));
-							fetchedResponses.notify();
 						}
+						fetchedResponses.notify();
 						if(logger.isDebugEnabled())
 						{
 							logger.debug("Fetch success with sequence = "+sequence + "@" +  Thread.currentThread());
@@ -245,8 +261,8 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 			} 
 			catch (Exception e1) 
 			{
-				fetchCounter.set(fetchnum);
 				logger.error("Failed for this fetch thread!", e1);
+				closeChunkInput();
 				
 			}	
 		}

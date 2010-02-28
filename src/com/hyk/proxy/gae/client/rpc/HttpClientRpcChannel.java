@@ -4,7 +4,7 @@
  *
  * Description: HttpClientRpcChannel.java 
  *
- * @author qiying.wang [ Jan 28, 2010 | 5:41:08 PM ]
+ * @author yinqiwen [ Jan 28, 2010 | 5:41:08 PM ]
  *
  */
 package com.hyk.proxy.gae.client.rpc;
@@ -13,6 +13,8 @@ import static org.jboss.netty.channel.Channels.pipeline;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -40,7 +42,9 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
+import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.common.HttpServerAddress;
+import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
@@ -57,26 +61,84 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	private HttpServerAddress				remoteAddress;
 
 	private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
-	
-	//private List<SocketChannel>            clientChannels;
-	private SocketChannel					channel;
 
-	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress, final int maxMessageSize)
+	private HttpClientSocketChannelSelector	clientChannelSelector;
+
+	class HttpClientSocketChannel
+	{
+		SocketChannel	socketChannel;
+
+		public HttpClientSocketChannel()
+		{
+			this.socketChannel = null;
+		}
+
+		public synchronized SocketChannel getSocketChannel()
+		{
+			if(null == socketChannel || !socketChannel.isConnected())
+			{
+				socketChannel = connectProxyServer();
+			}
+			return socketChannel;
+		}
+
+		public void close()
+		{
+			if(socketChannel != null && socketChannel.isOpen())
+			{
+				socketChannel.close();
+			}
+		}
+	}
+
+	class HttpClientSocketChannelSelector
+	{
+		private List<HttpClientSocketChannel>	clientChannels;
+		private int								cursor;
+
+		public HttpClientSocketChannelSelector(List<HttpClientSocketChannel> clientChannels)
+		{
+			super();
+			this.clientChannels = clientChannels;
+		}
+
+		public synchronized HttpClientSocketChannel select()
+		{
+			if(cursor >= clientChannels.size())
+			{
+				cursor = 0;
+			}
+			HttpClientSocketChannel channle = clientChannels.get(cursor++);
+			return channle;
+		}
+
+		public void close()
+		{
+			for(HttpClientSocketChannel channel : clientChannels)
+			{
+				channel.close();
+			}
+		}
+	}
+
+	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress, final int maxMessageSize) throws IOException
 	{
 		super(threadPool);
 		this.remoteAddress = remoteAddress;
 		start();
 		setMaxMessageSize(maxMessageSize);
-		connectProxyServer();
+		List<HttpClientSocketChannel> clientChannels = new ArrayList<HttpClientSocketChannel>();
+		int maxHttpConnectionSize = Config.getInstance().getHttpConnectionPoolSize();
+		for(int i = 0; i < maxHttpConnectionSize; i++)
+		{
+			clientChannels.add(new HttpClientSocketChannel());
+		}
+		clientChannelSelector = new HttpClientSocketChannelSelector(clientChannels);
 	}
 
 	private synchronized SocketChannel connectProxyServer()
 	{
-		//if(null != channel && channel.isConnected())
-		//{
-		//	return channel;
-		//}
-		
+
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Connect remote proxy server.");
@@ -87,11 +149,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		pipeline.addLast("aggregator", new HttpChunkAggregator(maxMessageSize));
 		pipeline.addLast("encoder", new HttpRequestEncoder());
 		pipeline.addLast("handler", responseHandler);
-		this.channel = factory.newChannel(pipeline);
+		SocketChannel channel = factory.newChannel(pipeline);
 		ChannelFuture future = channel.connect(new InetSocketAddress(remoteAddress.getHost(), remoteAddress.getPort())).awaitUninterruptibly();
 		if(!future.isSuccess())
 		{
-			logger.error("Failed to connect proxy server." , future.getCause());
+			logger.error("Failed to connect proxy server.", future.getCause());
 		}
 		return channel;
 	}
@@ -100,9 +162,9 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	public void close()
 	{
 		super.close();
-		channel.close();
+		clientChannelSelector.close();
 	}
-	
+
 	@Override
 	public HttpServerAddress getRpcChannelAddress()
 	{
@@ -122,7 +184,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				}
 				catch(InterruptedException e)
 				{
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					return null;
 				}
@@ -138,16 +199,13 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			logger.debug("send  data to:" + data.address.toPrintableString());
 		}
-		//if(!channel.isConnected())
-		{
-			channel = connectProxyServer();
-		}
-		if(channel.isConnected())
+		HttpClientSocketChannel clientChannel = clientChannelSelector.select();
+
+		if(clientChannel.getSocketChannel().isConnected())
 		{
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.getPath());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
-			//
-			request.setHeader(HttpHeaders.Names.CONNECTION, "close");
+			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
 			// request.setHeader(HttpHeaders.Names.TRANSFER_ENCODING,
 			// HttpHeaders.Values.CHUNKED);
 			request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
@@ -158,7 +216,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			request.setHeader("Content-Length", String.valueOf(buffer.readableBytes()));
 
 			request.setContent(buffer);
-			channel.write(request).awaitUninterruptibly();
+			clientChannel.getSocketChannel().write(request).awaitUninterruptibly();
 		}
 		else
 		{
@@ -191,7 +249,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			{
 				logger.debug("Connection closed.");
 			}
-			//connectProxyServer();
 		}
 
 		@Override

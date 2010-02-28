@@ -4,7 +4,7 @@
  *
  * Description: ClientUtils.java 
  *
- * @author Administrator [ 2010-2-1 | pm10:11:39 ]
+ * @author yinqiwen [ 2010-2-1 | pm10:11:39 ]
  *
  */
 package com.hyk.proxy.gae.client.util;

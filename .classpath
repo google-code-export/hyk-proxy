@@ -4,7 +4,6 @@
 	<classpathentry kind="src" path="etc"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/netty-3.1.5.GA.jar" sourcepath="D:/Develop/Javalib/netty-3.1.5.GA/jar/netty-3.1.5.GA-sources.jar"/>
 	<classpathentry kind="lib" path="lib/smack.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/slf4j-api-1.5.10.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.14.jar"/>
@@ -12,5 +11,6 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/hyk-util.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/hyk-rpc.jar"/>
 	<classpathentry kind="lib" path="lib/smackx.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.1.5.GA.jar" sourcepath="D:/Develop/Javalib/netty-3.1.5.GA/jar/netty-3.1.5.GA-sources.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

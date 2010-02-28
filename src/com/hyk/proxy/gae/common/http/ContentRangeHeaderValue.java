@@ -4,7 +4,7 @@
  *
  * Description: ContentRangeHeader.java 
  *
- * @author qiying.wang [ Feb 2, 2010 | 2:42:47 PM ]
+ * @author yinqiwen [ Feb 2, 2010 | 2:42:47 PM ]
  *
  */
 package com.hyk.proxy.gae.common.http;

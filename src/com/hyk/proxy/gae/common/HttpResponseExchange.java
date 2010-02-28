@@ -4,7 +4,7 @@
  *
  * Description: HttpResponseExchange.java 
  *
- * @author qiying.wang [ Jan 14, 2010 | 3:50:29 PM ]
+ * @author yinqiwen [ Jan 14, 2010 | 3:50:29 PM ]
  *
  */
 package com.hyk.proxy.gae.common;
