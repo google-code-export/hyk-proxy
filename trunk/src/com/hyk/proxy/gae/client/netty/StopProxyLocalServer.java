@@ -4,7 +4,7 @@
  *
  * Description: StopClient.java 
  *
- * @author Administrator [ 2010-1-31 | pm04:13:31 ]
+ * @author yinqiwen [ 2010-1-31 | pm04:13:31 ]
  *
  */
 package com.hyk.proxy.gae.client.netty;

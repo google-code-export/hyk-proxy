@@ -36,7 +36,7 @@ import com.hyk.util.buffer.ByteArray;
 import com.hyk.util.codec.Base64;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  * 
  */
 public class XmppRpcChannel extends AbstractDefaultRpcChannel implements MessageListener

@@ -4,7 +4,7 @@
  *
  * Description: HttpServerAddress.java 
  *
- * @author qiying.wang [ Jan 29, 2010 | 10:45:02 AM ]
+ * @author yinqiwen [ Jan 29, 2010 | 10:45:02 AM ]
  *
  */
 package com.hyk.proxy.gae.common;

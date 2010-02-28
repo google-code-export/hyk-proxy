@@ -4,7 +4,7 @@
  *
  * Description: Util.java 
  *
- * @author Administrator [ 2010-1-30 | pm09:53:28 ]
+ * @author yinqiwen [ 2010-1-30 | pm09:53:28 ]
  *
  */
 package com.hyk.proxy.gae.server.core.util;
@@ -73,10 +73,9 @@ public class ServerUtils
 	public static HTTPRequest toHTTPRequest(HttpRequestExchange exchange) throws MalformedURLException
 	{
 		URL requrl = new URL(exchange.url);
-		FetchOptions fetchOptions = FetchOptions.Builder.disallowTruncate().doNotFollowRedirects();
-		fetchOptions.setDeadline(10.0);
+		FetchOptions fetchOptions = FetchOptions.Builder.withDeadline(10).disallowTruncate().doNotFollowRedirects();
+		//fetchOptions.setDeadline(1000000.0);
 		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), fetchOptions);
-
 		for(String[] header:exchange.getHeaders())
 		{
 			req.addHeader(new HTTPHeader(header[0], header[1]));

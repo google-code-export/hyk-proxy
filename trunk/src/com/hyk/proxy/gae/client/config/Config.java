@@ -4,7 +4,7 @@
  *
  * Description: Config.java 
  *
- * @author Administrator [ 2010-1-31 | am10:41:52 ]
+ * @author yinqiwen [ 2010-1-31 | am10:41:52 ]
  *
  */
 package com.hyk.proxy.gae.client.config;
@@ -39,7 +39,8 @@ public class Config
 	private static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
 	private static final String	LOCAL_SERVER_COMPRESSOR_TYPE			= "localserver.rpc.compressor.type";
 	private static final String	LOCAL_SERVER_COMPRESSOR_TRIGGER			= "localserver.rpc.compressor.trigger";
-	private static final String LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
+	private static final String   LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
+	private static final String   LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE  = "localserver.http.connection_pool_size";
 	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
@@ -48,6 +49,9 @@ public class Config
 
 	private CompressorType		compressorType					= CompressorType.GZ;
 	private int compressorTrigger = 256;
+	private int httpConnectionPoolSize = 5;
+	
+
 	private static Config		instance						= null;
 
 	public synchronized static Config getInstance() throws IOException
@@ -64,6 +68,11 @@ public class Config
 		loadConfig();
 	}
 
+	public int getHttpConnectionPoolSize()
+	{
+		return httpConnectionPoolSize;
+	}
+	
 	public String getLocalServerHost()
 	{
 		return localServerHost;
@@ -212,6 +221,10 @@ public class Config
 			else if(key.equals(LOCAL_SERVER_HTTP_MAX_FETCHER))
 			{
 				maxFetcherForBigFile = Integer.parseInt(value);
+			}
+			else if(key.equals(LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE))
+			{
+				httpConnectionPoolSize = Integer.parseInt(value);
 			}
 		}
 

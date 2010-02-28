@@ -3,12 +3,13 @@
  */
 package com.hyk.proxy.gae.client.netty;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.hyk.proxy.gae.common.service.FetchService;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  *
  */
 public class FetchServiceSelector 
@@ -19,10 +20,11 @@ public class FetchServiceSelector
 	public FetchServiceSelector(List<FetchService> fetchServices) 
 	{
 		super();
+		Collections.shuffle(fetchServices);
 		this.fetchServices = fetchServices;
 	}
 
-	public FetchService select()
+	public synchronized FetchService select()
 	{
 		if(cursor >= fetchServices.size())
 		{

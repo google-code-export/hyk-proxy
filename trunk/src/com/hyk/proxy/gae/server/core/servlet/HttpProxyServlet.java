@@ -4,7 +4,7 @@
  *
  * Description: HttpProxyServlet.java 
  *
- * @author Administrator [ 2010-1-29 | pm09:58:01 ]
+ * @author yinqiwen [ 2010-1-29 | pm09:58:01 ]
  *
  */
 package com.hyk.proxy.gae.server.core.servlet;

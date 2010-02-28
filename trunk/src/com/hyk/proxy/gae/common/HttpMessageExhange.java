@@ -4,13 +4,15 @@
  *
  * Description: HttpMessageExhange.java 
  *
- * @author qiying.wang [ Jan 14, 2010 | 4:02:29 PM ]
+ * @author yinqiwen [ Jan 14, 2010 | 4:02:29 PM ]
  *
  */
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.hyk.proxy.gae.common.http.HttpHeaderValue;
@@ -26,6 +28,71 @@ public abstract class HttpMessageExhange implements Externalizable
 	protected List<String[]>	headers	= new ArrayList<String[]>();
 	protected byte[]				body	= new byte[0];
 
+	
+	@Override
+	public int hashCode()
+	{
+		int hash = 0;
+		for(String[] header : headers)
+		{
+			if( header[0].equalsIgnoreCase("range"))
+			{
+				hash += header[0].hashCode();
+				hash += header[1].hashCode();
+			}
+		}
+		return hash;
+	}
+	
+	protected boolean compareHeaders(HttpMessageExhange other)
+	{
+		if(containsHeader("range") && other.containsHeader("range"))
+		{
+			String range1 = getHeaderValue("range");
+			String range2 = getHeaderValue("range");
+			if(!range1.equalsIgnoreCase(range2))
+			{
+				return false;
+			}
+		}
+		else if(containsHeader("range") || other.containsHeader("range"))
+		{
+			return false;
+		}
+		return true;
+//		if(headers.size() != other.headers.size())
+//		{
+//			return false;
+//		}
+//		for(int i = 0; i< headers.size(); i++)
+//		{
+//			String[] header1 = headers.get(i);
+//			String[] header2 = other.headers.get(i);
+//			if( header1[0].equalsIgnoreCase("range"))
+//			{
+//				if(!(header1[0].equalsIgnoreCase(header2[0]) && header1[1].equalsIgnoreCase(header2[1])))
+//				{
+//					return false;
+//				}
+//			}
+//		}
+//		return true;
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(null == obj)
+		{
+			return false;
+		}
+		if(obj instanceof HttpMessageExhange)
+		{
+			HttpMessageExhange other = (HttpMessageExhange)obj;
+			return compareHeaders(other) &&  Arrays.equals(body, other.body);
+		}
+		return false;
+	}
 	
 	public void addHeader(String name, String value)
 	{
@@ -140,7 +207,7 @@ public abstract class HttpMessageExhange implements Externalizable
 	public String toPrintableString()
 	{
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("\n============================================\n");
+		buffer.append("\r\n============================================\r\n");
 		print(buffer);
 		for(String[] header : headers)
 		{

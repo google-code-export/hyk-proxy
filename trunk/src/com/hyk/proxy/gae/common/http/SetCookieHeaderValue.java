@@ -4,18 +4,13 @@
  *
  * Description: SetCookieHeaderValue.java 
  *
- * @author qiying.wang [ Feb 2, 2010 | 4:49:21 PM ]
+ * @author yinqiwen [ Feb 2, 2010 | 4:49:21 PM ]
  *
  */
 package com.hyk.proxy.gae.common.http;
 
-import java.nio.CharBuffer;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +32,9 @@ public class SetCookieHeaderValue implements HttpHeaderValue
 	public static List<SetCookieHeaderValue> parse(String value)
 	{
 		List<SetCookieHeaderValue> hvs = new LinkedList<SetCookieHeaderValue>();
+//		CookieDecoder decoder = new CookieDecoder();
+//		CookieEncoder encoder = new CookieEncoder();
+//		Set<Cookie> cookies = decoder.decode(value);
 		try 
 		{
 			LinkedList<String> headerValues = new LinkedList<String>();

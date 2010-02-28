@@ -24,6 +24,7 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -50,13 +51,14 @@ import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.rpc.core.Rpctimeout;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  * 
  */
 @ChannelPipelineCoverage("one")
-public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements Runnable
+public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 {
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 
@@ -76,7 +78,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private HttpServer				httpServer;
 	
 	private HttpRequestExchange forwardRequest;
-	private HttpResponseExchange forwardResponse;
+	//private HttpResponseExchange forwardResponse;
 	
 	private ContentRangeHeaderValue lastContentRange = null;
 	private ChannelBuffer leftChannelBuffer;
@@ -95,7 +97,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		this.httpServer = httpServer;
 	}
 
-	protected void fetch() throws InterruptedException
+	protected HttpResponseExchange fetch() throws InterruptedException
 	{
 		waitForwardBodyComplete();
 		if(logger.isDebugEnabled())
@@ -103,12 +105,35 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			logger.debug("Send proxy request");
 			logger.debug(forwardRequest.toPrintableString());
 		}
-		forwardResponse = fetchServiceSelector.select().fetch(forwardRequest);
+		
+		int retry = 3;
+		HttpResponseExchange forwardResponse = null;
+		while((null == forwardResponse || forwardResponse.getResponseCode() == HttpResponseStatus.REQUEST_TIMEOUT.getCode()) && retry > 0)
+		{
+			try 
+			{
+				forwardResponse = fetchServiceSelector.select().fetch(forwardRequest);
+			} 
+			catch (Rpctimeout e) 
+			{
+				if(logger.isDebugEnabled())
+				{
+					logger.debug("Fetch encounter timeout, retry one time.");
+				}
+			}
+			retry--;
+		}
+		if(null == forwardResponse)
+		{
+			forwardResponse = new HttpResponseExchange();
+			forwardResponse.setResponseCode(408);
+		}
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Recv proxy response");
 			logger.debug(forwardResponse.toPrintableString());
 		}
+		return forwardResponse;
 	}
 
 	protected void waitForwardBodyComplete() throws InterruptedException
@@ -197,8 +222,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		return gaeRequest;
 	}
 
-	
-
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception
 	{
@@ -214,7 +237,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				ishttps = true;
 				httpspath = request.getHeader("Host");
 				HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-				e.getChannel().write(response).await();
+				//response.setHeader(arg0, arg1)
+				e.getChannel().write(response);
 				if(channelPipeline.get("ssl") == null)
 				{
 					InetSocketAddress remote = (InetSocketAddress)e.getRemoteAddress();
@@ -242,7 +266,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			}
 			this.forwardRequest = buildForwardRequest(request);
 			this.channel = e.getChannel();
-			workerExecutor.execute(this);
+			//workerExecutor.execute(this);
+			processProxyRequest();
 		}
 		else
 		{
@@ -309,6 +334,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	}
 
 	@Override
+	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
+	{
+		if(chunkedInput != null)
+		{
+			chunkedInput.close();
+		}
+		super.channelClosed(ctx, e);
+	}
+	
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
 	{
 		logger.error("exceptionCaught.", e.getCause());
@@ -320,19 +355,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		{
 			e.getChannel().close();
 		}
-		
 	}
-
 	
-	
-	@Override
-	public void run()
+	public void processProxyRequest()
 	{
 		long startTime = System.currentTimeMillis();
 		try
 		{
 			HttpRequestExchange originalRequest = forwardRequest.clone();
-			fetch();
+			HttpResponseExchange forwardResponse = fetch();
 			if(null == forwardResponse)
 			{
 				return;
@@ -357,7 +388,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				}
 				
 				//forwardResponse = selectFetchService().fetch(forwardRequest);
-				fetch();
+				forwardResponse = fetch();
 			}
 
 			while(null != lastContentRange)
@@ -376,7 +407,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, old.getLastBytePos()  + sendSize, old.getInstanceLength());
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(sendSize));
-				fetch();
+				forwardResponse = fetch();
 				if(sendSize < fetchSizeLimit)
 				{
 					lastContentRange = null;
@@ -417,31 +448,30 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					
 				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
-				boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))
-						|| request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
-						&& !HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION));
+				boolean close =  !(HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION)) || HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader("Proxy-Connection")));
+				
 				if(logger.isDebugEnabled())
 				{
 					logger.debug(" Received response for " + request.getMethod() + " " + request.getUri());
 				}
 				ChannelFuture future = channel.write(response);
-				future.await();
+				//future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
 				{
 					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
-				if(close)
+				//if(close)
 				{
 					future.addListener(ChannelFutureListener.CLOSE);
 				}
 			}
 			else
 			{
-				long current = System.currentTimeMillis();
-				if(logger.isInfoEnabled())
+				if(logger.isDebugEnabled())
 				{
-					logger.info("Warn:Browser connection is already closed by browser. It wait " + (current - startTime) + "ms");
+					long current = System.currentTimeMillis();
+					logger.debug("Warn:Browser connection is already closed by browser. It wait " + (current - startTime) + "ms");
 				}	
 			}
 		}

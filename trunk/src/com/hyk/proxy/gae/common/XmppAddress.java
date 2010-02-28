@@ -7,7 +7,7 @@ import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.message.MessageID;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  *
  */
 public class XmppAddress implements Address {

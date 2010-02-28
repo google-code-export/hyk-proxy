@@ -4,7 +4,7 @@
  *
  * Description: XmppAccount.java 
  *
- * @author Administrator [ 2010-1-31 | am10:50:02 ]
+ * @author yinqiwen [ 2010-1-31 | am10:50:02 ]
  *
  */
 package com.hyk.proxy.gae.client.config;

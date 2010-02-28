@@ -4,7 +4,7 @@
  *
  * Description: AbstractAppEngineRpcChannel.java 
  *
- * @author qiying.wang [ Jan 26, 2010 | 5:33:34 PM ]
+ * @author yinqiwen [ Jan 26, 2010 | 5:33:34 PM ]
  *
  */
 package com.hyk.proxy.gae.server.core.rpc;
@@ -13,7 +13,6 @@ import java.io.IOException;
 
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
-import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.message.MessageFragment;
 import com.hyk.rpc.core.message.MessageID;
 import com.hyk.rpc.core.transport.RpcChannel;

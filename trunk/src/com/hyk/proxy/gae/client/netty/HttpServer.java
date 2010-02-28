@@ -22,6 +22,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ import com.hyk.rpc.core.service.NameService;
 import com.hyk.rpc.core.transport.RpcChannel;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  * 
  */
 public class HttpServer
@@ -78,7 +79,7 @@ public class HttpServer
 		return new RPC(xmppRpcchannle);
 	}
 
-	protected RPC createHttpRpc(String appid, Config config, Executor workerExecutor)
+	protected RPC createHttpRpc(String appid, Config config, Executor workerExecutor) throws IOException
 	{
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
 		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost",8888, "/fetchproxy");
@@ -112,8 +113,9 @@ public class HttpServer
 		SSLContext sslContext = null;
 		Config config = Config.getInstance();
 		
-		Executor bossExecutor = Executors.newFixedThreadPool(5);
-		Executor workerExecutor = Executors.newFixedThreadPool(50);
+		Executor bossExecutor = Executors.newCachedThreadPool();
+		//Executor workerExecutor = Executors.newFixedThreadPool(50);
+		Executor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(50, 0, 0);
 		
 		try
 		{
@@ -178,7 +180,6 @@ public class HttpServer
 
 		// Set up the event pipeline factory.
 		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchServices, workerExecutor, sslContext, this));
-		Map<String, Object> connectionParams = new HashMap<String, Object>();
 		bootstrap.bind(new InetSocketAddress(InetAddress.getByName(config.getLocalServerHost()), config.getLocalServerPort()));
 	}
 	

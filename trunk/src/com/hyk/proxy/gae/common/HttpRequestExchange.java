@@ -4,12 +4,13 @@
  *
  * Description: HttpRequestExchange.java 
  *
- * @author qiying.wang [ Jan 14, 2010 | 3:49:21 PM ]
+ * @author yinqiwen [ Jan 14, 2010 | 3:49:21 PM ]
  *
  */
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.hyk.compress.CompressorPreference;
 import com.hyk.serializer.SerializerInput;
@@ -32,6 +33,31 @@ public class HttpRequestExchange extends HttpMessageExhange
 		ret.headers = getCloneHeaders();
 		ret.body = body;
 		return ret;
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		int hash = 0;
+		hash += url.hashCode();
+		hash += method.hashCode();
+		hash += super.hashCode();
+		return hash;
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(null == obj)
+		{
+			return false;
+		}
+		if(obj instanceof HttpRequestExchange)
+		{
+			HttpRequestExchange other = (HttpRequestExchange)obj;
+			return url.equals(other.url) && method.equals(other.method) && super.equals(obj);
+		}
+		return false;
 	}
 	
 	public String getMethod()

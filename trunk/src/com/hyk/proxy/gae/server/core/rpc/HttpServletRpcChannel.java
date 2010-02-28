@@ -19,7 +19,7 @@ import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
 
 /**
- * @author Administrator
+ * @author yinqiwen
  * 
  */
 public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
