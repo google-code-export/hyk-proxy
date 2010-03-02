@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.CompressorPreference;
-import com.hyk.compress.CompressorType;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
@@ -48,7 +45,7 @@ import com.hyk.rpc.core.transport.RpcChannel;
 public class HttpServer
 {
 	protected static Logger	logger	= LoggerFactory.getLogger(HttpServer.class);
-
+	
 	private List<RpcChannel> rpcChannels = new LinkedList<RpcChannel>();
 	
 	protected SSLContext initSSLContext() throws Exception

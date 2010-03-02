@@ -206,6 +206,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.getPath());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
+			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");
 			// request.setHeader(HttpHeaders.Names.TRANSFER_ENCODING,
 			// HttpHeaders.Values.CHUNKED);
 			request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);

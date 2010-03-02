@@ -4,7 +4,7 @@
  *
  * Description: Config.java 
  *
- * @author yinqiwen [ 2010-1-31 | am10:41:52 ]
+ * @author yinqiwen [ 2010-1-31 | 10:41:52 AM ]
  *
  */
 package com.hyk.proxy.gae.client.config;

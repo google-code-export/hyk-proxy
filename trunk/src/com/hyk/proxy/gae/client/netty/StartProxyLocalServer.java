@@ -4,7 +4,7 @@
  *
  * Description: StartClient.java 
  *
- * @author yinqiwen [ 2010-1-31 | pm04:33:16 ]
+ * @author yinqiwen [ 2010-1-31 | 04:33:16 PM ]
  *
  */
 package com.hyk.proxy.gae.client.netty;

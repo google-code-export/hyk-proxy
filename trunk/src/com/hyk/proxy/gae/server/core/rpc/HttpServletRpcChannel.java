@@ -25,7 +25,7 @@ import com.hyk.util.buffer.ByteArray;
 public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 {
 	protected Logger								logger						= LoggerFactory.getLogger(getClass());
-
+	
 	private static ThreadLocal<HttpServletResponse>	httpServletResponseCache	= new ThreadLocal<HttpServletResponse>();
 
 	private HttpServerAddress						address;

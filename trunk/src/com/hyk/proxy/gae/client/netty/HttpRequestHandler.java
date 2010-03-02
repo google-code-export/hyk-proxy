@@ -1,11 +1,16 @@
 /**
- * 
+ * This file is part of the hyk-proxy project.
+ * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ *
+ * Description: XmppAccount.java 
+ *
+ * @author yinqiwen [ 2010-1-31 | 10:50:02 AM]
+ *
  */
 package com.hyk.proxy.gae.client.netty;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -106,9 +111,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			logger.debug(forwardRequest.toPrintableString());
 		}
 		
-		int retry = 3;
+		int retry = 1;
 		HttpResponseExchange forwardResponse = null;
-		while((null == forwardResponse || forwardResponse.getResponseCode() == HttpResponseStatus.REQUEST_TIMEOUT.getCode()) && retry > 0)
+		while((null == forwardResponse) && retry > 0)
 		{
 			try 
 			{
