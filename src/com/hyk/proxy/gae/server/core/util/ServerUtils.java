@@ -74,7 +74,6 @@ public class ServerUtils
 	{
 		URL requrl = new URL(exchange.url);
 		FetchOptions fetchOptions = FetchOptions.Builder.withDeadline(10).disallowTruncate().doNotFollowRedirects();
-		//fetchOptions.setDeadline(1000000.0);
 		HTTPRequest req = new HTTPRequest(requrl,HTTPMethod.valueOf(exchange.method), fetchOptions);
 		for(String[] header:exchange.getHeaders())
 		{

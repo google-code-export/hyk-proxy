@@ -36,7 +36,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 	private final FetchServiceSelector fetchServiceSelector;
 	private HttpRequestExchange	forwardRequest;
-	private final int retryTimes = 3;
+	private final int retryTimes = 1;
 	
 	private LinkedList<FetchResponse> fetchedResponses;
 	private long					step;
@@ -206,7 +206,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 					}
 					HttpResponseExchange res = null;
 					int retry = retryTimes;
-					while((null == res || res.getResponseCode() == HttpResponseStatus.REQUEST_TIMEOUT.getCode()) && retry > 0)
+					while((null == res) && retry > 0)
 					{
 						try 
 						{

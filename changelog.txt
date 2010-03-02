@@ -1,12 +1,14 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.3.0beta (2010.3.x)
+Changes in version 0.3.0beta2 (2010.3.2)
 -------------------------------------------
 
 ** Bug
    * Issue 4:system is blocked when doanloading big file
-   * Some concurrent bugs
+   * Issue 5:youtube problem 
+   * Some other concurrent bugs
+   * Size error of uploading big file 
    
 ** Improvement
    * Add cache support

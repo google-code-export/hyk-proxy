@@ -1,5 +1,11 @@
 /**
- * 
+ * This file is part of the hyk-proxy project.
+ * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ *
+ * Description: XmppAccount.java 
+ *
+ * @author yinqiwen [ 2010-1-31 | 10:50:02 AM]
+ *
  */
 package com.hyk.proxy.gae.client.netty;
 

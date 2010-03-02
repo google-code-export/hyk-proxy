@@ -14,9 +14,8 @@ package com.hyk.proxy.gae.common.http;
  */
 public class ContentRangeHeaderValue implements HttpHeaderValue
 {
-
 	private static final String BYTES_UNIT = "bytes";
-
+	
 	private long firstBytePos;
 	private long lastBytePos;
 	private long instanceLength;

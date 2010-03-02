@@ -4,7 +4,7 @@
  *
  * Description: ClientUtils.java 
  *
- * @author yinqiwen [ 2010-2-1 | pm10:11:39 ]
+ * @author yinqiwen [ 2010-2-1 | 10:11:39 PM ]
  *
  */
 package com.hyk.proxy.gae.client.util;
@@ -31,7 +31,6 @@ import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
 public class ClientUtils
 {
 	protected static Logger				logger			= LoggerFactory.getLogger(ClientUtils.class);
-	
 	private static final String	ContentRangeValueHeader	= "bytes";
 
 	public static HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException

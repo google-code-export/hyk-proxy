@@ -24,7 +24,7 @@ import com.hyk.rpc.core.transport.RpcChannelData;
 public abstract class AbstractAppEngineRpcChannel extends RpcChannel
 {
 	protected MemcacheService					memcache	= MemcacheServiceFactory.getMemcacheService();
-
+	
 	@Override
 	protected void deleteMessageFragments(MessageID id)
 	{

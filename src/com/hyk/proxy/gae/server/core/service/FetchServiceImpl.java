@@ -9,6 +9,8 @@
  */
 package com.hyk.proxy.gae.server.core.service;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +59,10 @@ public class FetchServiceImpl implements FetchService
 				if(null != maxAgeValue)
 				{
 					int maxAge = Integer.parseInt(maxAgeValue);
-					memcache.put(req, res, Expiration.byDeltaSeconds(maxAge));
+					if(maxAge > 0)
+					{
+						memcache.put(req, res, Expiration.byDeltaSeconds(maxAge));
+					}		
 					return true;
 				}
 			}	
@@ -90,6 +95,20 @@ public class FetchServiceImpl implements FetchService
 				cacheResponse(req, ret);
 			}	
 		}
+		catch(IOException e)
+		{
+			logger.error("Faile to fetch", e);
+			if(e.getMessage().indexOf("Timeout") != -1)
+			{
+				ret = new HttpResponseExchange().setResponseTooLarge(true);
+			}
+			else
+			{
+				ret = new HttpResponseExchange();
+				ret.setResponseCode(400);
+			}
+			ret = new HttpResponseExchange().setResponseTooLarge(true);
+		}
 		catch(ResponseTooLargeException e)
 		{
 			ret = new HttpResponseExchange().setResponseTooLarge(true);
@@ -98,8 +117,7 @@ public class FetchServiceImpl implements FetchService
 		{
 			logger.error("Faile to fetch", e);
 			ret = new HttpResponseExchange();
-			ret.setResponseCode(408);
-			ret.setBody(e.getMessage().getBytes());
+			ret.setResponseCode(400);
 		}
 		return ret;
 	}
