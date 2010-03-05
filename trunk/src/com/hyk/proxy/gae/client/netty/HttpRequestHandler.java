@@ -379,7 +379,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			{
 				if(logger.isInfoEnabled())
 				{
-					logger.info("Start range fetch!");
+					logger.info("Try to start range fetch!");
 				}
 				if(!forwardRequest.containsHeader(HttpHeaders.Names.RANGE))
 				{
@@ -451,6 +451,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 						forwardResponse.setHeader(HttpHeaders.Names.CONTENT_RANGE, returnContentRange);
 					}
 					
+				}
+				
+				if(forwardResponse.getResponseCode() == 0)
+				{
+					forwardResponse.setResponseCode(400);
 				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
 				boolean close =  !(HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION)) || HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader("Proxy-Connection")));

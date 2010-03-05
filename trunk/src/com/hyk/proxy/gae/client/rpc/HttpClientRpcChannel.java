@@ -40,9 +40,12 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jivesoftware.smack.util.Base64;
 
 import com.hyk.proxy.gae.client.config.Config;
+import com.hyk.proxy.gae.client.config.ProxyInfo;
 import com.hyk.proxy.gae.common.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
@@ -63,6 +66,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
 
 	private HttpClientSocketChannelSelector	clientChannelSelector;
+	
+	private Config config;
 
 	class HttpClientSocketChannel
 	{
@@ -134,6 +139,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			clientChannels.add(new HttpClientSocketChannel());
 		}
 		clientChannelSelector = new HttpClientSocketChannelSelector(clientChannels);
+		config = Config.getInstance();
 	}
 
 	private synchronized SocketChannel connectProxyServer()
@@ -150,7 +156,19 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		pipeline.addLast("encoder", new HttpRequestEncoder());
 		pipeline.addLast("handler", responseHandler);
 		SocketChannel channel = factory.newChannel(pipeline);
-		ChannelFuture future = channel.connect(new InetSocketAddress(remoteAddress.getHost(), remoteAddress.getPort())).awaitUninterruptibly();
+		String connectHost;
+		int connectPort;
+		if(null != config.getProxyInfo())
+		{
+			connectHost = config.getProxyInfo().getHost();
+			connectPort = config.getProxyInfo().getPort();
+		}
+		else
+		{
+			connectHost = remoteAddress.getHost();
+			connectPort = remoteAddress.getPort();
+		}
+		ChannelFuture future = channel.connect(new InetSocketAddress(connectHost, connectPort)).awaitUninterruptibly();
 		if(!future.isSuccess())
 		{
 			logger.error("Failed to connect proxy server.", future.getCause());
@@ -209,6 +227,16 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");
 			// request.setHeader(HttpHeaders.Names.TRANSFER_ENCODING,
 			// HttpHeaders.Values.CHUNKED);
+			if(null != config.getProxyInfo())
+			{
+				ProxyInfo info = config.getProxyInfo();
+				if(null != info.getUser())
+				{
+					String userpass = info.getUser() + ":" + info.getPassword();
+					String encode = Base64.encodeBytes(userpass.getBytes());
+					request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION, "Basic " + encode);
+				}
+			}
 			request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
 			request.setHeader(HttpHeaders.Names.USER_AGENT, "hyk-proxy-client");
 			request.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
@@ -274,7 +302,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				logger.debug("Recv message:" + response + " with len:" + bodyLen);
 				// response.g
 			}
-			if(bodyLen > 0)
+			if(response.getStatus().equals(HttpResponseStatus.OK) && bodyLen > 0)
 			{
 				ByteArray content = ByteArray.allocate(bodyLen);
 				// response.g
@@ -290,10 +318,9 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			}
 			else
 			{
-
 				if(logger.isDebugEnabled())
 				{
-					logger.debug("Recv message with no body" + response.getHeaderNames());
+					logger.debug("Recv message with no body or error rsponse" + response);
 				}
 			}
 		}

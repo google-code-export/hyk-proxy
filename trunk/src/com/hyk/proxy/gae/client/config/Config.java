@@ -42,6 +42,11 @@ public class Config
 	private static final String   LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
 	private static final String   LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE  = "localserver.http.connection_pool_size";
 	
+	private static final String   LOCAL_SERVER_HTTP_PROXY_HOST  = "localserver.http.proxy.host";
+	private static final String   LOCAL_SERVER_HTTP_PROXY_PORT  = "localserver.http.proxy.port";
+	private static final String   LOCAL_SERVER_HTTP_PROXY_USER  = "localserver.http.proxy.user";
+	private static final String   LOCAL_SERVER_HTTP_PROXY_PASSWD  = "localserver.http.proxy.password";
+	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
 	private List<String>		appids							= new LinkedList<String>();
@@ -50,6 +55,8 @@ public class Config
 	private CompressorType		compressorType					= CompressorType.GZ;
 	private int compressorTrigger = 256;
 	private int httpConnectionPoolSize = 5;
+	private ProxyInfo proxy;
+
 	
 
 	private static Config		instance						= null;
@@ -68,6 +75,11 @@ public class Config
 		loadConfig();
 	}
 
+	public ProxyInfo getProxyInfo()
+	{
+		return proxy;
+	}
+	
 	public int getHttpConnectionPoolSize()
 	{
 		return httpConnectionPoolSize;
@@ -225,6 +237,26 @@ public class Config
 			else if(key.equals(LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE))
 			{
 				httpConnectionPoolSize = Integer.parseInt(value);
+			}
+			else if(key.equals(LOCAL_SERVER_HTTP_PROXY_HOST))
+			{
+				proxy = new ProxyInfo();
+				proxy.setHost(value);
+				String port = props.getProperty(LOCAL_SERVER_HTTP_PROXY_PORT);
+				if(null != port && !port.trim().isEmpty())
+				{
+					proxy.setPort(Integer.parseInt(port.trim()));
+				}
+				String user = props.getProperty(LOCAL_SERVER_HTTP_PROXY_USER);
+				if(null != user && !user.trim().isEmpty())
+				{
+					proxy.setUser(user.trim());
+				}
+				String passwd = props.getProperty(LOCAL_SERVER_HTTP_PROXY_PASSWD);
+				if(null != passwd && !passwd.trim().isEmpty())
+				{
+					proxy.setPassword(passwd.trim());
+				}
 			}
 		}
 
