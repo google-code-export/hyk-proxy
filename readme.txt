@@ -31,7 +31,7 @@ GAE server part：（GAE server部分）
  3. modify war/WEB-INF/appengine-web.xml, change the element '<application>hyk-proxy-demo</application>'
     修改war/WEB-INF/appengine-web.xml， 将'<application>'值改为自己创建的appid
  4. execute appcfg update (make sure you are in the directory 'hyk-proxy-server-[version]')
-    执行appcfg.cmd/appcfg.sh update上传
+    执行appcfg.cmd/appcfg.sh update war上传
     
 GAE client part: （GAE client部分）
   1. unzip hyk-proxy-client-[version].zip
