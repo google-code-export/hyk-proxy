@@ -14,7 +14,6 @@ import static org.jboss.netty.channel.Channels.pipeline;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -47,7 +46,6 @@ import org.jivesoftware.smack.util.Base64;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.ProxyInfo;
 import com.hyk.proxy.gae.common.HttpServerAddress;
-import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
@@ -144,7 +142,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 	private synchronized SocketChannel connectProxyServer()
 	{
-
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Connect remote proxy server.");
@@ -221,7 +218,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		if(clientChannel.getSocketChannel().isConnected())
 		{
-			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.getPath());
+			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.toPrintableString());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
 			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");

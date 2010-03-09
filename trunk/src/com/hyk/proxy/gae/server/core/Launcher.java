@@ -85,7 +85,7 @@ public class Launcher extends HttpServlet{
 		RPC xmppRpc = new RPC(transport);
 		xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 		
-		httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(appid + ".appspot.com", "fetchproxy"));
+		httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(appid + ".appspot.com", "/fetchproxy"));
 		httpServletRpcChannel.setCompressorPreference(preference);
 		RPC httpRpc = new RPC(httpServletRpcChannel);
 		httpServletRpcChannel.setMaxMessageSize(10240000);

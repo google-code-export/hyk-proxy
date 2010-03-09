@@ -203,7 +203,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 		
 		int fetchLimit = Config.getInstance().getFetchLimitSize();
 		
-		if(recvReq.getContentLength() > fetchLimit)
+		//if(recvReq.getContentLength() > fetchLimit)
+		if(recvReq.getContentLength() > 1024000) //GAE's limit 1M
 		{
 			lastContentRange =  new ContentRangeHeaderValue(0, fetchLimit-1, recvReq.getContentLength());
 			gaeRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
