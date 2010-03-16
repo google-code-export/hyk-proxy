@@ -95,7 +95,7 @@ public class Config
 		return localServerPort;
 	}
 
-	private String	localServerHost	= "127.0.0.1";
+	private String	localServerHost	= "localhost";
 	private int		localServerPort	= 48100;
 	private int		sessionTimeout	= 30 * 1000;
 
