@@ -1,6 +1,18 @@
 hyk-proxy Changelog
 ===================
 
+Changes in version 0.3.0 (2010.3.16)
+-------------------------------------------
+
+** Bug
+   * When uploading file size > fetchlimitsize, try range uploading
+     -> change to when file size > 1024000
+   
+** Improvement
+   * Issue 6:add local proxy support
+
+** Task
+
 Changes in version 0.3.0beta2 (2010.3.2)
 -------------------------------------------
 
