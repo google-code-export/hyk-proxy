@@ -32,17 +32,19 @@ import com.hyk.proxy.gae.common.service.FetchService;
  */
 public class HttpServerPipelineFactory implements ChannelPipelineFactory
 {
-	private List<FetchService>	fetchServices;
+	//private List<FetchService>	fetchServices;
 	private Executor workerExecutor;
 	private SSLContext sslContext;
 	private HttpServer httpServer;
+	private FetchServiceSelector selector;
 
 	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer)
 	{
-		this.fetchServices = fetchServices;
+		//this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
 		this.sslContext = sslContext;
 		this.httpServer = httpServer;
+		this.selector = new FetchServiceSelector(fetchServices);
 	}
 
 	public ChannelPipeline getPipeline() throws Exception
@@ -61,7 +63,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		pipeline.addLast("aggregator", new HttpChunkAggregator(10485760));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
-		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, fetchServices, workerExecutor, httpServer));
+		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, selector, workerExecutor, httpServer));
 		return pipeline;
 	}
 }
