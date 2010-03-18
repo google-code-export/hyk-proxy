@@ -92,12 +92,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private Channel	channel;
 	private ChunkedInput chunkedInput;
 
-	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, List<FetchService> fetchServices, Executor workerExecutor,
+	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, FetchServiceSelector selector, Executor workerExecutor,
 			HttpServer httpServer)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
-		this.fetchServiceSelector = new FetchServiceSelector(fetchServices);
+		this.fetchServiceSelector = selector;
 		this.workerExecutor = workerExecutor;
 		this.httpServer = httpServer;
 	}
