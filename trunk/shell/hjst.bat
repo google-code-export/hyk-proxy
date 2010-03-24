@@ -1,1 +1,0 @@
-@java -cp "%~dp0\..\dist\hyk-jsipunit.jar;%~dp0\..\etc" org.hyk.sip.test.launcher.Launcher %*
