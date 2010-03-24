@@ -7,11 +7,11 @@ case "`uname`" in
   CYGWIN*) cygwin=true ;;
 esac
 
-HYK_PROXY_BIN=`dirname $0 | sed -e "s#^\\([^/]\\)#${PWD}/\\1#"` # sed makes absolute
-HYK_PROXY_HOME=$HYK_PROXY_BIN/..
-HYK_PROXY_LIB=$HYK_PROXY_HOME/lib
-HYK_PROXY_CONFIG=$HYK_PROXY_HOME/etc
-CLASSPATH="$HYK_PROXY_HOME/dist/hyk-proxy-client.jar:$HYK_PROXY_CONFIG"
+HYK_JST_BIN=`dirname $0 | sed -e "s#^\\([^/]\\)#${PWD}/\\1#"` # sed makes absolute
+HYK_JST_HOME=$HYK_JST_BIN/..
+HYK_JST_LIB=$HYK_JST_HOME/lib
+HYK_JST_CONFIG=$HYK_JST_HOME/etc
+CLASSPATH="$HYK_JST_HOME/dist/hyk-jsipunit.jar:$HYK_JST_CONFIG"
 if $cygwin; then
   if [ "$OS" = "Windows_NT" ] && cygpath -m .>/dev/null 2>/dev/null ; then
     format=mixed
@@ -21,4 +21,4 @@ if $cygwin; then
   CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
 fi
 
-java  -cp "$CLASSPATH" com.hyk.proxy.gae.client.netty.StartProxyLocalServer
+java  -cp "$CLASSPATH" org.hyk.sip.test.launcher.Launcher $*
