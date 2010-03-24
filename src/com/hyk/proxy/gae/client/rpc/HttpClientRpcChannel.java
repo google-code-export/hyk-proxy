@@ -12,6 +12,8 @@ package com.hyk.proxy.gae.client.rpc;
 import static org.jboss.netty.channel.Channels.pipeline;
 
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -30,6 +32,7 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
@@ -61,7 +64,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 	private HttpServerAddress				remoteAddress;
 
-	private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
+	//private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
+	private ClientSocketChannelFactory		factory			;
 
 	private HttpClientSocketChannelSelector	clientChannelSelector;
 	
@@ -128,6 +132,15 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	{
 		super(threadPool);
 		this.remoteAddress = remoteAddress;
+		//Java NIO is not support IPv6, here is a workaround 
+		if(InetAddress.getByName(remoteAddress.getHost()) instanceof Inet6Address)
+		{
+			factory = new OioClientSocketChannelFactory(threadPool);
+		}
+		else
+		{
+			factory	= new NioClientSocketChannelFactory(threadPool, threadPool);
+		}
 		start();
 		setMaxMessageSize(maxMessageSize);
 		List<HttpClientSocketChannel> clientChannels = new ArrayList<HttpClientSocketChannel>();

@@ -378,9 +378,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 			RangeHeaderValue containedRange = new RangeHeaderValue(fetchSizeLimit, -1);
 			if(forwardResponse.isResponseTooLarge())
 			{
-				if(logger.isInfoEnabled())
+				if(logger.isDebugEnabled())
 				{
-					logger.info("Try to start range fetch!");
+					logger.debug("Try to start range fetch!");
 				}
 				if(!forwardRequest.containsHeader(HttpHeaders.Names.RANGE))
 				{

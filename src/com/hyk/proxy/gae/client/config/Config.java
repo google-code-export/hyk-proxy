@@ -161,7 +161,7 @@ public class Config
 		{
 			String key = (String)keys.next();
 			String value = props.getProperty(key);
-			if(null == value || value.trim().isEmpty())
+			if(null == value || value.trim().equals(""))
 			{
 				continue;
 			}
@@ -182,17 +182,17 @@ public class Config
 				}
 				XmppAccount account = new XmppAccount(name, passwd);
 				String host = props.getProperty(XMPP_SERVER_HOST_CONFIG + id);
-				if(null != host && !host.trim().isEmpty())
+				if(null != host && !host.trim().equals(""))
 				{
 					account.setServerHost(host);
 				}
 				String port = props.getProperty(XMPP_SERVER_PORT_CONFIG + id);
-				if(null != port && !port.trim().isEmpty())
+				if(null != port && !port.trim().equals(""))
 				{
 					account.setServerPort(Integer.parseInt(port.trim()));
 				}
 				String oldssl = props.getProperty(XMPP_SERVER_OLDSSL_CONFIG + id);
-				if(null != oldssl && !oldssl.trim().isEmpty())
+				if(null != oldssl && !oldssl.trim().equals(""))
 				{
 					account.setOldSSLEnable(Boolean.parseBoolean(oldssl.trim()));
 				}
@@ -243,17 +243,17 @@ public class Config
 				proxy = new ProxyInfo();
 				proxy.setHost(value);
 				String port = props.getProperty(LOCAL_SERVER_HTTP_PROXY_PORT);
-				if(null != port && !port.trim().isEmpty())
+				if(null != port && !port.trim().equals(""))
 				{
 					proxy.setPort(Integer.parseInt(port.trim()));
 				}
 				String user = props.getProperty(LOCAL_SERVER_HTTP_PROXY_USER);
-				if(null != user && !user.trim().isEmpty())
+				if(null != user && !user.trim().equals(""))
 				{
 					proxy.setUser(user.trim());
 				}
 				String passwd = props.getProperty(LOCAL_SERVER_HTTP_PROXY_PASSWD);
-				if(null != passwd && !passwd.trim().isEmpty())
+				if(null != passwd && !passwd.trim().equals(""))
 				{
 					proxy.setPassword(passwd.trim());
 				}

@@ -51,7 +51,6 @@ public class ClientUtils
 				for(SetCookieHeaderValue cookie : cookies)
 				{
 					response.addHeader(header[0], cookie.toString());
-					
 				}
 			}
 			else

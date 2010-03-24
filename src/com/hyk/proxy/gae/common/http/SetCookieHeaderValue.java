@@ -32,9 +32,6 @@ public class SetCookieHeaderValue implements HttpHeaderValue
 	public static List<SetCookieHeaderValue> parse(String value)
 	{
 		List<SetCookieHeaderValue> hvs = new LinkedList<SetCookieHeaderValue>();
-//		CookieDecoder decoder = new CookieDecoder();
-//		CookieEncoder encoder = new CookieEncoder();
-//		Set<Cookie> cookies = decoder.decode(value);
 		try 
 		{
 			LinkedList<String> headerValues = new LinkedList<String>();
