@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-1-31 | 10:50:02 AM]
  *
  */
-package com.hyk.proxy.gae.client.netty;
+package com.hyk.proxy.gae.client.httpserver;
 
 import static org.jboss.netty.channel.Channels.*;
 
@@ -24,7 +24,10 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.jboss.netty.handler.stream.ChunkedWriteHandler;
 
+import com.hyk.proxy.gae.client.handler.HttpRequestHandler;
+import com.hyk.proxy.gae.client.util.FetchServiceSelector;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.rpc.core.RpcException;
 
 /**
  * @author yinqiwen
@@ -38,7 +41,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 	private HttpServer httpServer;
 	private FetchServiceSelector selector;
 
-	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer)
+	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer) throws RpcException
 	{
 		//this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
@@ -63,7 +66,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		pipeline.addLast("aggregator", new HttpChunkAggregator(10485760));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
-		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, selector, workerExecutor, httpServer));
+		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, selector, httpServer));
 		return pipeline;
 	}
 }

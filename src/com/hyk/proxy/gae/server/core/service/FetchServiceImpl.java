@@ -28,6 +28,7 @@ import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SimpleNameValueListHeader;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.server.core.util.ServerUtils;
+import com.hyk.util.thread.ThreadLocalUtil;
 
 /**
  *
@@ -88,12 +89,17 @@ public class FetchServiceImpl implements FetchService
 			if(null == ret)
 			{
 				HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
-				
-				//Future<HTTPResponse> future = urlFetchService.fetchAsync(fetchReq);
 				HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
 				ret =  ServerUtils.toHttpResponseExchange(fetchRes);
 				cacheResponse(req, ret);
-			}	
+			}
+			
+			String contentType = ret.getHeaderValue("content-type");
+		    if(null == contentType)
+		    {
+		    	contentType = "";
+		    }
+			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
 		}
 		catch(IOException e)
 		{

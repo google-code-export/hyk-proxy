@@ -7,7 +7,7 @@
  * @author yinqiwen [ Feb 2, 2010 | 10:53:27 AM ]
  *
  */
-package com.hyk.proxy.gae.client.netty;
+package com.hyk.proxy.gae.client.handler;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.client.config.Config;
+import com.hyk.proxy.gae.client.util.FetchServiceSelector;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;

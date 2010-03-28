@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-1-31 | 10:50:02 AM]
  *
  */
-package com.hyk.proxy.gae.client.netty;
+package com.hyk.proxy.gae.client.handler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -50,12 +50,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.client.config.Config;
+import com.hyk.proxy.gae.client.httpserver.HttpServer;
 import com.hyk.proxy.gae.client.util.ClientUtils;
+import com.hyk.proxy.gae.client.util.FetchServiceSelector;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.rpc.core.RpcCallback;
 import com.hyk.rpc.core.Rpctimeout;
 
 /**
@@ -63,7 +66,7 @@ import com.hyk.rpc.core.Rpctimeout;
  * 
  */
 @ChannelPipelineCoverage("one")
-public class HttpRequestHandler extends SimpleChannelUpstreamHandler
+public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements RpcCallback<HttpResponseExchange>
 {
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 
@@ -76,14 +79,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private boolean					ishttps			= false;
 	private String					httpspath		= null;
 
-	//private List<FetchService>		fetchServices;
-	//private int						cursor;
 	private FetchServiceSelector fetchServiceSelector;
-	private Executor				workerExecutor;
 	private HttpServer				httpServer;
 	
 	private HttpRequestExchange forwardRequest;
-	//private HttpResponseExchange forwardResponse;
 	
 	private ContentRangeHeaderValue lastContentRange = null;
 	private ChannelBuffer leftChannelBuffer;
@@ -92,13 +91,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 	private Channel	channel;
 	private ChunkedInput chunkedInput;
 
-	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, FetchServiceSelector selector, Executor workerExecutor,
+	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, FetchServiceSelector selector,
 			HttpServer httpServer)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
 		this.fetchServiceSelector = selector;
-		this.workerExecutor = workerExecutor;
 		this.httpServer = httpServer;
 	}
 
@@ -494,6 +492,13 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler
 				channel.write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT)).addListener(ChannelFutureListener.CLOSE);
 			}
 		}
+		
+	}
+
+	@Override
+	public void run(HttpResponseExchange parameter, Throwable e)
+	{
+		// TODO Auto-generated method stub
 		
 	}
 }

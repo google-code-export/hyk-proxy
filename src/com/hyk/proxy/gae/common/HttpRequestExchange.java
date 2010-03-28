@@ -12,7 +12,6 @@ package com.hyk.proxy.gae.common;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.hyk.compress.CompressorPreference;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
 
