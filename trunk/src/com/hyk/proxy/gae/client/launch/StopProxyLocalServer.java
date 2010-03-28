@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-1-31 | pm04:13:31 ]
  *
  */
-package com.hyk.proxy.gae.client.netty;
+package com.hyk.proxy.gae.client.launch;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
