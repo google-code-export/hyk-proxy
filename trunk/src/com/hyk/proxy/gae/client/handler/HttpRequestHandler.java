@@ -59,7 +59,9 @@ import com.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
 import com.hyk.proxy.gae.common.http.RangeHeaderValue;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.rpc.core.RpcCallback;
+import com.hyk.rpc.core.RpcCallbackResult;
 import com.hyk.rpc.core.Rpctimeout;
+import com.hyk.util.buffer.ByteArray;
 
 /**
  * @author yinqiwen
@@ -83,6 +85,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private HttpServer				httpServer;
 	
 	private HttpRequestExchange forwardRequest;
+	private HttpRequestExchange originalRequest;
 	
 	private ContentRangeHeaderValue lastContentRange = null;
 	private ChannelBuffer leftChannelBuffer;
@@ -102,40 +105,52 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 
 	protected HttpResponseExchange fetch() throws InterruptedException
 	{
+	    return fetch(false);	
+	}
+	
+	protected HttpResponseExchange fetch(boolean isAsync) throws InterruptedException
+	{
 		waitForwardBodyComplete();
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Send proxy request");
 			logger.debug(forwardRequest.toPrintableString());
 		}
-		
-		int retry = 1;
 		HttpResponseExchange forwardResponse = null;
-		while((null == forwardResponse) && retry > 0)
+		if(!isAsync)
 		{
-			try 
+			int retry = 1;
+			while((null == forwardResponse) && retry > 0)
 			{
-				forwardResponse = fetchServiceSelector.select().fetch(forwardRequest);
-			} 
-			catch (Rpctimeout e) 
-			{
-				if(logger.isDebugEnabled())
+				try 
 				{
-					logger.debug("Fetch encounter timeout, retry one time.");
+					forwardResponse = fetchServiceSelector.select().fetch(forwardRequest);
+				} 
+				catch (Rpctimeout e) 
+				{
+					if(logger.isDebugEnabled())
+					{
+						logger.debug("Fetch encounter timeout, retry one time.");
+					}
 				}
+				retry--;
 			}
-			retry--;
+			if(null == forwardResponse)
+			{
+				forwardResponse = new HttpResponseExchange();
+				forwardResponse.setResponseCode(408);
+			}
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Recv proxy response");
+				logger.debug(forwardResponse.toPrintableString());
+			}
 		}
-		if(null == forwardResponse)
+		else
 		{
-			forwardResponse = new HttpResponseExchange();
-			forwardResponse.setResponseCode(408);
+			fetchServiceSelector.selectAsync().fetch(forwardRequest, this);
 		}
-		if(logger.isDebugEnabled())
-		{
-			logger.debug("Recv proxy response");
-			logger.debug(forwardResponse.toPrintableString());
-		}
+		
 		return forwardResponse;
 	}
 
@@ -269,6 +284,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				readingChunks = true;
 			}
 			this.forwardRequest = buildForwardRequest(request);
+			this.originalRequest = forwardRequest.clone(); 
 			this.channel = e.getChannel();
 			//workerExecutor.execute(this);
 			processProxyRequest();
@@ -363,17 +379,33 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	
 	public void processProxyRequest()
 	{
-		long startTime = System.currentTimeMillis();
 		try
 		{
-			HttpRequestExchange originalRequest = forwardRequest.clone();
-			HttpResponseExchange forwardResponse = fetch();
-			if(null == forwardResponse)
+			fetch(true);
+		}
+		catch(Exception e)
+		{
+			logger.error("Encounter error.", e);
+			if(channel.isConnected())
 			{
-				return;
+				channel.write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT)).addListener(ChannelFutureListener.CLOSE);
+			}
+		}
+		
+	}
+
+	@Override
+	public void callBack(RpcCallbackResult<HttpResponseExchange> result)
+	{
+		try
+		{
+			HttpResponseExchange forwardResponse = result.get();
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Recv proxy response");
+				logger.debug(forwardResponse.toPrintableString());
 			}
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
-			RangeHeaderValue containedRange = new RangeHeaderValue(fetchSizeLimit, -1);
 			if(forwardResponse.isResponseTooLarge())
 			{
 				if(logger.isDebugEnabled())
@@ -387,35 +419,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				else
 				{
 					String hv = forwardRequest.getHeaderValue(HttpHeaders.Names.RANGE);
-					containedRange = new RangeHeaderValue(hv);
+					RangeHeaderValue containedRange = new RangeHeaderValue(hv);
 					forwardRequest.setHeader(HttpHeaders.Names.RANGE, new RangeHeaderValue(containedRange.getFirstBytePos(), containedRange.getFirstBytePos() + fetchSizeLimit-1));
 				}
-				
-				//forwardResponse = selectFetchService().fetch(forwardRequest);
 				forwardResponse = fetch();
 			}
-
-			while(null != lastContentRange)
+			
+			if(null != lastContentRange)
 			{
-				forwardRequest.setBody(null);
-				ContentRangeHeaderValue old = lastContentRange;
-				long sendSize = fetchSizeLimit;
-				if(old.getInstanceLength() - old.getLastBytePos() - 1 < fetchSizeLimit)
-				{
-					sendSize = (old.getInstanceLength() - old.getLastBytePos() - 1);
-				}
-				if(sendSize <= 0)
-				{
-					break;
-				}
-				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, old.getLastBytePos()  + sendSize, old.getInstanceLength());
-				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
-				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(sendSize));
-				forwardResponse = fetch();
-				if(sendSize < fetchSizeLimit)
-				{
-					lastContentRange = null;
-				}
+				forwardResponse = new RangeHttpProxyChunkedOutput().execute();
 			}
 			
 			if(channel.isConnected())
@@ -457,7 +469,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					forwardResponse.setResponseCode(400);
 				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
-				boolean close =  !(HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION)) || HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader("Proxy-Connection")));
+				//boolean close =  !(HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION)) || HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader("Proxy-Connection")));
 				
 				if(logger.isDebugEnabled())
 				{
@@ -470,7 +482,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
-				//if(close)
 				{
 					future.addListener(ChannelFutureListener.CLOSE);
 				}
@@ -479,12 +490,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			{
 				if(logger.isDebugEnabled())
 				{
-					long current = System.currentTimeMillis();
-					logger.debug("Warn:Browser connection is already closed by browser. It wait " + (current - startTime) + "ms");
+					logger.debug("Warn:Browser connection is already closed by browser.");
 				}	
 			}
 		}
-		catch(Exception e)
+		catch(Throwable e)
 		{
 			logger.error("Encounter error.", e);
 			if(channel.isConnected())
@@ -492,13 +502,37 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				channel.write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT)).addListener(ChannelFutureListener.CLOSE);
 			}
 		}
-		
 	}
-
-	@Override
-	public void run(HttpResponseExchange parameter, Throwable e)
+	
+	class RangeHttpProxyChunkedOutput
 	{
-		// TODO Auto-generated method stub
-		
+		public HttpResponseExchange execute() throws Exception
+		{
+			HttpResponseExchange forwardResponse = null;
+			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
+			while(null != lastContentRange)
+			{
+				forwardRequest.setBody((ByteArray)null);
+				ContentRangeHeaderValue old = lastContentRange;
+				long sendSize = fetchSizeLimit;
+				if(old.getInstanceLength() - old.getLastBytePos() - 1 < fetchSizeLimit)
+				{
+					sendSize = (old.getInstanceLength() - old.getLastBytePos() - 1);
+				}
+				if(sendSize <= 0)
+				{
+					break;
+				}
+				lastContentRange = new ContentRangeHeaderValue(old.getLastBytePos() + 1, old.getLastBytePos()  + sendSize, old.getInstanceLength());
+				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, lastContentRange);
+				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(sendSize));
+				forwardResponse = fetch();
+				if(sendSize < fetchSizeLimit)
+				{
+					lastContentRange = null;
+				}
+			}
+			return forwardResponse;
+		}
 	}
 }

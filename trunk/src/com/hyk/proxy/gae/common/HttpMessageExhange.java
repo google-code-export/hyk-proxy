@@ -10,6 +10,8 @@
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,14 +21,16 @@ import com.hyk.proxy.gae.common.http.HttpHeaderValue;
 import com.hyk.serializer.Externalizable;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
+import com.hyk.util.buffer.ByteArray;
 
 /**
  *
  */
-public abstract class HttpMessageExhange implements Externalizable
+public abstract class HttpMessageExhange implements Externalizable, java.io.Externalizable
 {
 	protected List<String[]>	headers	= new ArrayList<String[]>();
-	protected byte[]				body	= new byte[0];
+	//protected byte[]				body	= new byte[0];
+	protected ByteArray body = ByteArray.wrap(new byte[0]);
 
 	
 	@Override
@@ -60,23 +64,6 @@ public abstract class HttpMessageExhange implements Externalizable
 			return false;
 		}
 		return true;
-//		if(headers.size() != other.headers.size())
-//		{
-//			return false;
-//		}
-//		for(int i = 0; i< headers.size(); i++)
-//		{
-//			String[] header1 = headers.get(i);
-//			String[] header2 = other.headers.get(i);
-//			if( header1[0].equalsIgnoreCase("range"))
-//			{
-//				if(!(header1[0].equalsIgnoreCase(header2[0]) && header1[1].equalsIgnoreCase(header2[1])))
-//				{
-//					return false;
-//				}
-//			}
-//		}
-//		return true;
 	}
 	
 	@Override
@@ -89,7 +76,7 @@ public abstract class HttpMessageExhange implements Externalizable
 		if(obj instanceof HttpMessageExhange)
 		{
 			HttpMessageExhange other = (HttpMessageExhange)obj;
-			return compareHeaders(other) &&  Arrays.equals(body, other.body);
+			return compareHeaders(other) &&  body.buffer().equals(other.body.buffer());
 		}
 		return false;
 	}
@@ -129,10 +116,18 @@ public abstract class HttpMessageExhange implements Externalizable
 
 	public void setBody(byte[] data)
 	{
-		this.body = data;
+		body.free();
+		body = ByteArray.wrap(data);
+		//this.body = data;
+	}
+	
+	public void setBody(ByteArray data)
+	{
+		body.free();
+		body = data;
 	}
 
-	public byte[] getBody()
+	public ByteArray getBody()
 	{
 		return body;
 	}
@@ -230,7 +225,15 @@ public abstract class HttpMessageExhange implements Externalizable
 		boolean b = in.readBoolean();
 		if(b)
 		{
-			body = in.readObject(byte[].class);
+			int len = in.readInt();
+			body = ByteArray.allocate(len);
+			in.readBytes(body.rawbuffer(), 0, len);
+			body.position(len);
+			body.flip();
+			if(body.capacity() > 327680)
+			{
+				System.out.println("######" + body.capacity());
+			}
 		}
 	}
 
@@ -241,10 +244,28 @@ public abstract class HttpMessageExhange implements Externalizable
 		{
 			out.writeObject(header);
 		}
-		out.writeBoolean(null != body && body.length > 0);
-		if(null != body && body.length > 0)
+		out.writeBoolean(null != body && body.size() > 0);
+		if(null != body && body.size() > 0)
 		{
-			out.writeObject(body);
+			byte[] content = body.toByteArray();
+			out.writeInt(content.length);
+			out.writeBytes(content);
 		}
+	}
+	
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		headers = (List<String[]>)in.readObject();
+		byte[] content = (byte[])in.readObject();
+		body = ByteArray.wrap(content);
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException
+	{
+		out.writeObject(headers);
+		byte[] content = body.toByteArray();
+		out.writeObject(content);
 	}
 }

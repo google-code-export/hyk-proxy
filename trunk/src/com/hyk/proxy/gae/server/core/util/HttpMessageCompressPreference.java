@@ -11,6 +11,8 @@ package com.hyk.proxy.gae.server.core.util;
 
 import com.hyk.compress.CompressPreference;
 import com.hyk.compress.Compressor;
+import com.hyk.compress.CompressorFactory;
+import com.hyk.compress.CompressorType;
 import com.hyk.util.thread.ThreadLocalUtil;
 
 /**
@@ -33,7 +35,10 @@ public class HttpMessageCompressPreference implements CompressPreference
 		String contentType = ThreadLocalUtil.getThreadLocalUtil(String.class).getThreadLocalObject();
 		if(null != contentType)
 		{
-			
+//			if(contentType.contains("video"))
+//			{
+//				return CompressorFactory.getCompressor(CompressorType.NONE);
+//			}
 		}
 		return compressor;
 	}

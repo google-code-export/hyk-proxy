@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
+import com.hyk.util.buffer.ByteArray;
 
 /**
  *
@@ -58,10 +59,10 @@ public class ClientUtils
 				response.addHeader(header[0], header[1]);
 			}
 		}
-		byte[] content = forwardResponse.getBody();
+		ByteArray content = forwardResponse.getBody();
 		if(null != content)
 		{
-			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(content);
+			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(content.buffer());
 			response.setContent(bufer);
 		}
 
@@ -94,4 +95,5 @@ public class ClientUtils
 		}
 		return false;
 	}
+
 }
