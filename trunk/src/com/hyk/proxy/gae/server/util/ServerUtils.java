@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-1-30 | pm09:53:28 ]
  *
  */
-package com.hyk.proxy.gae.server.core.util;
+package com.hyk.proxy.gae.server.util;
 
 import java.net.MalformedURLException;
 import java.net.URL;

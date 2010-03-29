@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -37,7 +38,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	protected Logger				logger			= LoggerFactory.getLogger(getClass());
 	private final FetchServiceSelector fetchServiceSelector;
 	private HttpRequestExchange	forwardRequest;
-	private volatile HttpResponseExchange lastContentResponse;
 	private final int retryTimes = 1;
 	
 	private LinkedList<FetchResponse> fetchedResponses;
@@ -91,7 +91,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	@Override
 	public synchronized void close() throws Exception
 	{
-		clearLastContentResponse();
 		if(!isClose)
 		{
 			if(logger.isDebugEnabled())
@@ -104,14 +103,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 		
 	}
 
-	protected void clearLastContentResponse()
-	{
-		if(null != lastContentResponse)
-		{
-			lastContentResponse.getBody().free();
-			lastContentResponse = null;
-		}
-	}
 	
 	@Override
 	public synchronized boolean hasNextChunk() throws Exception
@@ -123,7 +114,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	@Override
 	public Object nextChunk() throws Exception
 	{
-		clearLastContentResponse();
 		HttpResponseExchange response = null;
 		synchronized (fetchedResponses) 
 		{
@@ -147,15 +137,17 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 				return ChannelBuffers.EMPTY_BUFFER;
 			}
 			
-			if(logger.isDebugEnabled())
-			{
-				logger.debug("Write chunk with sequnce " + chunkSequence.get());
-			}
+			
 			chunkSequence.incrementAndGet();
 			response = fetchedResponses.removeFirst().response;
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Write chunk with sequnce " + chunkSequence.get() + " and content-range:" + response.getHeaderValue("content-range") + response.getHeaderValue("content-type"));
+			}
 		}
-		this.lastContentResponse = response;
-		return ChannelBuffers.wrappedBuffer(response.getBody().buffer());
+		ChannelBuffer ret =  ChannelBuffers.copiedBuffer(response.getBody().buffer());
+		response.getBody().free();
+		return ret;
 	}
 	
 	private boolean hasFetchedAll()
@@ -176,7 +168,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	
 	protected void closeChunkInput()
 	{
-		clearLastContentResponse();
 		isClose = true;
 		chunkSequence.set(fetchnum);
 		synchronized (fetchedResponses) 
