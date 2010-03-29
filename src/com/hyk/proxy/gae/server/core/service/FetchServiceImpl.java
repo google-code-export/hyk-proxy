@@ -27,7 +27,7 @@ import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SimpleNameValueListHeader;
 import com.hyk.proxy.gae.common.service.FetchService;
-import com.hyk.proxy.gae.server.core.util.ServerUtils;
+import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.thread.ThreadLocalUtil;
 
 /**

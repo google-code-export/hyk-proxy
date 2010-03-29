@@ -20,10 +20,11 @@ import org.w3c.dom.NodeList;
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.CompressorType;
 import com.hyk.proxy.gae.common.HttpServerAddress;
+import com.hyk.proxy.gae.server.config.Config;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
 import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;
 import com.hyk.proxy.gae.server.core.service.FetchServiceImpl;
-import com.hyk.proxy.gae.server.core.util.HttpMessageCompressPreference;
+import com.hyk.proxy.gae.server.util.HttpMessageCompressPreference;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.constant.RpcConstants;
 
@@ -37,8 +38,7 @@ public class Launcher extends HttpServlet{
 	
 	private static XmppServletRpcChannel xmppServletRpcChannel = null;
 	private static HttpServletRpcChannel httpServletRpcChannel = null;
-	
-	private static String appid;
+
 	
 	
 	public static XmppServletRpcChannel getXmppServletRpcChannel()
@@ -56,28 +56,19 @@ public class Launcher extends HttpServlet{
 		super.init(config);
 		try
 		{	
-			InputStream is = config.getServletContext().getResourceAsStream("/WEB-INF/appengine-web.xml");
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(is);
-			NodeList nodes = doc.getElementsByTagName("application");
-			appid = nodes.item(0).getTextContent();
-			is.close();
-			
-			String type = config.getInitParameter("remoteserver.rpc.compressor.type").trim();
-			String trigger = config.getInitParameter("remoteserver.rpc.compressor.trigger").trim();
+			Config hykConfig = Config.init(config);
 			
 			Properties initProps = new Properties();
-			initProps.setProperty(RpcConstants.TIMER_CLASS, "com.hyk.proxy.gae.server.core.util.AppEngineTimer");
-			initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.proxy.gae.server.core.util.HttpMessageCompressPreference");
-			HttpMessageCompressPreference.init(CompressorFactory.getCompressor(CompressorType.valueOfName(type)), Integer.parseInt(trigger));
+			initProps.setProperty(RpcConstants.TIMER_CLASS, "com.hyk.proxy.gae.server.util.AppEngineTimer");
+			initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.proxy.gae.server.util.HttpMessageCompressPreference");
+			HttpMessageCompressPreference.init(hykConfig.getCompressor(), hykConfig.getCompressTrigger(), hykConfig.getIgnorePatterns());
 			
-			XmppServletRpcChannel transport = new XmppServletRpcChannel(appid + "@appspot.com");
+			XmppServletRpcChannel transport = new XmppServletRpcChannel(hykConfig.getAppId() + "@appspot.com");
 			xmppServletRpcChannel = transport;	
 			RPC xmppRpc = new RPC(transport, initProps);
 			xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 			
-			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(appid + ".appspot.com", "/fetchproxy"));
+			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(hykConfig.getAppId() + ".appspot.com", "/fetchproxy"));
 			RPC httpRpc = new RPC(httpServletRpcChannel, initProps);
 			httpServletRpcChannel.setMaxMessageSize(10240000);
 			httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());

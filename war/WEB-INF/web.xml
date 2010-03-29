@@ -7,14 +7,6 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	<servlet>
 		<servlet-name>launcher</servlet-name>
 		<servlet-class>com.hyk.proxy.gae.server.core.Launcher</servlet-class>
-		<init-param>
-			<param-name>remoteserver.rpc.compressor.type</param-name>
-			<param-value>gz</param-value>
-		</init-param>
-		<init-param>
-			<param-name>remoteserver.rpc.compressor.trigger</param-name>
-			<param-value>256</param-value>
-		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet>

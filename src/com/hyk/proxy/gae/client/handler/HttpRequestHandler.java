@@ -484,6 +484,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				}
 				{
 					future.addListener(ChannelFutureListener.CLOSE);
+					final HttpResponseExchange res = forwardResponse;
+					future.addListener(new ChannelFutureListener()
+					{
+						@Override
+						public void operationComplete(ChannelFuture future) throws Exception
+						{
+							res.getBody().free();
+						}
+					});
 				}
 			}
 			else

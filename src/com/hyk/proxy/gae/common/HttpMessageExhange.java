@@ -230,10 +230,6 @@ public abstract class HttpMessageExhange implements Externalizable, java.io.Exte
 			in.readBytes(body.rawbuffer(), 0, len);
 			body.position(len);
 			body.flip();
-			if(body.capacity() > 327680)
-			{
-				System.out.println("######" + body.capacity());
-			}
 		}
 	}
 

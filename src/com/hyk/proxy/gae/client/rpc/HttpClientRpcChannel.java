@@ -88,6 +88,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				socketChannel = connectProxyServer();
 			}
 			return socketChannel;
+			//return connectProxyServer();
 		}
 
 		public void close()
@@ -236,6 +237,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.toPrintableString());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
+			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");
 			if(null != config.getProxyInfo())
 			{
 				ProxyInfo info = config.getProxyInfo();
@@ -322,10 +324,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					{
 						// response.g
 						ChannelBuffer body = response.getContent();
-//						System.out.println("####" + body.readableBytes());
-//						System.out.println("####" + bodyLen);
-//						System.out.println("####" + content.buffer().remaining());
-						//body.readBytes(content.buffer());
 						body.readBytes(content.rawbuffer(), 0, bodyLen);
 						content.position(bodyLen);
 						content.flip();

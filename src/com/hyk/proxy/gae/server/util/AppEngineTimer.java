@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-3-28 | обнГ09:46:57 ]
  *
  */
-package com.hyk.proxy.gae.server.core.util;
+package com.hyk.proxy.gae.server.util;
 
 import com.hyk.timer.Timer;
 import com.hyk.timer.TimerTask;

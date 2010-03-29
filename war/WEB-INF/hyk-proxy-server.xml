@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<hyk-proxy>
+   <compress-setting>
+       <compressor>gz</compressor>
+       <trigger>512</trigger>
+       <ignore>
+           <content-type>audio.*</content-type>
+           <content-type>video.*</content-type>
+           <content-type>image/gif.*</content-type>
+           <content-type>image/jpg.*</content-type>
+           <content-type>image/png.*</content-type>
+           <content-type>application/zip.*</content-type>
+           <content-type>application/x-gzip.*</content-type>
+           <content-type>application/x-zip-compressed.*</content-type>
+           <content-type>application/x-compress.*</content-type>
+           <content-type>application/x-compressed.*</content-type>
+           <content-type>application/x-spoon.*</content-type>  
+       </ignore>
+   </compress-setting>
+</hyk-proxy>
