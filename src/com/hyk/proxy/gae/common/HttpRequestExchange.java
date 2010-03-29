@@ -10,6 +10,8 @@
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 
 import com.hyk.serializer.SerializerInput;
@@ -98,5 +100,22 @@ public class HttpRequestExchange extends HttpMessageExhange
 	protected void print(StringBuffer buffer)
 	{
 		buffer.append(method).append("  ").append(url).append("\r\n");
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		url = in.readUTF();
+		method = in.readUTF();
+		super.readExternal(in);
+		
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException
+	{
+		out.writeUTF(url);
+		out.writeUTF(method);
+		super.writeExternal(out);
 	}
 }

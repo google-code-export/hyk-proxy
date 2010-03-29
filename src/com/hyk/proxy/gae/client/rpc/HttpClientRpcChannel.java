@@ -58,18 +58,19 @@ import com.hyk.util.buffer.ByteArray;
  */
 public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 {
-	private SimpleChannelUpstreamHandler	responseHandler	= new HttpResponseHandler();
+	//private SimpleChannelUpstreamHandler	responseHandler	= new HttpResponseHandler();
 
 	private List<RpcChannelData>			recvList		= new LinkedList<RpcChannelData>();
 
 	private HttpServerAddress				remoteAddress;
 
-	//private ClientSocketChannelFactory		factory			= new NioClientSocketChannelFactory(threadPool, threadPool);
-	private ClientSocketChannelFactory		factory			;
+	// private ClientSocketChannelFactory factory = new
+	// NioClientSocketChannelFactory(threadPool, threadPool);
+	private ClientSocketChannelFactory		factory;
 
 	private HttpClientSocketChannelSelector	clientChannelSelector;
-	
-	private Config config;
+
+	private Config							config;
 
 	class HttpClientSocketChannel
 	{
@@ -132,14 +133,14 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	{
 		super(threadPool);
 		this.remoteAddress = remoteAddress;
-		//Java NIO is not support IPv6, here is a workaround 
+		// Java NIO is not support IPv6, here is a workaround
 		if(InetAddress.getByName(remoteAddress.getHost()) instanceof Inet6Address)
 		{
 			factory = new OioClientSocketChannelFactory(threadPool);
 		}
 		else
 		{
-			factory	= new NioClientSocketChannelFactory(threadPool, threadPool);
+			factory = new NioClientSocketChannelFactory(threadPool, threadPool);
 		}
 		start();
 		setMaxMessageSize(maxMessageSize);
@@ -162,9 +163,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		ChannelPipeline pipeline = pipeline();
 
 		pipeline.addLast("decoder", new HttpResponseDecoder());
-		pipeline.addLast("aggregator", new HttpChunkAggregator(maxMessageSize));
+		// pipeline.addLast("aggregator", new
+		// HttpChunkAggregator(maxMessageSize));
 		pipeline.addLast("encoder", new HttpRequestEncoder());
-		pipeline.addLast("handler", responseHandler);
+		pipeline.addLast("handler", new HttpResponseHandler());
 		SocketChannel channel = factory.newChannel(pipeline);
 		String connectHost;
 		int connectPort;
@@ -234,9 +236,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.toPrintableString());
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
-			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");
-			// request.setHeader(HttpHeaders.Names.TRANSFER_ENCODING,
-			// HttpHeaders.Values.CHUNKED);
 			if(null != config.getProxyInfo())
 			{
 				ProxyInfo info = config.getProxyInfo();
@@ -273,14 +272,12 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		return true;
 	}
 
-	public SimpleChannelUpstreamHandler getResponseHandler()
-	{
-		return responseHandler;
-	}
-
 	@ChannelPipelineCoverage("one")
 	class HttpResponseHandler extends SimpleChannelUpstreamHandler
 	{
+		private volatile boolean	readingChunks = false;
+		private ByteArray content;
+
 		@Override
 		public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
 		{
@@ -289,49 +286,84 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				logger.debug("Connection closed.");
 			}
 		}
+		
+		private void notifyRpcReader()
+		{
+			RpcChannelData recv = new RpcChannelData(content, remoteAddress);
+			synchronized(recvList)
+			{
+				recvList.add(recv);
+				recvList.notify();
+			}
+			content = null;
+		}
 
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception
 		{
-			if(!(e.getMessage() instanceof HttpResponse))
+			if(!readingChunks)
 			{
-				HttpChunk chunk = (HttpChunk)e.getMessage();
+				HttpResponse response = (HttpResponse)e.getMessage();
+
+				int bodyLen = (int)response.getContentLength();
 				if(logger.isDebugEnabled())
 				{
-					logger.debug("Recv chunk:" + chunk.getContent().readableBytes());
-					// response.g
+					logger.debug("Recv message:" + response + " with len:" + bodyLen);
 				}
-
-				return;
-			}
-			HttpResponse response = (HttpResponse)e.getMessage();
-
-			int bodyLen = (int)response.getContentLength();
-			if(logger.isDebugEnabled())
-			{
-				logger.debug("Recv message:" + response + " with len:" + bodyLen);
-				// response.g
-			}
-			if(response.getStatus().equals(HttpResponseStatus.OK) && bodyLen > 0)
-			{
-				ByteArray content = ByteArray.allocate(bodyLen);
-				// response.g
-				ChannelBuffer body = response.getContent();
-				body.readBytes(content.buffer());
-				content.rewind();
-				RpcChannelData recv = new RpcChannelData(content, remoteAddress);
-				synchronized(recvList)
+				content = ByteArray.allocate(bodyLen);
+				if(response.getStatus().getCode() == 200 && response.isChunked())
 				{
-					recvList.add(recv);
-					recvList.notify();
+					readingChunks = true;
 				}
+				else
+				{
+					//content = response.getContent();
+					if(response.getStatus().equals(HttpResponseStatus.OK) && bodyLen > 0)
+					{
+						// response.g
+						ChannelBuffer body = response.getContent();
+//						System.out.println("####" + body.readableBytes());
+//						System.out.println("####" + bodyLen);
+//						System.out.println("####" + content.buffer().remaining());
+						//body.readBytes(content.buffer());
+						body.readBytes(content.rawbuffer(), 0, bodyLen);
+						content.position(bodyLen);
+						content.flip();
+						notifyRpcReader();
+					}
+					else
+					{
+						if(logger.isDebugEnabled())
+						{
+							logger.debug("Recv message with no body or error rsponse" + response);
+						}
+					}
+				}	
 			}
 			else
 			{
-				if(logger.isDebugEnabled())
+				HttpChunk chunk = (HttpChunk)e.getMessage();
+				if(chunk.isLast())
 				{
-					logger.debug("Recv message with no body or error rsponse" + response);
+					readingChunks = false;
+					content.rewind();
+					notifyRpcReader();
 				}
+				else
+				{
+//					if(logger.isDebugEnabled())
+//					{
+//						logger.debug("Recv chunk:" + chunk.getContent().readableBytes());
+//					}
+					ChannelBuffer chunkContent = chunk.getContent();
+					//chunkContent.read
+					byte[] rawbuf = content.rawbuffer();
+					int offset = content.position();
+					int len = chunkContent.readableBytes();
+					chunkContent.readBytes(rawbuf, offset, len);
+					content.position(offset + len);
+				}
+
 			}
 		}
 	}

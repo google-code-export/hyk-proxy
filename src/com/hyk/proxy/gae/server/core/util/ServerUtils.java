@@ -79,7 +79,7 @@ public class ServerUtils
 		{
 			req.addHeader(new HTTPHeader(header[0], header[1]));
 		}
-		req.setPayload(exchange.getBody());
+		req.setPayload(exchange.getBody().toByteArray());
 		return req;
 	}
 	

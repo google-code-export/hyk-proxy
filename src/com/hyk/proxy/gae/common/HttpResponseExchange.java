@@ -10,6 +10,8 @@
 package com.hyk.proxy.gae.common;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -87,6 +89,33 @@ public class HttpResponseExchange extends HttpMessageExhange
 			out.writeString(redirectURL);
 		}
 		super.writeExternal(out);
+	}
+	
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		isResponseTooLarge = in.readBoolean();
+		responseCode = in.readInt();
+		if(in.readBoolean())
+		{
+			redirectURL = in.readUTF();
+		}
+		super.readExternal(in);
+		
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException
+	{
+		out.writeBoolean(isResponseTooLarge);
+		out.writeInt(responseCode);
+		out.writeBoolean(null != redirectURL);
+		if(null != redirectURL)
+		{
+			out.writeUTF(redirectURL);
+		}
+		super.writeExternal(out);
+		
 	}
 
 }
