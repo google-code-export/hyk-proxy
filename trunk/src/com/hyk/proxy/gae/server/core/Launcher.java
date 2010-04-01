@@ -38,8 +38,6 @@ public class Launcher extends HttpServlet{
 	
 	private static XmppServletRpcChannel xmppServletRpcChannel = null;
 	private static HttpServletRpcChannel httpServletRpcChannel = null;
-
-	
 	
 	public static XmppServletRpcChannel getXmppServletRpcChannel()
 	{
@@ -65,6 +63,7 @@ public class Launcher extends HttpServlet{
 			
 			XmppServletRpcChannel transport = new XmppServletRpcChannel(hykConfig.getAppId() + "@appspot.com");
 			xmppServletRpcChannel = transport;	
+			xmppServletRpcChannel.setMaxMessageSize(hykConfig.getMaxXmppMessageSize());
 			RPC xmppRpc = new RPC(transport, initProps);
 			xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 			

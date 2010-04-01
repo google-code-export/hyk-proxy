@@ -6,18 +6,13 @@ package com.hyk.proxy.gae.client.httpserver;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -32,6 +27,7 @@ import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
 import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
+import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.common.HttpServerAddress;
 import com.hyk.proxy.gae.common.XmppAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
@@ -40,6 +36,7 @@ import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.constant.RpcConstants;
 import com.hyk.rpc.core.service.NameService;
 import com.hyk.rpc.core.transport.RpcChannel;
+import com.hyk.util.buffer.ByteArrayPoolDaemon;
 
 /**
  * @author yinqiwen
@@ -50,22 +47,6 @@ public class HttpServer
 	protected static Logger	logger	= LoggerFactory.getLogger(HttpServer.class);
 	
 	private List<RpcChannel> rpcChannels = new LinkedList<RpcChannel>();
-	
-	protected SSLContext initSSLContext() throws Exception
-	{
-		String password = "hykproxy";
-		SSLContext sslContext = SSLContext.getInstance("TLS");
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		ks.load(HttpServer.class.getResourceAsStream("/hykproxykeystore"), password.toCharArray());
-		kmf.init(ks, password.toCharArray());
-		KeyManager[] km = kmf.getKeyManagers();
-		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-		tmf.init(ks);
-		TrustManager[] tm = tmf.getTrustManagers();
-		sslContext.init(km, tm, null);
-		return sslContext;
-	}
 
 	protected RPC createXmppRpc(XmppAccount account,Executor workerExecutor, Properties initProps) throws XMPPException, RpcException
 	{
@@ -105,7 +86,7 @@ public class HttpServer
 		
 		Executor bossExecutor = Executors.newCachedThreadPool();
 		//Executor workerExecutor = Executors.newFixedThreadPool(50);
-		Executor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(50, 0, 0);
+		Executor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(config.getThreadPoolSize(), 0, 0);
 		
 		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
 		Properties initProps = new Properties();
@@ -113,7 +94,7 @@ public class HttpServer
 		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
 		try
 		{
-			sslContext = initSSLContext();
+			sslContext = ClientUtils.initSSLContext();
 			
 			List<String> appids = config.getAppids();
 			//Only effect when HTTP mode is disable
@@ -174,6 +155,8 @@ public class HttpServer
 		// Set up the event pipeline factory.
 		bootstrap.setPipelineFactory(new HttpServerPipelineFactory(fetchServices, workerExecutor, sslContext, this));
 		bootstrap.bind(new InetSocketAddress(InetAddress.getByName(config.getLocalServerHost()), config.getLocalServerPort()));
+		
+		ByteArrayPoolDaemon.start();
 	}
 	
 	public void stop()

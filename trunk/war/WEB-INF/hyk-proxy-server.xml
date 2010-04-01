@@ -18,4 +18,8 @@
            <content-type>application/x-spoon.*</content-type>  
        </ignore>
    </compress-setting>
+   
+   <XMPP-setting>
+      <MaxMessageSize>20480</MaxMessageSize>
+   </XMPP-setting>
 </hyk-proxy>
