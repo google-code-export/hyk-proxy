@@ -324,7 +324,16 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					{
 						// response.g
 						ChannelBuffer body = response.getContent();
-						body.readBytes(content.rawbuffer(), 0, bodyLen);
+						try
+						{
+							body.readBytes(content.rawbuffer(), 0, bodyLen);
+						}
+						catch(RuntimeException ex)
+						{
+							System.out.println("######" + content.rawbuffer().length);
+							System.out.println("######" + bodyLen);
+							throw ex;
+						}
 						content.position(bodyLen);
 						content.flip();
 						notifyRpcReader();

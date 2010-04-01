@@ -24,6 +24,14 @@ public class Config
 	private String appId;
 	private Compressor compressor;
 	private int compressTrigger;
+	
+	private int maxXmppMessageSize;
+	
+	public int getMaxXmppMessageSize()
+	{
+		return maxXmppMessageSize;
+	}
+
 	public String getAppId()
 	{
 		return appId;
@@ -76,6 +84,9 @@ public class Config
 			String ignoreType = ignoreList.item(i).getTextContent().trim();
 			ret.ignorePatterns.add(Pattern.compile(ignoreType.toLowerCase()));
 		}
+		
+		String maxMessageSize = doc.getElementsByTagName("MaxMessageSize").item(0).getTextContent();
+		ret.maxXmppMessageSize = Integer.parseInt(maxMessageSize);
 		return ret;
 	}
 }

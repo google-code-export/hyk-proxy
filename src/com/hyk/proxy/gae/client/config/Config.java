@@ -47,6 +47,8 @@ public class Config
 	private static final String   LOCAL_SERVER_HTTP_PROXY_USER  = "localserver.http.proxy.user";
 	private static final String   LOCAL_SERVER_HTTP_PROXY_PASSWD  = "localserver.http.proxy.password";
 	
+	private static final String   LOCAL_SERVER_THREAD_POOL_SIZE  = "localserver.threadpoolsize";
+	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
 	private List<String>		appids							= new LinkedList<String>();
@@ -55,9 +57,9 @@ public class Config
 	private CompressorType		compressorType					= CompressorType.GZ;
 	private int compressorTrigger = 256;
 	private int httpConnectionPoolSize = 5;
-	private ProxyInfo proxy;
-
+	private int threadPoolSize = 20;
 	
+	private ProxyInfo proxy;
 
 	private static Config		instance						= null;
 
@@ -65,14 +67,25 @@ public class Config
 	{
 		if(null == instance)
 		{
-			instance = new Config();
+			Properties props = new Properties();
+			props.load(Config.class.getResourceAsStream("/" + CONFIG_FILE));
+			return getInstance(props);
+		}
+		return instance;
+	}
+	
+	public synchronized static Config getInstance(Properties props) throws IOException
+	{
+		if(null == instance)
+		{
+			instance = new Config(props);
 		}
 		return instance;
 	}
 
-	private Config() throws IOException
+	private Config(Properties props) throws IOException
 	{
-		loadConfig();
+		loadFromProperties(props);
 	}
 
 	public ProxyInfo getProxyInfo()
@@ -105,11 +118,15 @@ public class Config
 	private boolean	isXmppEnable;
 	private boolean	isHttpEnable;
 
+	public int getThreadPoolSize()
+	{
+		return threadPoolSize;
+	}
+	
 	public int getMaxFetcherForBigFile() 
 	{
 		return maxFetcherForBigFile;
 	}
-
 	
 	public List<String> getAppids()
 	{
@@ -151,11 +168,8 @@ public class Config
 		return compressorTrigger;
 	}
 
-	private void loadConfig() throws IOException
+	private Config loadFromProperties(Properties props) throws IOException
 	{
-		Properties props = new Properties();
-		props.load(Config.class.getResourceAsStream("/" + CONFIG_FILE));
-
 		Iterator keys = props.keySet().iterator();
 		while(keys.hasNext())
 		{
@@ -238,6 +252,10 @@ public class Config
 			{
 				httpConnectionPoolSize = Integer.parseInt(value);
 			}
+			else if(key.equals(LOCAL_SERVER_THREAD_POOL_SIZE))
+			{
+				threadPoolSize = Integer.parseInt(value);
+			}
 			else if(key.equals(LOCAL_SERVER_HTTP_PROXY_HOST))
 			{
 				proxy = new ProxyInfo();
@@ -259,6 +277,7 @@ public class Config
 				}
 			}
 		}
-
+		
+		return this;
 	}
 }

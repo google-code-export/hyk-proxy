@@ -10,7 +10,14 @@
 package com.hyk.proxy.gae.client.util;
 
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.List;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -22,6 +29,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.gae.client.httpserver.HttpServer;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
 import com.hyk.util.buffer.ByteArray;
@@ -34,6 +42,22 @@ public class ClientUtils
 	protected static Logger				logger			= LoggerFactory.getLogger(ClientUtils.class);
 	private static final String	ContentRangeValueHeader	= "bytes";
 
+	public static SSLContext initSSLContext() throws Exception
+	{
+		String password = "hyk-proxy";
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+		ks.load(HttpServer.class.getResourceAsStream("/hyk-proxy.cert"), password.toCharArray());
+		kmf.init(ks, password.toCharArray());
+		KeyManager[] km = kmf.getKeyManagers();
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		tmf.init(ks);
+		TrustManager[] tm = tmf.getTrustManagers();
+		sslContext.init(km, tm, null);
+		return sslContext;
+	}
+	
 	public static HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException
 	{
 

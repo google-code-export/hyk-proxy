@@ -23,6 +23,7 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.appengine.tools.appstats.AppstatsServlet;
 import com.hyk.proxy.gae.common.HttpRequestExchange;
 import com.hyk.proxy.gae.common.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.SimpleNameValueListHeader;
@@ -100,6 +101,7 @@ public class FetchServiceImpl implements FetchService
 		    	contentType = "";
 		    }
 			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
+			//AppstatsServlet.
 		}
 		catch(IOException e)
 		{
