@@ -7,12 +7,11 @@
  * @author yinqiwen [ Jan 14, 2010 | 3:49:21 PM ]
  *
  */
-package com.hyk.proxy.gae.common;
+package com.hyk.proxy.gae.common.http.message;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;

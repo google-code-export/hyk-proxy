@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.gae.common.HttpServerAddress;
+import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.rpc.core.address.SimpleSockAddress;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;

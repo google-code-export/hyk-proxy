@@ -35,7 +35,6 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -48,7 +47,7 @@ import org.jivesoftware.smack.util.Base64;
 
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.ProxyInfo;
-import com.hyk.proxy.gae.common.HttpServerAddress;
+import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
@@ -324,16 +323,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					{
 						// response.g
 						ChannelBuffer body = response.getContent();
-						try
-						{
-							body.readBytes(content.rawbuffer(), 0, bodyLen);
-						}
-						catch(RuntimeException ex)
-						{
-							System.out.println("######" + content.rawbuffer().length);
-							System.out.println("######" + bodyLen);
-							throw ex;
-						}
+						body.readBytes(content.rawbuffer(), 0, bodyLen);
 						content.position(bodyLen);
 						content.flip();
 						notifyRpcReader();

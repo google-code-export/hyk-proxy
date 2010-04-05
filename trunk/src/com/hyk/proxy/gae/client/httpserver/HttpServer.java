@@ -28,9 +28,9 @@ import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
 import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
 import com.hyk.proxy.gae.client.util.ClientUtils;
-import com.hyk.proxy.gae.common.HttpServerAddress;
-import com.hyk.proxy.gae.common.XmppAddress;
+import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.proxy.gae.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.constant.RpcConstants;
@@ -104,7 +104,6 @@ public class HttpServer
 				for(XmppAccount account : xmppAccounts)
 				{
 					RPC rpc = createXmppRpc(account, workerExecutor, initProps);
-					//rpc.setSessionTimeout(config.getSessionTimeout());
 					for(String appid : appids)
 					{
 						try
@@ -141,6 +140,8 @@ public class HttpServer
 		{
 			logger.error("Failed to retireve remote service, please check your configuration.", e);
 		}
+		
+		
 		if(fetchServices.isEmpty())
 		{
 			logger.error("No fetch service found, please check configuration again.");

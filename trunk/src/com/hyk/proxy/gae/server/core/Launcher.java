@@ -3,23 +3,16 @@
  */
 package com.hyk.proxy.gae.server.core;
 
-import java.io.InputStream;
 import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
-import com.hyk.compress.CompressorFactory;
-import com.hyk.compress.CompressorType;
-import com.hyk.proxy.gae.common.HttpServerAddress;
+import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.server.config.Config;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
 import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;

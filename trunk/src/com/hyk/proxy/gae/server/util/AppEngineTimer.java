@@ -4,7 +4,7 @@
  *
  * Description: AppEngineTimer.java 
  *
- * @author yinqiwen [ 2010-3-28 | обнГ09:46:57 ]
+ * @author yinqiwen [ 2010-3-28 | 09:46:57 PM ]
  *
  */
 package com.hyk.proxy.gae.server.util;

@@ -14,10 +14,9 @@ import com.google.appengine.api.xmpp.MessageType;
 import com.google.appengine.api.xmpp.SendResponse;
 import com.google.appengine.api.xmpp.XMPPService;
 import com.google.appengine.api.xmpp.XMPPServiceFactory;
-import com.hyk.proxy.gae.common.XmppAddress;
+import com.hyk.proxy.gae.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.transport.RpcChannelData;
-import com.hyk.rpc.core.transport.RpcChannelException;
 import com.hyk.util.buffer.ByteArray;
 import com.hyk.util.codec.Base64;
 

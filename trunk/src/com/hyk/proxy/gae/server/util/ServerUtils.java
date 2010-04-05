@@ -18,8 +18,8 @@ import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
+import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 
 /**
  *

@@ -9,8 +9,8 @@
  */
 package com.hyk.proxy.gae.common.service;
 
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
+import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.rpc.core.annotation.Remote;
 
 /**

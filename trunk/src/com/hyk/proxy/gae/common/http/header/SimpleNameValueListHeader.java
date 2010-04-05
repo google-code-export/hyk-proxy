@@ -7,7 +7,7 @@
  * @author yinqiwen [ 2010-2-27 | 04:43:25 PM ]
  *
  */
-package com.hyk.proxy.gae.common.http;
+package com.hyk.proxy.gae.common.http.header;
 
 import java.util.HashMap;
 import java.util.Map;

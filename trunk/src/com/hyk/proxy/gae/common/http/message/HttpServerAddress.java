@@ -7,7 +7,7 @@
  * @author yinqiwen [ Jan 29, 2010 | 10:45:02 AM ]
  *
  */
-package com.hyk.proxy.gae.common;
+package com.hyk.proxy.gae.common.http.message;
 
 import com.hyk.rpc.core.address.Address;
 

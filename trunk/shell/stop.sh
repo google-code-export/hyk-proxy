@@ -23,4 +23,4 @@ fi
 
 echo $CLASSPATH
 
-java  -cp "$CLASSPATH" com.hyk.proxy.gae.client.netty.StopProxyLocalServer
+java  -cp "$CLASSPATH" com.hyk.proxy.gae.client.launch.StopProxyLocalServer

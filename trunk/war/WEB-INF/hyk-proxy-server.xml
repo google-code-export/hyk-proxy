@@ -20,6 +20,7 @@
    </compress-setting>
    
    <XMPP-setting>
-      <MaxMessageSize>20480</MaxMessageSize>
+      <MaxMessageSize>4096</MaxMessageSize>
    </XMPP-setting>
+   
 </hyk-proxy>

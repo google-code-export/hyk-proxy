@@ -17,6 +17,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>XmppProxy</servlet-name>
 		<servlet-class>com.hyk.proxy.gae.server.core.servlet.XmppProxyServlet</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>Admin</servlet-name>
+		<servlet-class>com.hyk.proxy.gae.server.core.servlet.AdminServlet</servlet-class>
+	</servlet>
 	<servlet-mapping>
 		<servlet-name>XmppProxy</servlet-name>
 		<url-pattern>/_ah/xmpp/message/chat/</url-pattern>
@@ -26,8 +30,22 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>HttpProxy</servlet-name>
 		<url-pattern>/fetchproxy</url-pattern>
 	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>Admin</servlet-name>
+		<url-pattern>/admin</url-pattern>
+	</servlet-mapping>
 
+    <security-constraint>
+        <web-resource-collection>
+            <url-pattern>/admin/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+    </security-constraint>
+    
 	<welcome-file-list>
-		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
 </web-app>
