@@ -7,7 +7,7 @@
  * @author yinqiwen [ Feb 2, 2010 | 2:42:47 PM ]
  *
  */
-package com.hyk.proxy.gae.common.http;
+package com.hyk.proxy.gae.common.http.header;
 
 /**
  *

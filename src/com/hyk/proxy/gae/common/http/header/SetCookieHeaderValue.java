@@ -7,7 +7,7 @@
  * @author yinqiwen [ Feb 2, 2010 | 4:49:21 PM ]
  *
  */
-package com.hyk.proxy.gae.common.http;
+package com.hyk.proxy.gae.common.http.header;
 
 import java.util.LinkedList;
 import java.util.List;

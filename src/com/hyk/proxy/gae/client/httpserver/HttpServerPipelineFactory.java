@@ -9,7 +9,7 @@
  */
 package com.hyk.proxy.gae.client.httpserver;
 
-import static org.jboss.netty.channel.Channels.*;
+import static org.jboss.netty.channel.Channels.pipeline;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -18,7 +18,6 @@ import javax.net.ssl.SSLContext;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.execution.ExecutionHandler;
@@ -43,7 +42,6 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 
 	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer) throws RpcException
 	{
-		//this.fetchServices = fetchServices;
 		this.workerExecutor = workerExecutor;
 		this.sslContext = sslContext;
 		this.httpServer = httpServer;

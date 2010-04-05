@@ -7,17 +7,15 @@
  * @author yinqiwen [ Jan 14, 2010 | 4:02:29 PM ]
  *
  */
-package com.hyk.proxy.gae.common;
+package com.hyk.proxy.gae.common.http.message;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import com.hyk.proxy.gae.common.http.HttpHeaderValue;
+import com.hyk.proxy.gae.common.http.header.HttpHeaderValue;
 import com.hyk.serializer.Externalizable;
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;

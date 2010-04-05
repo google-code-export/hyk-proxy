@@ -1,10 +1,9 @@
 /**
  * 
  */
-package com.hyk.proxy.gae.common;
+package com.hyk.proxy.gae.common.xmpp;
 
 import com.hyk.rpc.core.address.Address;
-import com.hyk.rpc.core.message.MessageID;
 
 /**
  * @author yinqiwen

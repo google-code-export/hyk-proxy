@@ -23,10 +23,9 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
-import com.google.appengine.tools.appstats.AppstatsServlet;
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.proxy.gae.common.http.SimpleNameValueListHeader;
+import com.hyk.proxy.gae.common.http.header.SimpleNameValueListHeader;
+import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.thread.ThreadLocalUtil;
@@ -100,8 +99,8 @@ public class FetchServiceImpl implements FetchService
 		    {
 		    	contentType = "";
 		    }
+		    //Store this value since the RPC framework would use this value to judge whole message compressing or not 
 			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
-			//AppstatsServlet.
 		}
 		catch(IOException e)
 		{

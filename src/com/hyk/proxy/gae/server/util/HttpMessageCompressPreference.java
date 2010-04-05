@@ -16,7 +16,6 @@ import com.hyk.compress.CompressPreference;
 import com.hyk.compress.Compressor;
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.CompressorType;
-import com.hyk.compress.NoneCompressor;
 import com.hyk.util.thread.ThreadLocalUtil;
 
 /**

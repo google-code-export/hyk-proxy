@@ -18,16 +18,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.util.FetchServiceSelector;
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.proxy.gae.common.http.RangeHeaderValue;
+import com.hyk.proxy.gae.common.http.header.RangeHeaderValue;
+import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.rpc.core.Rpctimeout;
 
 /**

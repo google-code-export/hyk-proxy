@@ -14,13 +14,11 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-import org.apache.tools.ant.taskdefs.Sleep;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -53,11 +51,10 @@ import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.httpserver.HttpServer;
 import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.client.util.FetchServiceSelector;
-import com.hyk.proxy.gae.common.HttpRequestExchange;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
-import com.hyk.proxy.gae.common.http.RangeHeaderValue;
-import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.proxy.gae.common.http.header.ContentRangeHeaderValue;
+import com.hyk.proxy.gae.common.http.header.RangeHeaderValue;
+import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.rpc.core.RpcCallback;
 import com.hyk.rpc.core.RpcCallbackResult;
 import com.hyk.rpc.core.Rpctimeout;
@@ -256,8 +253,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				ishttps = true;
 				httpspath = request.getHeader("Host");
 				HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-				//response.setHeader(arg0, arg1)
 				e.getChannel().write(response);
+				//https connection
 				if(channelPipeline.get("ssl") == null)
 				{
 					InetSocketAddress remote = (InetSocketAddress)e.getRemoteAddress();
@@ -286,7 +283,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			this.forwardRequest = buildForwardRequest(request);
 			this.originalRequest = forwardRequest.clone(); 
 			this.channel = e.getChannel();
-			//workerExecutor.execute(this);
 			processProxyRequest();
 		}
 		else
@@ -300,56 +296,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			{
 				proxyRequestBody.put(chunk.getContent());;
 			}
-		}
-	}
-
-	private void writeResponse(MessageEvent e)
-	{
-		// Convert the response content to a ChannelBuffer.
-		ChannelBuffer buf = ChannelBuffers.copiedBuffer(responseContent.toString(), "UTF-8");
-		responseContent.setLength(0);
-
-		// Decide whether to close the connection or not.
-		boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))
-				|| request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
-				&& !HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION));
-
-		// Build the response object.
-		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-		response.setContent(buf);
-		response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=UTF-8");
-
-		if(!close)
-		{
-			// There's no need to add 'Content-Length' header
-			// if this is the last response.
-			response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(buf.readableBytes()));
-		}
-
-		String cookieString = request.getHeader(HttpHeaders.Names.COOKIE);
-		if(cookieString != null)
-		{
-			CookieDecoder cookieDecoder = new CookieDecoder();
-			Set<Cookie> cookies = cookieDecoder.decode(cookieString);
-			if(!cookies.isEmpty())
-			{
-				// Reset the cookies if necessary.
-				CookieEncoder cookieEncoder = new CookieEncoder(true);
-				for(Cookie cookie : cookies)
-				{
-					cookieEncoder.addCookie(cookie);
-				}
-				response.addHeader(HttpHeaders.Names.SET_COOKIE, cookieEncoder.encode());
-			}
-		}
-
-		// Write the response.
-		ChannelFuture future = e.getChannel().write(response);
-
-		// Close the connection after the write operation is done if necessary.
-		if(close)
-		{
-			future.addListener(ChannelFutureListener.CLOSE);
 		}
 	}
 

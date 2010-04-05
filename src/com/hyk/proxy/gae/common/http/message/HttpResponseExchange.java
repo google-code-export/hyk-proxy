@@ -7,7 +7,7 @@
  * @author yinqiwen [ Jan 14, 2010 | 3:50:29 PM ]
  *
  */
-package com.hyk.proxy.gae.common;
+package com.hyk.proxy.gae.common.http.message;
 
 import java.io.IOException;
 import java.io.ObjectInput;

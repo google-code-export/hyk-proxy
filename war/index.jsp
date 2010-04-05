@@ -7,21 +7,19 @@
 <!-- but may lead to some differences in layout.   -->
 
 <html>
+  <%@ page language="java" import="java.sql.*" %>
+   <jsp:useBean id="version" scope="page" class="com.hyk.proxy.gae.common.Version" />
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>Hello App Engine</title>
+    <title>hyk-proxy V<%out.print(version.value);%></title>
   </head>
 
   <body>
-    <h1>Welcome to uses hyk-proxy!</h1>
-	
-    <table>
-      <tr>
-        <td colspan="2" style="font-weight:bold;">Available Servlets:</td>        
-      </tr>
-      <tr>
-        <td><a href="hyk_proxy">Hyk_proxy</a></td>
-      </tr>
+    <table width="800" border="0" align="center">
+            <tr><td align="center">
+                <b><h1>hyk-proxy V<%out.print(version.value);%> server is running!</h1></b>
+            </td></tr>
     </table>
+    
   </body>
 </html>

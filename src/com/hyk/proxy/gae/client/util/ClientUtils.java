@@ -30,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.client.httpserver.HttpServer;
-import com.hyk.proxy.gae.common.HttpResponseExchange;
-import com.hyk.proxy.gae.common.http.SetCookieHeaderValue;
+import com.hyk.proxy.gae.common.http.header.SetCookieHeaderValue;
+import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.util.buffer.ByteArray;
 
 /**
