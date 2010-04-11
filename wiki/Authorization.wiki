@@ -29,3 +29,4 @@ V0.8.0beta提供了一个admin(admin.sh/admin.bat)工具用于管理用户组管
 =注意=
   * 创建用户时，用户名必须是Email格式，随机创建的密码会发送到此邮箱
   * 对一个用户、组设置的blacklist在用户重新启动hyk-proxy-client时生效
+  * blacklist不支持通配符，目前只可以用`*`代表所有site
