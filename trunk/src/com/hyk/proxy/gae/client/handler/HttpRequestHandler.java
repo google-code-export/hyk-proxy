@@ -14,13 +14,13 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -31,9 +31,6 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.Cookie;
-import org.jboss.netty.handler.codec.http.CookieDecoder;
-import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -72,7 +69,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private SSLContext				sslContext;
 	private volatile HttpRequest	request;
 	private volatile boolean		readingChunks;
-	private final StringBuilder		responseContent	= new StringBuilder();
 	private ChannelPipeline			channelPipeline;
 
 	private boolean					ishttps			= false;
@@ -80,6 +76,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 
 	private FetchServiceSelector fetchServiceSelector;
 	private HttpServer				httpServer;
+	
+	private Executor workerExecutor;
 	
 	private HttpRequestExchange forwardRequest;
 	private HttpRequestExchange originalRequest;
@@ -92,12 +90,13 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	private ChunkedInput chunkedInput;
 
 	public HttpRequestHandler(SSLContext sslContext, ChannelPipeline channelPipeline, FetchServiceSelector selector,
-			HttpServer httpServer)
+			HttpServer httpServer, Executor workerExecutor)
 	{
 		this.sslContext = sslContext;
 		this.channelPipeline = channelPipeline;
 		this.fetchServiceSelector = selector;
 		this.httpServer = httpServer;
+		this.workerExecutor = workerExecutor;
 	}
 
 	protected HttpResponseExchange fetch() throws InterruptedException
@@ -195,6 +194,13 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		{
 			urlbuffer.append("https://").append(httpspath);
 		}
+		else
+		{
+			if(!recvReq.getUri().toLowerCase().startsWith("http:"))
+			{
+				urlbuffer.append("http:").append(recvReq.getHeader(HttpHeaders.Names.HOST));
+			}
+		}
 		urlbuffer.append(recvReq.getUri());
 		gaeRequest.setUrl(urlbuffer.toString());
 		gaeRequest.setMethod(recvReq.getMethod().getName());
@@ -273,6 +279,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 						logger.info("Received a close command to close local server.");
 					}
 					httpServer.stop();
+					System.exit(1);
 				}
 				return;
 			}
@@ -425,7 +432,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 				//future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
 				{
-					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
+					chunkedInput = new RangeHttpProxyChunkedInput(fetchServiceSelector, workerExecutor, forwardRequest, contentRange.getLastBytePos() + 1, contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
 				{
@@ -451,7 +458,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		}
 		catch(Throwable e)
 		{
-			logger.error("Encounter error.", e);
+			logger.error("Encounter error for request:" + forwardRequest.url, e);
 			if(channel.isConnected())
 			{
 				channel.write(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT)).addListener(ChannelFutureListener.CLOSE);

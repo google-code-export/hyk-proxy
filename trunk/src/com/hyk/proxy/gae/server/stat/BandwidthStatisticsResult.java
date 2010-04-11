@@ -4,7 +4,7 @@
  *
  * Description: BandwidthStatisticsResult.java 
  *
- * @author yinqiwen [ 2010-4-5 | обнГ07:01:34 ]
+ * @author yinqiwen [ 2010-4-5 | 07:01:34 PM ]
  *
  */
 package com.hyk.proxy.gae.server.stat;

@@ -14,6 +14,15 @@ package com.hyk.proxy.gae.client.config;
  */
 public class ProxyInfo
 {
+	public ProxyInfo(String host)
+	{
+		this.host = host;
+	}
+	
+	public ProxyInfo()
+	{
+		this.host = host;
+	}
 	public String getHost()
 	{
 		return host;

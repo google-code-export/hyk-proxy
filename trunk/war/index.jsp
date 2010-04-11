@@ -19,6 +19,9 @@
             <tr><td align="center">
                 <b><h1>hyk-proxy V<%out.print(version.value);%> server is running!</h1></b>
             </td></tr>
+            <tr><td align="center">
+                <a href="/admin.jsp">admin</a>
+            </td></tr>
     </table>
     
   </body>

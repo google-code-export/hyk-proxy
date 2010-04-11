@@ -1,6 +1,25 @@
 hyk-proxy Changelog
 ===================
 
+Changes in version 0.8.0bata (2010.4.11)
+-------------------------------------------
+
+** Bug
+   * Issue 12: Auto complete the URL if it's not complete at client side
+   
+** Improvement
+   * Add USER/GROUP control/setting support and an admin tool
+   * Add a GUI launcher
+   * Add IPV6 support
+   * Use async remote invocation instead of sync remote invocation at client side
+   * Add compress ignore setting
+   * Add max XMPP message size setting at server side
+   * Add default local proxy setting
+   * Use more effective memory strategy in remote invocation
+   * Upgrade AppEngine SDK to 1.3.2
+
+** Task
+
 Changes in version 0.3.0 (2010.3.16)
 -------------------------------------------
 

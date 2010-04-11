@@ -10,6 +10,9 @@
 package com.hyk.proxy.gae.server.core.service;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,9 @@ import com.hyk.proxy.gae.common.http.header.SimpleNameValueListHeader;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.proxy.gae.server.account.Group;
+import com.hyk.proxy.gae.server.account.User;
+import com.hyk.proxy.gae.server.config.Config;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.thread.ThreadLocalUtil;
 
@@ -38,10 +44,31 @@ public class FetchServiceImpl implements FetchService
 	protected Logger	logger	= LoggerFactory.getLogger(getClass());
 	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 	protected MemcacheService	memcache	= MemcacheServiceFactory.getMemcacheService();
+
+	private Group group;
+	private User user;
+	
+	private Set<String> blacklist = new HashSet<String>();
+	
+	public FetchServiceImpl(Group group, User user)
+	{
+		setUserAndGroup(group, user);
+	}
+	
+	public void setUserAndGroup(Group group, User user)
+	{
+		this.group = group;
+		this.user = user;
+		blacklist.clear();
+		blacklist.addAll(group.getBlacklist());
+		blacklist.addAll(user.getBlacklist());
+	}
+	
+	
 	
 	protected boolean cacheResponse(HttpRequestExchange req, HttpResponseExchange res)
 	{
-		//only 2xx for get could be cached
+		//only 2xx/3xx for get could be cached
 		if(res.getResponseCode() < 400 && req.getMethod().equalsIgnoreCase(HTTPMethod.GET.name()))
 		{
 			String cacheControlValue = res.getHeaderValue("cache-control");
@@ -80,9 +107,51 @@ public class FetchServiceImpl implements FetchService
 		return null;
 	}
 	
+	protected HttpResponseExchange createErrorResponse()
+	{
+		HttpResponseExchange res = new HttpResponseExchange();
+		res.setResponseCode(403);
+		res.addHeader("content-type", "text/html; charset=utf-8");
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\"/>");
+		buffer.append("<title>Error 403 User not allowed to visit this site</title>");
+		buffer.append("</head>");
+		buffer.append("<body><h2>HTTP ERROR 403</h2>");
+		buffer.append(Config.getInstance().getBlacklistErrorInfo());
+		buffer.append("</body></html>");
+		String bodystr = buffer.toString();
+		byte[] body = bodystr.getBytes();
+		res.addHeader("content-length", "" + body.length);
+		res.setBody(body);
+		return res;
+	}
+	
+	protected boolean authByBlacklist(HttpRequestExchange req)
+	{
+		Iterator<String> hosts = blacklist.iterator();
+		while(hosts.hasNext())
+		{
+			String host = hosts.next();
+			if(host.equals("*"))
+			{
+				return false;
+			}
+			if(host.equals(req.getHeaderValue("Host")))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
 		HttpResponseExchange ret = null;
+		
+		if(!authByBlacklist(req))
+		{
+			return createErrorResponse();
+		}
 		try
 		{			
 			ret = getCache(req);

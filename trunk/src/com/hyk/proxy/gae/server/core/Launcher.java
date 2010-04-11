@@ -13,10 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
+import com.hyk.proxy.gae.common.service.RemoteServiceManager;
 import com.hyk.proxy.gae.server.config.Config;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
 import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;
+import com.hyk.proxy.gae.server.core.service.AccountServiceImpl;
 import com.hyk.proxy.gae.server.core.service.FetchServiceImpl;
+import com.hyk.proxy.gae.server.core.service.RemoteServiceManagerImpl;
 import com.hyk.proxy.gae.server.util.HttpMessageCompressPreference;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.constant.RpcConstants;
@@ -31,6 +34,9 @@ public class Launcher extends HttpServlet{
 	
 	private static XmppServletRpcChannel xmppServletRpcChannel = null;
 	private static HttpServletRpcChannel httpServletRpcChannel = null;
+	//private static RPC xmppRpc;
+	//private static RPC httpRpc;
+	
 	
 	public static XmppServletRpcChannel getXmppServletRpcChannel()
 	{
@@ -58,12 +64,17 @@ public class Launcher extends HttpServlet{
 			xmppServletRpcChannel = transport;	
 			xmppServletRpcChannel.setMaxMessageSize(hykConfig.getMaxXmppMessageSize());
 			RPC xmppRpc = new RPC(transport, initProps);
-			xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
+		
+			//xmppRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
+			xmppRpc.getLocalNaming().bind(RemoteServiceManager.NAME, new RemoteServiceManagerImpl(xmppRpc));
 			
 			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(hykConfig.getAppId() + ".appspot.com", "/fetchproxy"));
 			RPC httpRpc = new RPC(httpServletRpcChannel, initProps);
 			httpServletRpcChannel.setMaxMessageSize(10240000);
-			httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
+			//httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
+			httpRpc.getLocalNaming().bind(RemoteServiceManager.NAME, new RemoteServiceManagerImpl(httpRpc));
+			
+			AccountServiceImpl.checkDefaultAccount();
 			
 			if(logger.isInfoEnabled())
 			{

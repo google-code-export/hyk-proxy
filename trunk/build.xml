@@ -14,8 +14,9 @@
 	<property name="lib" value="${root}/lib" />
 	<property name="etc" value="${root}/etc" />
 	<property name="shell" value="${root}/shell" />
-	<property name="version" value="0.3.0" />
+	<property name="version" value="0.8.0beta" />
 	<property name="release" value="release" />
+	<property name="versionfile" value="com/hyk/proxy/gae/common/Version.java" />
 	<property name="project_name" value="hyk-proxy" />
 
 	<path id="classpath">
@@ -27,7 +28,15 @@
 		<mkdir dir="${serverclass}" />
 		<mkdir dir="${clientclasses}" />
 		<mkdir dir="${distroot}" />
+		<echo message=
+			"package com.hyk.proxy.gae.common;
+			public class Version
+			{
+			   public static final String value = &quot;${version}&quot;;
+			}"  
+			file="${srcroot}/${versionfile}"/>
 	</target>
+	
 
 	<target name="compile-server" depends="prepare">
 		<javac debug="on" target="1.5" destdir="${serverclass}">
@@ -55,10 +64,16 @@
 				<pathelement path="${warlib}/slf4j-api-1.5.10.jar" />
 			</classpath>
 		</javac>
+		<copy todir="${clientclasses}">
+			<fileset dir="${srcroot}">
+				<include name="**/*.png"/>
+				<include name="**/*.PNG"/>
+				<include name="**/*.txt"/>
+			</fileset>
+		</copy>
 	</target>
 
 	<target name="compile" depends="compile-client, compile-server" />
-
 
 	<target name="jarclient" depends="compile">
 		<jar destfile="${distroot}/${clientjar}" basedir="${clientclasses}">
@@ -67,7 +82,7 @@
 				<attribute name="Version" value="${version}"/>
 				<attribute name="Extension-Dirs" value="./etc"/>
 				<attribute name="Class-Path" value="../etc ../lib/hyk-rpc.jar 
-					../lib/hyk-util.jar  ../lib/smackx.jar 
+					../lib/hyk-util.jar  ../lib/smackx.jar ../lib/commons-cli-1.2.jar 
 					../lib/smack.jar ../lib/netty-3.1.5.GA.jar 
 					../lib/log4j-1.2.14.jar ../lib/slf4j-log4j12-1.5.10.jar 
 					../lib/slf4j-api-1.5.10.jar "/>

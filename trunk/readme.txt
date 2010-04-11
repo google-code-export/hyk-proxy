@@ -1,4 +1,4 @@
-hyk-proxy 0.2.0  Read Me
+hyk-proxy 0.8.0beta  Read Me
 Release 2010/01/31
 http://hyk-proxy.googlecode.com 
 
@@ -19,8 +19,8 @@ along with GAppProxy.  If not, see <http://www.gnu.org/licenses/>.
 
 Dependencies
 ------------
-1. You need to install JRE/JDK(5+).
-2. You need to install Google App Engine SDK(Java) (developed under 1.3.0, don't test earlier version)
+1. You need to install JRE/JDK(1.6+).
+2. You need to install Google App Engine SDK(Java) (use the latest version)
 
 INSTALL:
 GAE server part£º£¨GAE server²¿·Ö£©

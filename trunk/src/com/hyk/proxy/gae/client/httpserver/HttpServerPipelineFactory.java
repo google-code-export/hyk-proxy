@@ -40,11 +40,16 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 	private HttpServer httpServer;
 	private FetchServiceSelector selector;
 
-	public HttpServerPipelineFactory(List<FetchService> fetchServices, Executor workerExecutor, SSLContext sslContext, HttpServer httpServer) throws RpcException
+	public HttpServerPipelineFactory(Executor workerExecutor, SSLContext sslContext, HttpServer httpServer) throws RpcException
 	{
 		this.workerExecutor = workerExecutor;
 		this.sslContext = sslContext;
 		this.httpServer = httpServer;
+		
+	}
+	
+	public void  setFetchServices(List<FetchService> fetchServices) throws RpcException
+	{
 		this.selector = new FetchServiceSelector(fetchServices);
 	}
 
@@ -64,7 +69,7 @@ public class HttpServerPipelineFactory implements ChannelPipelineFactory
 		//pipeline.addLast("aggregator", new HttpChunkAggregator(10485760));
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
-		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, selector, httpServer));
+		pipeline.addLast("handler", new HttpRequestHandler(sslContext, pipeline, selector, httpServer, workerExecutor));
 		return pipeline;
 	}
 }

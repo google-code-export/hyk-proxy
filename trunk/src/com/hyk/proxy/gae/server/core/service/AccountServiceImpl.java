@@ -1,0 +1,488 @@
+/**
+ * This file is part of the hyk-proxy project.
+ * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ *
+ * Description: AccountServiceImpl.java 
+ *
+ * @author yinqiwen [ 2010-4-8 | ÏÂÎç07:51:42 ]
+ *
+ */
+package com.hyk.proxy.gae.server.core.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.mail.Message;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hyk.proxy.gae.common.auth.Operation;
+import com.hyk.proxy.gae.common.service.AccountService;
+import com.hyk.proxy.gae.common.service.AuthRuntimeException;
+import com.hyk.proxy.gae.server.account.Group;
+import com.hyk.proxy.gae.server.account.User;
+import com.hyk.proxy.gae.server.config.Config;
+import com.hyk.proxy.gae.server.util.PMF;
+import com.hyk.proxy.gae.server.util.ServerUtils;
+import com.hyk.util.random.RandomUtil;
+
+/**
+ *
+ */
+public class AccountServiceImpl implements AccountService
+{
+	protected Logger								logger			= LoggerFactory.getLogger(getClass());
+	
+	private static final String	ROOT_NAME				= "root";
+	private static final String	ROOT_GROUP_NAME			= "root";
+
+	private static final String	PUBLIC_GROUP_NAME		= "public";
+
+	private static final String	ANONYMOUSE_NAME			= "anonymouse";
+	private static final String	ANONYMOUSE_GROUP_NAME	= "anonymouse";
+
+	private static final String	AUTH_FAILED				= "You have no authorization for this operation!";
+	private static final String	USER_NOTFOUND			= "User not found!";
+	private static final String	USER_EXIST				= "User already exist!";
+	private static final String	GRP_NOTFOUND			= "Group not found!";
+	private static final String	GRP_EXIST				= "Group already exist!";
+	private static final String	PASS_NOT_MATCH			= "The old password is not match!";
+
+	private Group				group;
+	private User				user;
+
+	public AccountServiceImpl(Group group, User user)
+	{
+		setUserAndGroup(group, user);
+	}
+
+	public void setUserAndGroup(Group group, User user)
+	{
+		this.group = group;
+		this.user = user;
+	}
+
+	protected String assertRootAuth()
+	{
+		if(!user.getEmail().equals(ROOT_NAME))
+		{
+			return AUTH_FAILED;
+		}
+		return null;
+	}
+
+	protected void sendAccountMail(String to, String passwd, boolean isCreate)
+	{
+		Properties props = new Properties();
+		Session session = Session.getDefaultInstance(props, null);
+
+
+		try
+		{
+
+			Message msg = new MimeMessage(session);
+			StringBuffer buffer = new StringBuffer();
+			buffer.append("Hi, ").append(to).append("\r\n\r\n");
+			if(isCreate)
+			{
+				buffer.append("You account on ").append(Config.getInstance().getAppId() + ".appspot.com").append(" has been created.").append("\r\n");
+				buffer.append("    Username:").append(to).append("\r\n");
+				buffer.append("    Password:").append(passwd).append("\r\n");
+				msg.setSubject("Your account has been activated");
+			}
+			else
+			{
+				msg.setSubject("Your account has been deleted.");
+				buffer.append("You account on ").append(Config.getInstance().getAppId() + ".appspot.com").append(" has been deleted.").append("\r\n");
+			}
+			
+			buffer.append("Thanks again for registering, admin@" + Config.getInstance().getAppId() + ".appspot.com");
+			String msgBody = buffer.toString();
+			
+			msg.setFrom(new InternetAddress("admin@" + Config.getInstance().getAppId() + ".appspotmail.com"));
+			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to, "Mr. User"));
+			
+			//msg.set
+			msg.setText(msgBody);
+			Transport.send(msg);
+		}
+		catch(Exception e)
+		{
+			logger.error("Failed to send mail to user:" + to, e);
+		}
+	}
+
+	protected static boolean createGroupIfNotExist(String groupName, PersistenceManager pm)
+	{
+		Query query = pm.newQuery(Group.class);
+		query.setFilter("name == \"" + groupName + "\"");
+		List<Group> groupResults = (List<Group>)query.execute();
+		// Group rootGroup = pm.getObjectById(Group.class, ROOT_GROUP_NAME);
+		if(null == groupResults || groupResults.isEmpty())
+		{
+			Group rootGroup = new Group();
+			rootGroup.setName(groupName);
+			pm.makePersistent(rootGroup);
+			return false;
+		}
+		return true;
+	}
+
+	protected static boolean createUserIfNotExist(String email, String groupName, PersistenceManager pm)
+	{
+		Query query = pm.newQuery(User.class);
+		query.setFilter("email == \"" + email + "\"");
+		List<User> userResults = (List<User>)query.execute();
+		if(null == userResults || userResults.isEmpty())
+		{
+			User root = new User();
+			root.setEmail(email);
+			root.setGroup(groupName);
+			if(email.equals(ANONYMOUSE_NAME))
+			{
+				root.setPasswd(ANONYMOUSE_NAME);
+			}
+			else
+			{
+				root.setPasswd(RandomUtil.generateRandomString(8));
+			}
+			pm.makePersistent(root);
+		}
+		return true;
+	}
+
+	/**
+	 * Create it if it not exist
+	 */
+	public static void checkDefaultAccount()
+	{
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			createGroupIfNotExist(ROOT_GROUP_NAME, pm);
+			createUserIfNotExist(ROOT_NAME, ROOT_GROUP_NAME, pm);
+			createGroupIfNotExist(PUBLIC_GROUP_NAME, pm);
+			createGroupIfNotExist(ANONYMOUSE_NAME, pm);
+			createUserIfNotExist(ANONYMOUSE_NAME, ANONYMOUSE_GROUP_NAME, pm);
+		}
+		finally
+		{
+			pm.close();
+		}
+	}
+
+	public static User getRootUser()
+	{
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			User root = pm.getObjectById(User.class, ROOT_NAME);
+			return root;
+		}
+		finally
+		{
+			pm.close();
+		}
+	}
+
+	@Override
+	public String createGroup(String groupname)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+		Group g = ServerUtils.getGroup(groupname);
+		if(null != g)
+		{
+			return GRP_EXIST;
+		}
+		g = new Group();
+		g.setName(groupname);
+		ServerUtils.storeObject(g);
+		return null;
+	}
+
+	@Override
+	public String createUser(String username, String groupname, String passwd)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+		Group g = ServerUtils.getGroup(groupname);
+		if(null == g)
+		{
+			return GRP_NOTFOUND;
+		}
+		User u = ServerUtils.getUser(username);
+		if(null != u)
+		{
+			return USER_EXIST;
+		}
+		Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
+		Matcher m = p.matcher(username);
+		boolean matchFound = m.matches();
+		if(!matchFound)
+		{
+			return "Username MUST be a email address!";
+		}
+		u = new User();
+		u.setEmail(username);
+		u.setGroup(groupname);
+		u.setPasswd(passwd);
+		ServerUtils.storeObject(u);
+		sendAccountMail(username, passwd, true);
+		return null;
+	}
+
+	@Override
+	public String modifyPassword(String username, String oldPass, String newPass)
+	{
+		if(user.getEmail().equals(ANONYMOUSE_NAME))
+		{
+			return "Can't modify anonymous user's password!";
+		}
+		if(user.getEmail().equals(ROOT_NAME) || user.getEmail().equals(username))
+		{
+			PersistenceManager pm = PMF.get().getPersistenceManager();
+			try
+			{
+				User modifyuser = ServerUtils.getUser(pm, username);
+				if(null == modifyuser)
+				{
+					return USER_NOTFOUND;
+				}
+				if(!user.getEmail().equals(ROOT_NAME))
+				{
+					if(!modifyuser.getPasswd().equals(oldPass))
+					{
+						return PASS_NOT_MATCH;
+					}
+				}
+				if(null == newPass)
+				{
+					return "New password can't be empty!";
+				}
+				modifyuser.setPasswd(newPass);
+				return null;
+			}
+			finally
+			{
+				pm.close();
+			}
+
+		}
+		return AUTH_FAILED;
+	}
+
+	@Override
+	public List<String[]> getGroupsInfo()
+	{
+		if(assertRootAuth() != null)
+		{
+			throw new AuthRuntimeException(assertRootAuth());
+		}
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			Query query = pm.newQuery(Group.class);
+			List<Group> groups = (List<Group>)query.execute();
+			List<String[]> ret = new ArrayList<String[]>();
+			for(Group g : groups)
+			{
+				String[] value = new String[2];
+				value[0] = g.getName();
+				value[1] = ServerUtils.toString(g.getBlacklist());
+				ret.add(value);
+			}
+			return ret;
+		}
+		finally
+		{
+			pm.close();
+		}
+	}
+
+	@Override
+	public List<String[]> getUsersInfo()
+	{
+		if(assertRootAuth() != null)
+		{
+			throw new AuthRuntimeException(assertRootAuth());
+		}
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			// pm.get
+			Query query = pm.newQuery(User.class);
+			List<User> users = (List<User>)query.execute();
+			List<String[]> ret = new ArrayList<String[]>();
+			for(User u : users)
+			{
+				String[] value = new String[4];
+				value[0] = u.getEmail();
+				value[1] = u.getPasswd();
+				value[2] = u.getGroup();
+				value[3] = ServerUtils.toString(u.getBlacklist());
+				ret.add(value);
+			}
+			return ret;
+		}
+		finally
+		{
+			pm.close();
+		}
+
+	}
+
+	@Override
+	public String deleteGroup(String groupname)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+
+		if(groupname.equals(ROOT_NAME) || groupname.equals(ANONYMOUSE_NAME) || groupname.equals(PUBLIC_GROUP_NAME))
+		{
+			return "Deletion not allowed!";
+		}
+
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			Group g = ServerUtils.getGroup(pm, groupname);
+			if(null == g)
+			{
+				return GRP_NOTFOUND;
+			}
+			pm.deletePersistent(g);
+			return null;
+		}
+		finally
+		{
+			pm.close();
+		}
+
+	}
+
+	@Override
+	public String deleteUser(String username)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+
+		if(username.equals(ROOT_NAME) || username.equals(ANONYMOUSE_NAME))
+		{
+			return "Deletion not allowed!";
+		}
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			User u = ServerUtils.getUser(pm, username);
+			if(null == u)
+			{
+				return USER_NOTFOUND;
+			}
+			pm.deletePersistent(u);
+			sendAccountMail(u.getEmail(), u.getPasswd(), false);
+			return null;
+		}
+		finally
+		{
+			pm.close();
+			
+		}
+
+	}
+
+	@Override
+	public String operationOnGroupBlackList(String groupname, String host, Operation operation)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			Group g = ServerUtils.getGroup(pm, groupname);
+			if(null == g)
+			{
+				return GRP_NOTFOUND;
+			}
+			Set<String> blacklist = g.getBlacklist();
+			switch(operation)
+			{
+				case ADD:
+				{
+					blacklist.add(host);
+					break;
+				}
+				case DELETE:
+				{
+					blacklist.remove(host);
+					break;
+				}
+			}
+			g.setBlacklist(blacklist);
+			return null;
+		}
+		finally
+		{
+			pm.close();
+		}
+	}
+
+	@Override
+	public String operationOnUserBlackList(String username, String host, Operation operation)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			User u = ServerUtils.getUser(pm, username);
+			if(null == u)
+			{
+				return USER_NOTFOUND;
+			}
+			Set<String> blacklist = u.getBlacklist();
+			switch(operation)
+			{
+				case ADD:
+				{
+					blacklist.add(host);
+					break;
+				}
+				case DELETE:
+				{
+					blacklist.remove(host);
+					break;
+				}
+			}
+			u.setBlacklist(blacklist);
+			return null;
+		}
+		finally
+		{
+			pm.close();
+		}
+	}
+}
