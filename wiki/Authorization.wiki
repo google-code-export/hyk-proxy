@@ -1,13 +1,11 @@
-#用户/组概念、管理.
-
 =用户/组概念=
 
-从V0.8.0beta开始引入用户组
-　* hyk-proxy的用户组概念，参考了UNIX用户模型，每一个用户属于一个组
-　* 在server部署成功后，系统会默认创建root/root， anonymouse/anonymouse用户以及public组
+从V0.8.0beta开始引入用户/组概念
+  * hyk-proxy的用户组概念，参考了UNIX用户模型，每一个用户属于一个组
+  * 在server部署成功后，系统会默认创建root/root，anonymouse/anonymouse用户以及public组
   * 初始创建的root用户密码是随机字符串
   * 只有root用户能够创建删除用户、组
-
+　
 =黑名单=
 
   * 目前用户、组支持黑名单权限管理，root用户可以给某一个用户添加/删除访问web site的黑名单
