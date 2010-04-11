@@ -11,6 +11,7 @@ package com.hyk.proxy.gae.client.handler;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,14 +46,15 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 	private AtomicInteger            nextFetcherSequence  = new AtomicInteger(0);
 	private AtomicInteger                    fetchCounter   = new AtomicInteger(0);
 	private AtomicInteger                     chunkSequence = new AtomicInteger(0);
-	private ExecutorService workers = Executors.newFixedThreadPool(5);
+	private Executor workers ;
 	private volatile boolean isClose  = false;
 	private final long offset;
 	private final long total;
 
 	
-	public RangeHttpProxyChunkedInput(FetchServiceSelector fetchServiceSelector, HttpRequestExchange forwardRequest, long offset, long total) throws IOException
+	public RangeHttpProxyChunkedInput(FetchServiceSelector fetchServiceSelector, Executor workerExecutor, HttpRequestExchange forwardRequest, long offset, long total) throws IOException
 	{
+		this.workers = workerExecutor;
 		this.total = total;
 		this.fetchServiceSelector = fetchServiceSelector;
 		this.forwardRequest = forwardRequest;
@@ -97,7 +99,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 				logger.debug("Close this RangeHttpProxyChunkedInput");
 			}
 			closeChunkInput();
-			workers.shutdown();
+			//workers.shutdown();
 		}
 		
 	}

@@ -23,4 +23,14 @@
       <MaxMessageSize>4096</MaxMessageSize>
    </XMPP-setting>
    
+   <blacklist>
+      <error-info>
+         <![CDATA[
+         <p>You are not allowed to visit this site via proxy. Please</p>
+         <p>1. Contact the administrator</p>
+         <p>Or</p>  
+         <p>2. Visit <a href="http://hyk-proxy.googlecode.com">hyk-proxy</a>, install your own proxy server.</p>  
+         ]]>
+      </error-info>
+   </blacklist>
 </hyk-proxy>

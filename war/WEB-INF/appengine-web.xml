@@ -11,10 +11,7 @@
 
 	<inbound-services>
 		<service>xmpp_message</service>
+		<service>mail</service>
 	</inbound-services>
 	
-	<admin-console>
-      <page name="Appstats" url="/stats" />
-    </admin-console>
-
 </appengine-web-app>

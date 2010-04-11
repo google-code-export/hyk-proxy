@@ -12,6 +12,7 @@ package com.hyk.proxy.gae.client.rpc;
 import static org.jboss.netty.channel.Channels.pipeline;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -27,6 +28,7 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
@@ -129,9 +131,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		}
 	}
 
-	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress, final int maxMessageSize) throws IOException
+	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress) throws IOException
 	{
 		super(threadPool);
+		setMaxMessageSize(10240000);
 		this.remoteAddress = remoteAddress;
 		// Java NIO is not support IPv6, here is a workaround
 		if(InetAddress.getByName(remoteAddress.getHost()) instanceof Inet6Address)
@@ -143,7 +146,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			factory = new NioClientSocketChannelFactory(threadPool, threadPool);
 		}
 		start();
-		setMaxMessageSize(maxMessageSize);
 		List<HttpClientSocketChannel> clientChannels = new ArrayList<HttpClientSocketChannel>();
 		int maxHttpConnectionSize = Config.getInstance().getHttpConnectionPoolSize();
 		for(int i = 0; i < maxHttpConnectionSize; i++)
@@ -156,10 +158,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 	private synchronized SocketChannel connectProxyServer()
 	{
-		if(logger.isDebugEnabled())
-		{
-			logger.debug("Connect remote proxy server.");
-		}
+		
 		ChannelPipeline pipeline = pipeline();
 
 		pipeline.addLast("decoder", new HttpResponseDecoder());
@@ -179,6 +178,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			connectHost = remoteAddress.getHost();
 			connectPort = remoteAddress.getPort();
+		}
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Connect remote proxy server " + connectHost + ":" + connectPort);
 		}
 		ChannelFuture future = channel.connect(new InetSocketAddress(connectHost, connectPort)).awaitUninterruptibly();
 		if(!future.isSuccess())
@@ -280,6 +283,16 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		private ByteArray content;
 
 		@Override
+		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
+		{
+			if(e.getCause() instanceof ConnectException)
+			{
+				config.activateDefaultProxy();
+			}
+			super.exceptionCaught(ctx, e);
+		}
+		
+		@Override
 		public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
 		{
 			if(logger.isDebugEnabled())
@@ -348,10 +361,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				}
 				else
 				{
-//					if(logger.isDebugEnabled())
-//					{
-//						logger.debug("Recv chunk:" + chunk.getContent().readableBytes());
-//					}
 					ChannelBuffer chunkContent = chunk.getContent();
 					//chunkContent.read
 					byte[] rawbuf = content.rawbuffer();

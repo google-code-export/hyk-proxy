@@ -1,1 +1,1 @@
-@java -cp "%~dp0\..\dist\hyk-proxy-client.jar;%~dp0\..\etc" com.hyk.proxy.gae.client.launch.StartProxyLocalServer %*
+@java -cp "%~dp0\..\dist\hyk-proxy-client.jar;%~dp0\..\etc" com.hyk.proxy.gae.client.launch.tui.StartProxyLocalServer %*

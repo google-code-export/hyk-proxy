@@ -115,6 +115,10 @@ public abstract class HttpMessageExhange implements Externalizable, java.io.Exte
 	public void setBody(byte[] data)
 	{
 		body.free();
+		if(null == data)
+		{
+			data = new byte[0];
+		}
 		body = ByteArray.wrap(data);
 		//this.body = data;
 	}

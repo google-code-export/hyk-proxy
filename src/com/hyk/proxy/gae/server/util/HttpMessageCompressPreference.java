@@ -4,7 +4,7 @@
  *
  * Description: HttpMessageCompressPreference.java 
  *
- * @author yinqiwen [ 2010-3-28 | обнГ09:47:48 ]
+ * @author yinqiwen [ 2010-3-28 | 09:47:48 pm ]
  *
  */
 package com.hyk.proxy.gae.server.util;

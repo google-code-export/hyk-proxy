@@ -9,7 +9,10 @@
  */
 package com.hyk.proxy.gae.client.config;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,41 +20,45 @@ import java.util.Properties;
 
 
 import com.hyk.compress.CompressorType;
+import com.hyk.proxy.gae.client.util.ClientUtils;
 
 /**
  *
  */
 public class Config
 {
-	private static final String	CONFIG_FILE						= "hyk-proxy-client.properties";
-	private static final String	APPID_CONFIG					= "remoteserver.appid";
-	private static final String	XMPP_USER_CONFIG				= "localserver.xmpp.user";
-	private static final String	XMPP_PASS_CONFIG				= "localserver.xmpp.passwd";
-	private static final String	XMPP_SERVER_HOST_CONFIG			= "localserver.xmpp.server.host";
-	private static final String	XMPP_SERVER_PORT_CONFIG			= "localserver.xmpp.server.port";
-	private static final String	XMPP_SERVER_OLDSSL_CONFIG		= "localserver.xmpp.oldssl.enable";
+	public static final String	CONFIG_FILE						= "hyk-proxy-client.conf";
+	public static final String	APPID_CONFIG					= "remoteserver.appid";
+	public static final String	XMPP_USER_CONFIG				= "localserver.xmpp.user";
+	public static final String	XMPP_PASS_CONFIG				= "localserver.xmpp.passwd";
+	public static final String	XMPP_SERVER_HOST_CONFIG			= "localserver.xmpp.server.host";
+	public static final String	XMPP_SERVER_PORT_CONFIG			= "localserver.xmpp.server.port";
+	public static final String	XMPP_SERVER_OLDSSL_CONFIG		= "localserver.xmpp.oldssl.enable";
 	
-	private static final String	IS_HTTP_ENABLE					= "localserver.http.enable";
-	private static final String	IS_XMPP_ENABLE					= "localserver.xmpp.enable";
-	private static final String	LOCAL_SERVER_HOST				= "localserver.host";
-	private static final String	LOCAL_SERVER_PORT				= "localserver.port";
-	private static final String	LOCAL_SERVER_SESSION_TIMEOUT	= "localserver.rpc.timeout";
-	private static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
-	private static final String	LOCAL_SERVER_COMPRESSOR_TYPE			= "localserver.rpc.compressor.type";
-	private static final String	LOCAL_SERVER_COMPRESSOR_TRIGGER			= "localserver.rpc.compressor.trigger";
-	private static final String   LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
-	private static final String   LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE  = "localserver.http.connection_pool_size";
+	public static final String	IS_HTTP_ENABLE					= "localserver.http.enable";
+	public static final String	IS_XMPP_ENABLE					= "localserver.xmpp.enable";
+	public static final String	LOCAL_SERVER_HOST				= "localserver.host";
+	public static final String	LOCAL_SERVER_PORT				= "localserver.port";
+	public static final String	LOCAL_SERVER_SESSION_TIMEOUT	= "localserver.rpc.timeout";
+	public static final String	LOCAL_SERVER_HTTP_FETCH_LIMIT	= "localserver.rpc.http.fetchlimitsize";
+	public static final String	LOCAL_SERVER_COMPRESSOR_TYPE			= "localserver.rpc.compressor.type";
+	public static final String	LOCAL_SERVER_COMPRESSOR_TRIGGER			= "localserver.rpc.compressor.trigger";
+	public static final String   LOCAL_SERVER_HTTP_MAX_FETCHER           = "localserver.rpc.http.maxfetcher";
+	public static final String   LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE  = "localserver.http.connection_pool_size";
 	
-	private static final String   LOCAL_SERVER_HTTP_PROXY_HOST  = "localserver.http.proxy.host";
-	private static final String   LOCAL_SERVER_HTTP_PROXY_PORT  = "localserver.http.proxy.port";
-	private static final String   LOCAL_SERVER_HTTP_PROXY_USER  = "localserver.http.proxy.user";
-	private static final String   LOCAL_SERVER_HTTP_PROXY_PASSWD  = "localserver.http.proxy.password";
+	public static final String   LOCAL_SERVER_HTTP_PROXY_HOST  = "localserver.http.proxy.host";
+	public static final String   LOCAL_SERVER_HTTP_PROXY_PORT  = "localserver.http.proxy.port";
+	public static final String   LOCAL_SERVER_HTTP_PROXY_USER  = "localserver.http.proxy.user";
+	public static final String   LOCAL_SERVER_HTTP_PROXY_PASSWD  = "localserver.http.proxy.password";
 	
-	private static final String   LOCAL_SERVER_THREAD_POOL_SIZE  = "localserver.threadpoolsize";
+	public static final String   LOCAL_SERVER_THREAD_POOL_SIZE  = "localserver.threadpoolsize";
+	
+	public static final String   LOCAL_SERVER_HTTP_PROXY_HOST_DEFAULT  = "localserver.http.proxy.host.default";
+	public static final String   LOCAL_SERVER_HTTP_PROXY_PORT_DEFAULT  = "localserver.http.proxy.port.default";
 	
 	public static final String	STOP_COMMAND					= "StopLocalServer";
 
-	private List<String>		appids							= new LinkedList<String>();
+	private List<AppIdAuth>		appids							= new LinkedList<AppIdAuth>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
 	private CompressorType		compressorType					= CompressorType.GZ;
@@ -60,6 +67,10 @@ public class Config
 	private int threadPoolSize = 20;
 	
 	private ProxyInfo proxy;
+	
+	private ProxyInfo defaultProxy = new ProxyInfo("www.google.com.hk");
+	
+	private Properties wholeProps;
 
 	private static Config		instance						= null;
 
@@ -76,21 +87,61 @@ public class Config
 	
 	public synchronized static Config getInstance(Properties props) throws IOException
 	{
-		if(null == instance)
-		{
-			instance = new Config(props);
-		}
+		instance = new Config(props);
 		return instance;
 	}
 
 	private Config(Properties props) throws IOException
 	{
 		loadFromProperties(props);
+		init();
+		this.wholeProps = props;
+	}
+	
+	private void init()
+	{
+		for(AppIdAuth appid:appids)
+		{
+			if(null == proxy && !ClientUtils.isHTTPServerReachable(appid.getAppid()))
+			{
+				activateDefaultProxy();
+				break;
+			}
+		}
+		if(!isHttpEnable && isXmppEnable)
+		{
+			if(accounts.isEmpty())
+			{
+				throw new IllegalArgumentException("No XMPP account found when XMPP mode enabled!");
+			}
+			for(XmppAccount account:accounts)
+			{
+				account.init();
+			}
+		}
+		
+		for(AppIdAuth appid:appids)
+		{
+			if(appid.getEmail() == null || appid.getEmail().equals(""))
+			{
+				appid.setEmail("anonymouse");
+			}
+			if(appid.getPasswd() == null || appid.getPasswd().equals(""))
+			{
+				appid.setPasswd("anonymouse");
+			}
+		}
+		
 	}
 
 	public ProxyInfo getProxyInfo()
 	{
 		return proxy;
+	}
+	
+	public void activateDefaultProxy()
+	{
+		proxy = defaultProxy;
 	}
 	
 	public int getHttpConnectionPoolSize()
@@ -128,7 +179,7 @@ public class Config
 		return maxFetcherForBigFile;
 	}
 	
-	public List<String> getAppids()
+	public List<AppIdAuth> getAppids()
 	{
 		return appids;
 	}
@@ -180,9 +231,15 @@ public class Config
 				continue;
 			}
 			value = value.trim();
-			if(key.startsWith(APPID_CONFIG))
+			if(key.startsWith(APPID_CONFIG) && (!key.contains("auth.email") && !key.contains("auth.passwd")))
 			{
-				appids.add(value);
+				AppIdAuth auth = new AppIdAuth();
+				auth.setAppid(value);
+				String email = props.getProperty(key + ".auth.email");
+				String passwd = props.getProperty(key + ".auth.passwd");
+				auth.setEmail(email);
+				auth.setPasswd(passwd);
+				appids.add(auth);
 			}
 			else if(key.startsWith(XMPP_USER_CONFIG))
 			{
@@ -210,7 +267,7 @@ public class Config
 				{
 					account.setOldSSLEnable(Boolean.parseBoolean(oldssl.trim()));
 				}
-				accounts.add(account.init());
+				accounts.add(account);
 			}
 			else if(key.equals(IS_HTTP_ENABLE))
 			{
@@ -276,8 +333,29 @@ public class Config
 					proxy.setPassword(passwd.trim());
 				}
 			}
+			else if(key.equals(LOCAL_SERVER_HTTP_PROXY_HOST_DEFAULT))
+			{
+				defaultProxy = new ProxyInfo();
+				defaultProxy.setHost(value);
+				String port = props.getProperty(LOCAL_SERVER_HTTP_PROXY_PORT_DEFAULT);
+				if(null != port && !port.trim().equals(""))
+				{
+					defaultProxy.setPort(Integer.parseInt(port.trim()));
+				}
+			}
 		}
 		
 		return this;
 	}
+	
+	public void storeToConf(String comment) throws IOException
+	{
+		URL url = Config.class.getResource("/" + CONFIG_FILE);
+		String conf = url.getFile();
+		FileOutputStream fos = new FileOutputStream(conf);
+		wholeProps.store(fos, comment);
+		fos.close();
+	}
 }
+
+

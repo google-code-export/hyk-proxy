@@ -9,9 +9,14 @@
  */
 package com.hyk.proxy.gae.client.util;
 
+import java.io.Console;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.security.KeyStore;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.Executor;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -26,12 +31,23 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.compress.CompressorFactory;
+import com.hyk.compress.DefaultCompressPreference;
+import com.hyk.proxy.gae.client.config.Config;
+import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.httpserver.HttpServer;
+import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
+import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
 import com.hyk.proxy.gae.common.http.header.SetCookieHeaderValue;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
+import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
+import com.hyk.rpc.core.RPC;
+import com.hyk.rpc.core.RpcException;
+import com.hyk.rpc.core.constant.RpcConstants;
 import com.hyk.util.buffer.ByteArray;
 
 /**
@@ -40,6 +56,10 @@ import com.hyk.util.buffer.ByteArray;
 public class ClientUtils
 {
 	protected static Logger				logger			= LoggerFactory.getLogger(ClientUtils.class);
+	
+	private static byte[] STDIN_BUFFER = new byte[1024];
+	private static Console console = System.console();
+	
 	private static final String	ContentRangeValueHeader	= "bytes";
 
 	public static SSLContext initSSLContext() throws Exception
@@ -119,5 +139,69 @@ public class ClientUtils
 		}
 		return false;
 	}
+	
+	public static RPC createHttpRPC(String appid, Executor workerExecutor) throws IOException, RpcException
+	{
+		Config config = Config.getInstance();
+		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
+		Properties initProps = new Properties();
+		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
+		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
+		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
+		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost", 8888, "/fetchproxy");
+		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
+		return new RPC(httpCleintRpcchannle, initProps);
+	}
+	
+	public static RPC createXmppRPC(XmppAccount account, Executor workerExecutor) throws IOException, RpcException, XMPPException
+	{
+		Config config = Config.getInstance();
+		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
+		Properties initProps = new Properties();
+		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
+		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
+		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
+		return new RPC(xmppRpcchannle, initProps);
+	}
+	
+	public static boolean isHTTPServerReachable(String appid)
+	{
+		String server = appid + ".appspot.com";
+		Socket socket = new Socket();
+		try
+		{
+			socket.connect(new InetSocketAddress(server, 80));
+			return true;
+		}
+		catch(IOException e)
+		{
+			return false;
+		}
+		finally
+		{
+			try
+			{
+				socket.close();
+			}
+			catch(IOException e)
+			{
+				//do nothing
+			}
+		}
+	}
 
+	public static String readFromStdin(boolean isEcho) throws IOException
+	{	
+//		int len = System.in.read(STDIN_BUFFER);
+//		return new String(STDIN_BUFFER, 0, len).trim();
+//		
+		if(isEcho)
+		{
+			return console.readLine().trim();
+		}
+		else
+		{
+			return new String(console.readPassword()).trim();
+		}
+	}
 }
