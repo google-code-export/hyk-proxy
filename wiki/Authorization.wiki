@@ -15,7 +15,7 @@
 
 =Root用户=
   * root用户初始密码必须通过访问web方式才能得到
-  * 访问 http://<appid>.appspot.com, 点击admin链接按步骤得到root密码
+  * 访问 `http://<appid>.appspot.com`, 点击admin链接按步骤得到root密码
 
 =用户组管理 =
 V0.8.0beta提供了一个admin(admin.sh/admin.bat)工具用于管理用户组管理，工具随client包分发，在`<hyk-proxy-client>/bin`下
