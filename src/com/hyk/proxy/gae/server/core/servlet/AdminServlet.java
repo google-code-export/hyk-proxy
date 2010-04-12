@@ -4,7 +4,7 @@
  *
  * Description: AdminServlet.java 
  *
- * @author yinqiwen [ 2010-4-5 | обнГ01:47:14 ]
+ * @author qiying.wang [ Apr 7, 2010 | 5:02:26 PM ]
  *
  */
 package com.hyk.proxy.gae.server.core.servlet;
@@ -24,6 +24,6 @@ public class AdminServlet extends HttpServlet
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
-		//Nothing now
+		resp.getWriter().write("hello,world!");
 	}
 }

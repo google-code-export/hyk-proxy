@@ -21,4 +21,4 @@ if $cygwin; then
   CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
 fi
 
-javaw  -cp "$CLASSPATH" com.hyk.proxy.gae.client.launch.gui.GUILauncher
+java  -cp "$CLASSPATH" com.hyk.proxy.gae.client.launch.gui.GUILauncher
