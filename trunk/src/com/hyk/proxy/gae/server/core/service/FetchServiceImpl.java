@@ -158,6 +158,7 @@ public class FetchServiceImpl implements FetchService
 			if(null == ret)
 			{
 				HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
+				
 				HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
 				ret =  ServerUtils.toHttpResponseExchange(fetchRes);
 				cacheResponse(req, ret);
