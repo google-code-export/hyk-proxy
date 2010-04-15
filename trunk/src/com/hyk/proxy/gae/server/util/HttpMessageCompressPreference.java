@@ -10,7 +10,6 @@
 package com.hyk.proxy.gae.server.util;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 import com.hyk.compress.CompressPreference;
 import com.hyk.compress.Compressor;
@@ -25,9 +24,9 @@ public class HttpMessageCompressPreference implements CompressPreference
 {
 	private static Compressor compressor;
 	private static int trigger;
-	private static List<Pattern> ignorePatterns;
+	private static List<String> ignorePatterns;
 	
-	public static void init(Compressor compressor, int trigger, List<Pattern> ignorePatterns)
+	public static void init(Compressor compressor, int trigger, List<String> ignorePatterns)
 	{
 		HttpMessageCompressPreference.compressor = compressor;
 		HttpMessageCompressPreference.trigger = trigger;
@@ -38,13 +37,13 @@ public class HttpMessageCompressPreference implements CompressPreference
 	public Compressor getCompressor()
 	{
 		String contentType = ThreadLocalUtil.getThreadLocalUtil(String.class).getThreadLocalObject();
-		if(null != contentType)
+		if(compressor.equals(CompressorType.NONE) && null != contentType)
 		{
 			if(null != ignorePatterns)
 			{
-				for(Pattern p:ignorePatterns)
+				for(String p:ignorePatterns)
 				{
-					if(p.matcher(contentType.toLowerCase()).matches())
+					if(contentType.toLowerCase().indexOf(p) != -1)
 					{
 						return CompressorFactory.getCompressor(CompressorType.NONE);
 					}

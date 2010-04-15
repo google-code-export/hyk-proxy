@@ -27,6 +27,8 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.hyk.proxy.gae.common.auth.Operation;
 import com.hyk.proxy.gae.common.service.AccountService;
 import com.hyk.proxy.gae.common.service.AuthRuntimeException;
@@ -42,6 +44,8 @@ import com.hyk.util.random.RandomUtil;
  */
 public class AccountServiceImpl implements AccountService
 {
+	
+	
 	protected Logger								logger			= LoggerFactory.getLogger(getClass());
 	
 	private static final String	ROOT_NAME				= "root";
@@ -211,6 +215,7 @@ public class AccountServiceImpl implements AccountService
 		g = new Group();
 		g.setName(groupname);
 		ServerUtils.storeObject(g);
+		ServerUtils.cacheGroup(g);
 		return null;
 	}
 
@@ -243,6 +248,7 @@ public class AccountServiceImpl implements AccountService
 		u.setGroup(groupname);
 		u.setPasswd(passwd);
 		ServerUtils.storeObject(u);
+		ServerUtils.cacheUser(u);
 		sendAccountMail(username, passwd, true);
 		return null;
 	}
@@ -276,6 +282,7 @@ public class AccountServiceImpl implements AccountService
 					return "New password can't be empty!";
 				}
 				modifyuser.setPasswd(newPass);
+				ServerUtils.cacheUser(modifyuser);
 				return null;
 			}
 			finally
@@ -368,6 +375,7 @@ public class AccountServiceImpl implements AccountService
 			{
 				return GRP_NOTFOUND;
 			}
+			ServerUtils.removegroupCache(g);
 			pm.deletePersistent(g);
 			return null;
 		}
@@ -398,6 +406,7 @@ public class AccountServiceImpl implements AccountService
 			{
 				return USER_NOTFOUND;
 			}
+			ServerUtils.removeUserCache(u);
 			pm.deletePersistent(u);
 			sendAccountMail(u.getEmail(), u.getPasswd(), false);
 			return null;
@@ -440,6 +449,7 @@ public class AccountServiceImpl implements AccountService
 				}
 			}
 			g.setBlacklist(blacklist);
+			ServerUtils.cacheGroup(g);
 			return null;
 		}
 		finally
@@ -478,6 +488,7 @@ public class AccountServiceImpl implements AccountService
 				}
 			}
 			u.setBlacklist(blacklist);
+			ServerUtils.cacheUser(u);
 			return null;
 		}
 		finally

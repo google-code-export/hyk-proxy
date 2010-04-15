@@ -34,8 +34,6 @@ public class Launcher extends HttpServlet{
 	
 	private static XmppServletRpcChannel xmppServletRpcChannel = null;
 	private static HttpServletRpcChannel httpServletRpcChannel = null;
-	//private static RPC xmppRpc;
-	//private static RPC httpRpc;
 	
 	
 	public static XmppServletRpcChannel getXmppServletRpcChannel()

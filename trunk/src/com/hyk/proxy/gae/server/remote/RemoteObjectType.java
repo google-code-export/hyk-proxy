@@ -12,7 +12,7 @@ package com.hyk.proxy.gae.server.remote;
 /**
  *
  */
-public enum RemoteObjectType
+public enum RemoteObjectType 
 {
 	FETCH,ACCOUNT
 }
