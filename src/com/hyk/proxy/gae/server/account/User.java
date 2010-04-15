@@ -9,6 +9,7 @@
  */
 package com.hyk.proxy.gae.server.account;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import javax.jdo.annotations.IdentityType;
@@ -20,8 +21,10 @@ import javax.jdo.annotations.PrimaryKey;
  *
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION)
-public class User
+public class User implements Serializable
 {
+	public static final String CACHE_NAME = "CACHE_USER";
+	
 	public String getEmail()
 	{
 		return email;

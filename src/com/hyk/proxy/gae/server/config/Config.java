@@ -25,7 +25,9 @@ public class Config
 	private Compressor compressor;
 	private int compressTrigger;
 	
-	private String blacklistErrorInfo;
+	private byte[] blacklistErrorPage;
+	
+	//private String blacklistErrorInfo;
 
 	private int maxXmppMessageSize;
 	
@@ -49,17 +51,17 @@ public class Config
 		return compressTrigger;
 	}
 
-	public List<Pattern> getIgnorePatterns()
+	public List<String> getIgnorePatterns()
 	{
 		return ignorePatterns;
 	}
 	
-	public String getBlacklistErrorInfo()
+	public byte[] getBlacklistErrorPage()
 	{
-		return blacklistErrorInfo;
+		return blacklistErrorPage;
 	}
 
-	private List<Pattern> ignorePatterns = new ArrayList<Pattern>(); 
+	private List<String> ignorePatterns = new ArrayList<String>(); 
 	
 	private static Config instance = null;
 	
@@ -96,13 +98,22 @@ public class Config
 		for(int i = 0; i < ignoreList.getLength(); i++)
 		{
 			String ignoreType = ignoreList.item(i).getTextContent().trim();
-			instance.ignorePatterns.add(Pattern.compile(ignoreType.toLowerCase()));
+			instance.ignorePatterns.add(ignoreType.toLowerCase());
 		}
 		
 		String maxMessageSize = doc.getElementsByTagName("MaxMessageSize").item(0).getTextContent();
 		instance.maxXmppMessageSize = Integer.parseInt(maxMessageSize);
 		
-		instance.blacklistErrorInfo = doc.getElementsByTagName("error-info").item(0).getTextContent();
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\"/>");
+		buffer.append("<title>Error 403 User not allowed to visit this site</title>");
+		buffer.append("</head>");
+		buffer.append("<body><h2>HTTP ERROR 403</h2>");
+		buffer.append(doc.getElementsByTagName("error-info").item(0).getTextContent());
+		buffer.append("</body></html>");
+		String bodystr = buffer.toString();
+		instance.blacklistErrorPage = bodystr.getBytes();
+
 		return instance;
 	}
 }

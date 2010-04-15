@@ -9,6 +9,8 @@
  */
 package com.hyk.proxy.gae.server.remote;
 
+import java.io.Serializable;
+
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.PersistenceCapable;
@@ -19,8 +21,10 @@ import javax.jdo.annotations.PrimaryKey;
  *
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION)
-public class RemoteObject
+public class RemoteObject implements Serializable
 {
+	public static final String CACHE_LIST_NAME = "RemoteObjectList";
+	
 	public String getUsername()
 	{
 		return username;
