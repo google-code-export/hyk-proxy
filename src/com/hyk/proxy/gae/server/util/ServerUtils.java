@@ -19,6 +19,7 @@ import java.util.Set;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import com.google.appengine.api.memcache.Expiration;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.appengine.api.urlfetch.FetchOptions;
@@ -26,6 +27,7 @@ import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.google.apphosting.api.ApiProxy.CapabilityDisabledException;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.server.account.Group;
@@ -135,7 +137,15 @@ public class ServerUtils
 		List<RemoteObject> results = (List<RemoteObject>)query.execute();
 		List<RemoteObject> cache = new ArrayList<RemoteObject>();
 		cache.addAll(results);
-		memcache.put(RemoteObject.CACHE_LIST_NAME, cache);
+		try
+		{
+			memcache.put(RemoteObject.CACHE_LIST_NAME, cache);
+		}
+		catch(CapabilityDisabledException e)
+		{
+			//do nothing;
+		}
+		
 		return cache;
 	}
 

@@ -21,6 +21,7 @@ import com.hyk.proxy.gae.server.core.service.AccountServiceImpl;
 import com.hyk.proxy.gae.server.core.service.FetchServiceImpl;
 import com.hyk.proxy.gae.server.core.service.RemoteServiceManagerImpl;
 import com.hyk.proxy.gae.server.util.HttpMessageCompressPreference;
+import com.hyk.proxy.gae.server.util.KeepJVMWarmTaskHandler;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.constant.RpcConstants;
 
@@ -71,7 +72,7 @@ public class Launcher extends HttpServlet{
 			httpServletRpcChannel.setMaxMessageSize(10240000);
 			//httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 			httpRpc.getLocalNaming().bind(RemoteServiceManager.NAME, new RemoteServiceManagerImpl(httpRpc));
-			
+			KeepJVMWarmTaskHandler.addKeepJVMWarmTask();
 			AccountServiceImpl.checkDefaultAccount();
 			
 			if(logger.isInfoEnabled())

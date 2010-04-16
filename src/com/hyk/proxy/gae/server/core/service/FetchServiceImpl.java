@@ -26,6 +26,7 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.apphosting.api.ApiProxy.CapabilityDisabledException;
 import com.hyk.proxy.gae.common.http.header.SimpleNameValueListHeader;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
@@ -41,21 +42,21 @@ import com.hyk.util.thread.ThreadLocalUtil;
  */
 public class FetchServiceImpl implements FetchService
 {
-	
-	protected Logger	logger	= LoggerFactory.getLogger(getClass());
-	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
-	protected MemcacheService	memcache	= MemcacheServiceFactory.getMemcacheService();
 
-	private Group group;
-	private User user;
-	
-	private Set<String> blacklist = new HashSet<String>();
-	
+	protected Logger			logger			= LoggerFactory.getLogger(getClass());
+	protected URLFetchService	urlFetchService	= URLFetchServiceFactory.getURLFetchService();
+	protected MemcacheService	memcache		= MemcacheServiceFactory.getMemcacheService();
+
+	private Group				group;
+	private User				user;
+
+	private Set<String>			blacklist		= new HashSet<String>();
+
 	public FetchServiceImpl(Group group, User user)
 	{
 		setUserAndGroup(group, user);
 	}
-	
+
 	public void setUserAndGroup(Group group, User user)
 	{
 		this.group = group;
@@ -64,12 +65,10 @@ public class FetchServiceImpl implements FetchService
 		blacklist.addAll(group.getBlacklist());
 		blacklist.addAll(user.getBlacklist());
 	}
-	
-	
-	
+
 	protected boolean cacheResponse(HttpRequestExchange req, HttpResponseExchange res)
 	{
-		//only 2xx/3xx for get could be cached
+		// only 2xx/3xx for get could be cached
 		if(res.getResponseCode() < 400 && req.getMethod().equalsIgnoreCase(HTTPMethod.GET.name()))
 		{
 			String cacheControlValue = res.getHeaderValue("cache-control");
@@ -83,22 +82,30 @@ public class FetchServiceImpl implements FetchService
 				String maxAgeValue = cacheControl.getValue("max-age");
 				if(null == maxAgeValue)
 				{
-					maxAgeValue = cacheControl.getValue("s-maxage");	
+					maxAgeValue = cacheControl.getValue("s-maxage");
 				}
 				if(null != maxAgeValue)
 				{
 					int maxAge = Integer.parseInt(maxAgeValue);
 					if(maxAge > 0)
 					{
-						memcache.put(req, res, Expiration.byDeltaSeconds(maxAge));
-					}		
+						try
+						{
+							memcache.put(req, res, Expiration.byDeltaSeconds(maxAge));
+						}
+						catch(CapabilityDisabledException e)
+						{
+							logger.error("In maintenance, memcache is not available!");
+						}
+
+					}
 					return true;
 				}
-			}	
+			}
 		}
 		return false;
 	}
-	
+
 	protected HttpResponseExchange getCache(HttpRequestExchange req)
 	{
 		if(req.getMethod().equalsIgnoreCase(HTTPMethod.GET.name()))
@@ -107,19 +114,19 @@ public class FetchServiceImpl implements FetchService
 		}
 		return null;
 	}
-	
+
 	protected HttpResponseExchange createErrorResponse()
 	{
 		HttpResponseExchange res = new HttpResponseExchange();
 		res.setResponseCode(403);
 		res.addHeader("content-type", "text/html; charset=utf-8");
-		
+
 		byte[] content = Config.getInstance().getBlacklistErrorPage();
 		res.addHeader("content-length", "" + content.length);
 		res.setBody(content);
 		return res;
 	}
-	
+
 	protected boolean authByBlacklist(HttpRequestExchange req)
 	{
 		Iterator<String> hosts = blacklist.iterator();
@@ -130,40 +137,41 @@ public class FetchServiceImpl implements FetchService
 			{
 				return false;
 			}
-			if(req.getHeaderValue("Host").indexOf(host)!= -1)
+			if(req.getHeaderValue("Host").indexOf(host) != -1)
 			{
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
 		HttpResponseExchange ret = null;
-		
+
 		if(!authByBlacklist(req))
 		{
 			return createErrorResponse();
 		}
 		try
-		{			
+		{
 			ret = getCache(req);
 			if(null == ret)
 			{
 				HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
-				
+
 				HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
-				ret =  ServerUtils.toHttpResponseExchange(fetchRes);
+				ret = ServerUtils.toHttpResponseExchange(fetchRes);
 				cacheResponse(req, ret);
 			}
-			
+
 			String contentType = ret.getHeaderValue("content-type");
-		    if(null == contentType)
-		    {
-		    	contentType = "";
-		    }
-		    //Store this value since the RPC framework would use this value to judge whole message compressing or not 
+			if(null == contentType)
+			{
+				contentType = "";
+			}
+			// Store this value since the RPC framework would use this value to
+			// judge whole message compressing or not
 			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
 		}
 		catch(IOException e)

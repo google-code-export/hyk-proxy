@@ -33,4 +33,6 @@
          ]]>
       </error-info>
    </blacklist>
+   
+   <keep-warm-period>60000</keep-warm-period>
 </hyk-proxy>
