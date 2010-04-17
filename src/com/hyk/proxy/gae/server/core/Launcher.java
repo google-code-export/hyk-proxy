@@ -72,7 +72,6 @@ public class Launcher extends HttpServlet{
 			httpServletRpcChannel.setMaxMessageSize(10240000);
 			//httpRpc.getLocalNaming().bind("fetch", new FetchServiceImpl());
 			httpRpc.getLocalNaming().bind(RemoteServiceManager.NAME, new RemoteServiceManagerImpl(httpRpc));
-			KeepJVMWarmTaskHandler.addKeepJVMWarmTask();
 			AccountServiceImpl.checkDefaultAccount();
 			
 			if(logger.isInfoEnabled())

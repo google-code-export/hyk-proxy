@@ -23,7 +23,7 @@ public class ClearScreen implements CommandHandler
 	public ClearScreen()
 	{
 		StringBuffer buffer = new StringBuffer();
-		for(int i = 0; i < 40; i++)
+		for(int i = 0; i < 200; i++)
 		{
 			buffer.append(System.getProperty("line.separator"));
 		}

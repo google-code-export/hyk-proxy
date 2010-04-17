@@ -44,8 +44,6 @@ import com.hyk.util.random.RandomUtil;
  */
 public class AccountServiceImpl implements AccountService
 {
-	
-	
 	protected Logger								logger			= LoggerFactory.getLogger(getClass());
 	
 	private static final String	ROOT_NAME				= "root";
@@ -226,30 +224,39 @@ public class AccountServiceImpl implements AccountService
 		{
 			return assertRootAuth();
 		}
-		Group g = ServerUtils.getGroup(groupname);
-		if(null == g)
+		try
 		{
-			return GRP_NOTFOUND;
+			Group g = ServerUtils.getGroup(groupname);
+			if(null == g)
+			{
+				return GRP_NOTFOUND;
+			}
+			User u = ServerUtils.getUser(username);
+			if(null != u)
+			{
+				return USER_EXIST;
+			}
+			Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
+			Matcher m = p.matcher(username);
+			boolean matchFound = m.matches();
+			if(!matchFound)
+			{
+				return "Username MUST be a email address!";
+			}
+			u = new User();
+			u.setEmail(username);
+			u.setGroup(groupname);
+			u.setPasswd(passwd);
+			ServerUtils.storeObject(u);
+			ServerUtils.cacheUser(u);
+			sendAccountMail(username, passwd, true);
 		}
-		User u = ServerUtils.getUser(username);
-		if(null != u)
+		catch(Throwable e)
 		{
-			return USER_EXIST;
+			logger.error("Failed to create user.", e);
+			return "Failed to create user." + e.getMessage();
 		}
-		Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
-		Matcher m = p.matcher(username);
-		boolean matchFound = m.matches();
-		if(!matchFound)
-		{
-			return "Username MUST be a email address!";
-		}
-		u = new User();
-		u.setEmail(username);
-		u.setGroup(groupname);
-		u.setPasswd(passwd);
-		ServerUtils.storeObject(u);
-		ServerUtils.cacheUser(u);
-		sendAccountMail(username, passwd, true);
+		
 		return null;
 	}
 
@@ -407,9 +414,14 @@ public class AccountServiceImpl implements AccountService
 				return USER_NOTFOUND;
 			}
 			ServerUtils.removeUserCache(u);
-			pm.deletePersistent(u);
 			sendAccountMail(u.getEmail(), u.getPasswd(), false);
+			pm.deletePersistent(u);
 			return null;
+		}
+		catch(Throwable e)
+		{
+			logger.error("Failed to delete user.", e);
+			return "Failed to delete user." + e.getMessage();
 		}
 		finally
 		{
