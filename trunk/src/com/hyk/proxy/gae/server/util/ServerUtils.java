@@ -59,7 +59,10 @@ public class ServerUtils
 		cache.setGroup(u.getGroup());
 		cache.setPasswd(u.getPasswd());
 		Set<String> blacklist = new HashSet<String>();
-		blacklist.addAll(u.getBlacklist());
+		if(null != u.getBlacklist())
+		{
+			blacklist.addAll(u.getBlacklist());
+		}
 		cache.setBlacklist(blacklist);
 		memcache.put(User.CACHE_NAME + u.getEmail(), cache);
 	}
@@ -69,7 +72,10 @@ public class ServerUtils
 		Group cache = new Group();
 		cache.setName(g.getName());
 		Set<String> blacklist = new HashSet<String>();
-		blacklist.addAll(g.getBlacklist());
+		if(null != g.getBlacklist())
+		{
+			blacklist.addAll(g.getBlacklist());
+		}
 		cache.setBlacklist(blacklist);
 		memcache.put(Group.CACHE_NAME + g.getName(), cache);
 	}

@@ -26,19 +26,12 @@ public class Config
 	private int compressTrigger;
 	
 	private byte[] blacklistErrorPage;
-	
-	private long keepWarmPeriod;
 
 	private int maxXmppMessageSize;
 	
 	public int getMaxXmppMessageSize()
 	{
 		return maxXmppMessageSize;
-	}
-	
-	public long getKeepWarmPeriod()
-	{
-		return keepWarmPeriod;
 	}
 
 	public String getAppId()
@@ -119,8 +112,6 @@ public class Config
 		String bodystr = buffer.toString();
 		instance.blacklistErrorPage = bodystr.getBytes();
 
-		String keepWarmPeriodStr = doc.getElementsByTagName("keep-warm-period").item(0).getTextContent();
-		instance.keepWarmPeriod = Long.parseLong(keepWarmPeriodStr);
 		return instance;
 	}
 }

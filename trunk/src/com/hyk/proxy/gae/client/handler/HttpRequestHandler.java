@@ -232,15 +232,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 			proxyRequestBody.put(contentBody);
 		}
 
-		int bodyLen = gaeRequest.getContentLength();
-
-		if(bodyLen > 0)
-		{
-			byte[] payload = new byte[bodyLen];
-			ChannelBuffer body = recvReq.getContent();
-			body.readBytes(payload);
-			gaeRequest.setBody(payload);
-		}
+//		int bodyLen = gaeRequest.getContentLength();
+//
+//		if(bodyLen > 0)
+//		{
+//			byte[] payload = new byte[bodyLen];
+//			ChannelBuffer body = recvReq.getContent();
+//			body.readBytes(payload);
+//			gaeRequest.setBody(payload);
+//		}
 		return gaeRequest;
 	}
 
