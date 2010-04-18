@@ -20,6 +20,8 @@ public interface RemoteServiceManager
 {
 	public static final String NAME = "REMOTE_SERVICE_MANAGER";
 	
+	public static final long ID = 1;
+	
 	public FetchService getFetchService(UserInfo user);
 	
 	public AccountService getAccountService(UserInfo user);

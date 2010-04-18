@@ -9,15 +9,11 @@
  */
 package com.hyk.proxy.gae.server.stat;
 
-import javax.jdo.annotations.IdentityType;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
+import javax.persistence.Id;
 
 /**
  *
  */
-@PersistenceCapable(identityType = IdentityType.APPLICATION)
 public class BandwidthStatisticsResult
 {
 	public String getTargetSiteHost()
@@ -50,13 +46,11 @@ public class BandwidthStatisticsResult
 		Incoming = incoming;
 	}
 
-	@PrimaryKey
+	@Id
 	private String targetSiteHost;
 	
-	@Persistent
 	private long outgoing;
 	
-	@Persistent
 	private long Incoming;
 	
 }

@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jdo.PersistenceManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +25,6 @@ import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
 import com.hyk.proxy.gae.server.remote.RemoteObject;
 import com.hyk.proxy.gae.server.remote.RemoteObjectType;
-import com.hyk.proxy.gae.server.util.PMF;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.rpc.core.RPC;
 
@@ -50,46 +47,37 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 
 	protected void saveRemoteObject(Object remoteObj, RemoteObjectType type, String username, String groupname)
 	{
-		long id = rpc.getRemoteObjectId(remoteObj);
-		ServerUtils.saveRemoteObject(id, type, username, groupname);
+		long objid = rpc.getRemoteObjectId(remoteObj);
+		ServerUtils.saveRemoteObject(objid, type, username, groupname);
 	}
-	
+
 	protected void loadRemoteObjects()
 	{
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+		List<RemoteObject> ros = ServerUtils.loadRemoteObjects();
+		if(null == ros)
 		{
-			List<RemoteObject> ros = ServerUtils.loadRemoteObjects(pm);
-			if(null == ros)
+			return;
+		}
+		for(RemoteObject ro : ros)
+		{
+			switch(ro.getType())
 			{
-				return;
-			}
-			for(RemoteObject ro:ros)
-			{
-				switch(ro.getType())
+				case FETCH:
 				{
-					case FETCH:
-					{
-						FetchServiceImpl impl = createFetchServiceImpl(ro.getUsername(), ro.getGroupname());
-						fetchServiceTable.put(ro.getUsername(), (FetchService)rpc.exportRemoteObject(impl, ro.getObjid()));
-						break;
-					}
-					case ACCOUNT:
-					{
-						AccountServiceImpl impl = createAccountServiceImpl(ro.getUsername(), ro.getGroupname());
-						accountServiceTable.put(ro.getUsername(), (AccountService)rpc.exportRemoteObject(impl, ro.getObjid()));
-						break;
-					}
+					FetchServiceImpl impl = createFetchServiceImpl(ro.getUsername(), ro.getGroupname());
+					fetchServiceTable.put(ro.getUsername(), (FetchService)rpc.exportRemoteObject(impl, ro.getObjid()));
+					break;
+				}
+				case ACCOUNT:
+				{
+					AccountServiceImpl impl = createAccountServiceImpl(ro.getUsername(), ro.getGroupname());
+					accountServiceTable.put(ro.getUsername(), (AccountService)rpc.exportRemoteObject(impl, ro.getObjid()));
+					break;
 				}
 			}
 		}
-		finally
-		{
-			pm.close();
-		}
-		
 	}
-	
+
 	protected FetchServiceImpl createFetchServiceImpl(String username, String groupname)
 	{
 		User user = ServerUtils.getUser(username);
@@ -101,7 +89,7 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 		Group group = ServerUtils.getGroup(groupname);
 		return new FetchServiceImpl(group, user);
 	}
-	
+
 	protected AccountServiceImpl createAccountServiceImpl(String username, String groupname)
 	{
 		User user = ServerUtils.getUser(username);
@@ -113,7 +101,7 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 		Group group = ServerUtils.getGroup(groupname);
 		return new AccountServiceImpl(group, user);
 	}
-	
+
 	@Override
 	public FetchService getFetchService(UserInfo userInfo)
 	{
@@ -123,7 +111,7 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			logger.error("Invalid username/passwd.");
 			throw new AuthRuntimeException("Invalid username/passwd.");
 		}
-		//Group group = ServerUtils.getGroup(user.getGroup());
+		// Group group = ServerUtils.getGroup(user.getGroup());
 		FetchService remoteService = null;
 		if(!fetchServiceTable.containsKey(user.getEmail()))
 		{
@@ -152,24 +140,30 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			logger.error("Invalid username/passwd.");
 			throw new AuthRuntimeException("Invalid username/passwd.");
 		}
-		
-		AccountService remoteService = null;
-		if(!accountServiceTable.containsKey(user.getEmail()))
+		try
 		{
-			AccountServiceImpl service = createAccountServiceImpl(user.getEmail(), user.getGroup());
-			remoteService = (AccountService)rpc.exportRemoteObject(service);
-			accountServiceTable.put(user.getEmail(), remoteService);
-			saveRemoteObject(remoteService, RemoteObjectType.ACCOUNT, user.getEmail(), user.getGroup());
+			AccountService remoteService = null;
+			if(!accountServiceTable.containsKey(user.getEmail()))
+			{
+				AccountServiceImpl service = createAccountServiceImpl(user.getEmail(), user.getGroup());
+				remoteService = (AccountService)rpc.exportRemoteObject(service);
+				accountServiceTable.put(user.getEmail(), remoteService);
+				saveRemoteObject(remoteService, RemoteObjectType.ACCOUNT, user.getEmail(), user.getGroup());
+			}
+			else
+			{
+				Group group = ServerUtils.getGroup(user.getGroup());
+				remoteService = accountServiceTable.get(user.getEmail());
+				AccountServiceImpl service = (AccountServiceImpl)rpc.exportRawObject(remoteService);
+				service.setUserAndGroup(group, user);
+			}
+			return remoteService;
 		}
-		else
+		catch(Throwable e)
 		{
-			Group group = ServerUtils.getGroup(user.getGroup());
-			remoteService = accountServiceTable.get(user.getEmail());
-			AccountServiceImpl service = (AccountServiceImpl)rpc.exportRawObject(remoteService);
-			service.setUserAndGroup(group, user);
+			logger.error("Failed to get account service", e);
+			return null;
 		}
-		return remoteService;
-
 	}
 
 }

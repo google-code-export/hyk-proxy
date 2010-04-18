@@ -1,6 +1,19 @@
 hyk-proxy Changelog
 ===================
 
+Changes in version 0.8.0rc1 (2010.4.xx)
+-------------------------------------------
+
+** Bug
+   * Remote Object ID generate duplicate
+   
+** Improvement
+   * Use objectify instead JDO
+   * Add a cron job to keep JVM warm
+   
+
+** Task
+
 Changes in version 0.8.0bata (2010.4.11)
 -------------------------------------------
 

@@ -10,6 +10,7 @@
 package com.hyk.proxy.gae.server.core.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -35,7 +36,6 @@ import com.hyk.proxy.gae.common.service.AuthRuntimeException;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
 import com.hyk.proxy.gae.server.config.Config;
-import com.hyk.proxy.gae.server.util.PMF;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.random.RandomUtil;
 
@@ -44,8 +44,8 @@ import com.hyk.util.random.RandomUtil;
  */
 public class AccountServiceImpl implements AccountService
 {
-	protected Logger								logger			= LoggerFactory.getLogger(getClass());
-	
+	protected Logger			logger					= LoggerFactory.getLogger(getClass());
+
 	private static final String	ROOT_NAME				= "root";
 	private static final String	ROOT_GROUP_NAME			= "root";
 
@@ -89,10 +89,8 @@ public class AccountServiceImpl implements AccountService
 		Properties props = new Properties();
 		Session session = Session.getDefaultInstance(props, null);
 
-
 		try
 		{
-
 			Message msg = new MimeMessage(session);
 			StringBuffer buffer = new StringBuffer();
 			buffer.append("Hi, ").append(to).append("\r\n\r\n");
@@ -108,14 +106,14 @@ public class AccountServiceImpl implements AccountService
 				msg.setSubject("Your account has been deleted.");
 				buffer.append("You account on ").append(Config.getInstance().getAppId() + ".appspot.com").append(" has been deleted.").append("\r\n");
 			}
-			
+
 			buffer.append("Thanks again for registering, admin@" + Config.getInstance().getAppId() + ".appspot.com");
 			String msgBody = buffer.toString();
-			
+
 			msg.setFrom(new InternetAddress("admin@" + Config.getInstance().getAppId() + ".appspotmail.com"));
 			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to, "Mr. User"));
-			
-			//msg.set
+
+			// msg.set
 			msg.setText(msgBody);
 			Transport.send(msg);
 		}
@@ -125,41 +123,36 @@ public class AccountServiceImpl implements AccountService
 		}
 	}
 
-	protected static boolean createGroupIfNotExist(String groupName, PersistenceManager pm)
+	protected static boolean createGroupIfNotExist(String groupName)
 	{
-		Query query = pm.newQuery(Group.class);
-		query.setFilter("name == \"" + groupName + "\"");
-		List<Group> groupResults = (List<Group>)query.execute();
-		// Group rootGroup = pm.getObjectById(Group.class, ROOT_GROUP_NAME);
-		if(null == groupResults || groupResults.isEmpty())
+		Group group = ServerUtils.getGroup(groupName);
+		if(null == group)
 		{
-			Group rootGroup = new Group();
-			rootGroup.setName(groupName);
-			pm.makePersistent(rootGroup);
+			group = new Group();
+			group.setName(groupName);
+			ServerUtils.storeObject(group);
 			return false;
 		}
 		return true;
 	}
 
-	protected static boolean createUserIfNotExist(String email, String groupName, PersistenceManager pm)
+	protected static boolean createUserIfNotExist(String email, String groupName)
 	{
-		Query query = pm.newQuery(User.class);
-		query.setFilter("email == \"" + email + "\"");
-		List<User> userResults = (List<User>)query.execute();
-		if(null == userResults || userResults.isEmpty())
+		User user = ServerUtils.getUser(email);
+		if(null == user)
 		{
-			User root = new User();
-			root.setEmail(email);
-			root.setGroup(groupName);
+			user = new User();
+			user.setEmail(email);
+			user.setGroup(groupName);
 			if(email.equals(ANONYMOUSE_NAME))
 			{
-				root.setPasswd(ANONYMOUSE_NAME);
+				user.setPasswd(ANONYMOUSE_NAME);
 			}
 			else
 			{
-				root.setPasswd(RandomUtil.generateRandomString(8));
+				user.setPasswd(RandomUtil.generateRandomString(8));
 			}
-			pm.makePersistent(root);
+			ServerUtils.storeObject(user);
 		}
 		return true;
 	}
@@ -169,33 +162,17 @@ public class AccountServiceImpl implements AccountService
 	 */
 	public static void checkDefaultAccount()
 	{
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
-		{
-			createGroupIfNotExist(ROOT_GROUP_NAME, pm);
-			createUserIfNotExist(ROOT_NAME, ROOT_GROUP_NAME, pm);
-			createGroupIfNotExist(PUBLIC_GROUP_NAME, pm);
-			createGroupIfNotExist(ANONYMOUSE_NAME, pm);
-			createUserIfNotExist(ANONYMOUSE_NAME, ANONYMOUSE_GROUP_NAME, pm);
-		}
-		finally
-		{
-			pm.close();
-		}
+		createGroupIfNotExist(ROOT_GROUP_NAME);
+		createUserIfNotExist(ROOT_NAME, ROOT_GROUP_NAME);
+		createGroupIfNotExist(PUBLIC_GROUP_NAME);
+		createGroupIfNotExist(ANONYMOUSE_NAME);
+		createUserIfNotExist(ANONYMOUSE_NAME, ANONYMOUSE_GROUP_NAME);
+
 	}
 
 	public static User getRootUser()
 	{
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
-		{
-			User root = pm.getObjectById(User.class, ROOT_NAME);
-			return root;
-		}
-		finally
-		{
-			pm.close();
-		}
+		return ServerUtils.getUser(ROOT_NAME);
 	}
 
 	@Override
@@ -213,7 +190,7 @@ public class AccountServiceImpl implements AccountService
 		g = new Group();
 		g.setName(groupname);
 		ServerUtils.storeObject(g);
-		ServerUtils.cacheGroup(g);
+		// ServerUtils.cacheGroup(g);
 		return null;
 	}
 
@@ -248,7 +225,7 @@ public class AccountServiceImpl implements AccountService
 			u.setGroup(groupname);
 			u.setPasswd(passwd);
 			ServerUtils.storeObject(u);
-			ServerUtils.cacheUser(u);
+			// ServerUtils.cacheUser(u);
 			sendAccountMail(username, passwd, true);
 		}
 		catch(Throwable e)
@@ -256,7 +233,7 @@ public class AccountServiceImpl implements AccountService
 			logger.error("Failed to create user.", e);
 			return "Failed to create user." + e.getMessage();
 		}
-		
+
 		return null;
 	}
 
@@ -269,34 +246,25 @@ public class AccountServiceImpl implements AccountService
 		}
 		if(user.getEmail().equals(ROOT_NAME) || user.getEmail().equals(username))
 		{
-			PersistenceManager pm = PMF.get().getPersistenceManager();
-			try
+			User modifyuser = ServerUtils.getUser(username);
+			if(null == modifyuser)
 			{
-				User modifyuser = ServerUtils.getUser(pm, username);
-				if(null == modifyuser)
-				{
-					return USER_NOTFOUND;
-				}
-				if(!user.getEmail().equals(ROOT_NAME))
-				{
-					if(!modifyuser.getPasswd().equals(oldPass))
-					{
-						return PASS_NOT_MATCH;
-					}
-				}
-				if(null == newPass)
-				{
-					return "New password can't be empty!";
-				}
-				modifyuser.setPasswd(newPass);
-				ServerUtils.cacheUser(modifyuser);
-				return null;
+				return USER_NOTFOUND;
 			}
-			finally
+			if(!user.getEmail().equals(ROOT_NAME))
 			{
-				pm.close();
+				if(!modifyuser.getPasswd().equals(oldPass))
+				{
+					return PASS_NOT_MATCH;
+				}
 			}
-
+			if(null == newPass)
+			{
+				return "New password can't be empty!";
+			}
+			modifyuser.setPasswd(newPass);
+			ServerUtils.storeObject(modifyuser);
+			return null;
 		}
 		return AUTH_FAILED;
 	}
@@ -308,25 +276,19 @@ public class AccountServiceImpl implements AccountService
 		{
 			throw new AuthRuntimeException(assertRootAuth());
 		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+
+		// Query query = pm.newQuery(Group.class);
+		List<Group> groups = ServerUtils.getAllGroups();
+		List<String[]> ret = new ArrayList<String[]>();
+		for(Group g : groups)
 		{
-			Query query = pm.newQuery(Group.class);
-			List<Group> groups = (List<Group>)query.execute();
-			List<String[]> ret = new ArrayList<String[]>();
-			for(Group g : groups)
-			{
-				String[] value = new String[2];
-				value[0] = g.getName();
-				value[1] = ServerUtils.toString(g.getBlacklist());
-				ret.add(value);
-			}
-			return ret;
+			String[] value = new String[2];
+			value[0] = g.getName();
+			value[1] = ServerUtils.toString(g.getBlacklist());
+			ret.add(value);
 		}
-		finally
-		{
-			pm.close();
-		}
+		return ret;
+
 	}
 
 	@Override
@@ -336,28 +298,19 @@ public class AccountServiceImpl implements AccountService
 		{
 			throw new AuthRuntimeException(assertRootAuth());
 		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+
+		List<User> users = ServerUtils.getAllUsers();
+		List<String[]> ret = new ArrayList<String[]>();
+		for(User u : users)
 		{
-			// pm.get
-			Query query = pm.newQuery(User.class);
-			List<User> users = (List<User>)query.execute();
-			List<String[]> ret = new ArrayList<String[]>();
-			for(User u : users)
-			{
-				String[] value = new String[4];
-				value[0] = u.getEmail();
-				value[1] = u.getPasswd();
-				value[2] = u.getGroup();
-				value[3] = ServerUtils.toString(u.getBlacklist());
-				ret.add(value);
-			}
-			return ret;
+			String[] value = new String[4];
+			value[0] = u.getEmail();
+			value[1] = u.getPasswd();
+			value[2] = u.getGroup();
+			value[3] = ServerUtils.toString(u.getBlacklist());
+			ret.add(value);
 		}
-		finally
-		{
-			pm.close();
-		}
+		return ret;
 
 	}
 
@@ -374,22 +327,14 @@ public class AccountServiceImpl implements AccountService
 			return "Deletion not allowed!";
 		}
 
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+		Group g = ServerUtils.getGroup(groupname);
+		if(null == g)
 		{
-			Group g = ServerUtils.getGroup(pm, groupname);
-			if(null == g)
-			{
-				return GRP_NOTFOUND;
-			}
-			ServerUtils.removegroupCache(g);
-			pm.deletePersistent(g);
-			return null;
+			return GRP_NOTFOUND;
 		}
-		finally
-		{
-			pm.close();
-		}
+		ServerUtils.deleteObject(g);
+
+		return null;
 
 	}
 
@@ -405,17 +350,17 @@ public class AccountServiceImpl implements AccountService
 		{
 			return "Deletion not allowed!";
 		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try
 		{
-			User u = ServerUtils.getUser(pm, username);
+			User u = ServerUtils.getUser(username);
 			if(null == u)
 			{
 				return USER_NOTFOUND;
 			}
-			ServerUtils.removeUserCache(u);
+			// ServerUtils.removeUserCache(u);
 			sendAccountMail(u.getEmail(), u.getPasswd(), false);
-			pm.deletePersistent(u);
+			// pm.deletePersistent(u);
+			ServerUtils.deleteObject(u);
 			return null;
 		}
 		catch(Throwable e)
@@ -423,12 +368,6 @@ public class AccountServiceImpl implements AccountService
 			logger.error("Failed to delete user.", e);
 			return "Failed to delete user." + e.getMessage();
 		}
-		finally
-		{
-			pm.close();
-			
-		}
-
 	}
 
 	@Override
@@ -438,36 +377,33 @@ public class AccountServiceImpl implements AccountService
 		{
 			return assertRootAuth();
 		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+
+		Group g = ServerUtils.getGroup(groupname);
+		if(null == g)
 		{
-			Group g = ServerUtils.getGroup(pm, groupname);
-			if(null == g)
-			{
-				return GRP_NOTFOUND;
-			}
-			Set<String> blacklist = g.getBlacklist();
-			switch(operation)
-			{
-				case ADD:
-				{
-					blacklist.add(host);
-					break;
-				}
-				case DELETE:
-				{
-					blacklist.remove(host);
-					break;
-				}
-			}
-			g.setBlacklist(blacklist);
-			ServerUtils.cacheGroup(g);
-			return null;
+			return GRP_NOTFOUND;
 		}
-		finally
+		Set<String> blacklist = g.getBlacklist();
+		if(null == blacklist)
 		{
-			pm.close();
+			blacklist = new HashSet<String>();
 		}
+		switch(operation)
+		{
+			case ADD:
+			{
+				blacklist.add(host);
+				break;
+			}
+			case DELETE:
+			{
+				blacklist.remove(host);
+				break;
+			}
+		}
+		g.setBlacklist(blacklist);
+		ServerUtils.storeObject(g);
+		return null;
 	}
 
 	@Override
@@ -477,35 +413,33 @@ public class AccountServiceImpl implements AccountService
 		{
 			return assertRootAuth();
 		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+
+		User u = ServerUtils.getUser(username);
+		if(null == u)
 		{
-			User u = ServerUtils.getUser(pm, username);
-			if(null == u)
-			{
-				return USER_NOTFOUND;
-			}
-			Set<String> blacklist = u.getBlacklist();
-			switch(operation)
-			{
-				case ADD:
-				{
-					blacklist.add(host);
-					break;
-				}
-				case DELETE:
-				{
-					blacklist.remove(host);
-					break;
-				}
-			}
-			u.setBlacklist(blacklist);
-			ServerUtils.cacheUser(u);
-			return null;
+			return USER_NOTFOUND;
 		}
-		finally
+		Set<String> blacklist = u.getBlacklist();
+		if(null == blacklist)
 		{
-			pm.close();
+			blacklist = new HashSet<String>();
 		}
+		switch(operation)
+		{
+			case ADD:
+			{
+				blacklist.add(host);
+				break;
+			}
+			case DELETE:
+			{
+				blacklist.remove(host);
+				break;
+			}
+		}
+		u.setBlacklist(blacklist);
+		ServerUtils.storeObject(u);
+		return null;
+
 	}
 }

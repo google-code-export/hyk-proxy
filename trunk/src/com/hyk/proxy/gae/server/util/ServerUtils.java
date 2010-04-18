@@ -12,14 +12,15 @@ package com.hyk.proxy.gae.server.util;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
-import com.google.appengine.api.memcache.Expiration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.QueryResultIterable;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.appengine.api.urlfetch.FetchOptions;
@@ -27,12 +28,15 @@ import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.apphosting.api.ApiProxy.CapabilityDisabledException;
+import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Objectify;
+import com.googlecode.objectify.ObjectifyService;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
 import com.hyk.proxy.gae.server.remote.RemoteObject;
+import com.hyk.proxy.gae.server.remote.RemoteObjectId;
 import com.hyk.proxy.gae.server.remote.RemoteObjectType;
 
 /**
@@ -40,200 +44,89 @@ import com.hyk.proxy.gae.server.remote.RemoteObjectType;
  */
 public class ServerUtils
 {
+	protected static Logger					logger				= LoggerFactory.getLogger(ServerUtils.class);
+	
 	protected static MemcacheService	memcache	= MemcacheServiceFactory.getMemcacheService();
-	
-	public static void removeUserCache(User u)
+
+	protected static Objectify			ofy			= ObjectifyService.begin();
+
+	static
 	{
-		memcache.delete(User.CACHE_NAME + u.getEmail());
+		ObjectifyService.register(User.class);
+		ObjectifyService.register(Group.class);
+		ObjectifyService.register(RemoteObject.class);
+		ObjectifyService.register(RemoteObjectId.class);
 	}
 	
-	public static void removegroupCache(Group g)
+	public static long storeObject(Object obj)
 	{
-		memcache.delete(Group.CACHE_NAME + g.getName());
+		Key key = ofy.put(obj);
+		return key.getId();
 	}
-	
-	public static void cacheUser(User u)
+
+	public static void deleteObject(Object obj)
 	{
-		User cache = new User();
-		cache.setEmail(u.getEmail());
-		cache.setGroup(u.getGroup());
-		cache.setPasswd(u.getPasswd());
-		Set<String> blacklist = new HashSet<String>();
-		if(null != u.getBlacklist())
-		{
-			blacklist.addAll(u.getBlacklist());
-		}
-		cache.setBlacklist(blacklist);
-		memcache.put(User.CACHE_NAME + u.getEmail(), cache);
+		ofy.delete(obj);
 	}
-	
-	public static void cacheGroup(Group g)
+
+	public static List<Group> getAllGroups()
 	{
-		Group cache = new Group();
-		cache.setName(g.getName());
-		Set<String> blacklist = new HashSet<String>();
-		if(null != g.getBlacklist())
+		QueryResultIterable<Group> results = ofy.query(Group.class).fetch();
+		List<Group> groups = new ArrayList<Group>();
+		for(Group group : results)
 		{
-			blacklist.addAll(g.getBlacklist());
+			groups.add(group);
 		}
-		cache.setBlacklist(blacklist);
-		memcache.put(Group.CACHE_NAME + g.getName(), cache);
+		return groups;
 	}
-	
-	public static void storeObject(Object obj)
+
+	public static List<User> getAllUsers()
 	{
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
+		QueryResultIterable<User> results = ofy.query(User.class).fetch();
+		List<User> users = new ArrayList<User>();
+		for(User user : results)
 		{
-			pm.makePersistent(obj);
+			users.add(user);
 		}
-		finally
-		{
-			pm.close();
-		}
+		return users;
 	}
 
 	public static void storeObject(PersistenceManager pm, Object obj)
 	{
 		pm.makePersistent(obj);
 	}
-	
-	public static void saveRemoteObject(long objid, RemoteObjectType type, String username,  String groupname)
+
+	public static void saveRemoteObject(long objId, RemoteObjectType type, String username, String groupname)
 	{
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try
-		{
-			Query query = pm.newQuery(RemoteObject.class);
-			query.setFilter("objid == \"" + objid + "\"");
-			List<RemoteObject> groupResults = (List<RemoteObject>)query.execute();
-			// Group rootGroup = pm.getObjectById(Group.class, ROOT_GROUP_NAME);
-			if(null != groupResults &&  !groupResults.isEmpty())
-			{
-				return;
-			}
-			RemoteObject ro = new RemoteObject();
-			ro.setObjid(objid);
-			ro.setType(type);
-			ro.setUsername(username);
-			ro.setGroupname(groupname);
-			pm.makePersistent(ro);
-			List<RemoteObject> ros = (List<RemoteObject>)memcache.get(RemoteObject.CACHE_LIST_NAME);
-			if(null == ros)
-			{
-				ros = new ArrayList<RemoteObject>();
-			}
-			ros.add(ro);
-			memcache.put(RemoteObject.CACHE_LIST_NAME, ros);
-		}
-		finally
-		{
-			pm.close();
-		}
-	}
-	
-	public static List<RemoteObject> loadRemoteObjects(PersistenceManager pm)
-	{
-		List<RemoteObject> ros = (List<RemoteObject>)memcache.get(RemoteObject.CACHE_LIST_NAME);
-		if(null != ros)
-		{
-			return ros;
-		}
-		Query query = pm.newQuery(RemoteObject.class);
-		// query.setFilter("objid == \"" + objid + "\"");
-		List<RemoteObject> results = (List<RemoteObject>)query.execute();
-		List<RemoteObject> cache = new ArrayList<RemoteObject>();
-		cache.addAll(results);
-		try
-		{
-			memcache.put(RemoteObject.CACHE_LIST_NAME, cache);
-		}
-		catch(CapabilityDisabledException e)
-		{
-			//do nothing;
-		}
-		
-		return cache;
+		RemoteObject ro = new RemoteObject();
+		ro.setType(type);
+		ro.setUsername(username);
+		ro.setGroupname(groupname);
+		ro.setObjid(objId);
+		storeObject(ro);
+        
 	}
 
-	public static User getUser(PersistenceManager pm, String name)
+	public static List<RemoteObject> loadRemoteObjects()
 	{
-		Query query = pm.newQuery(User.class);
-		query.setFilter("email == \"" + name + "\"");
-		List<User> results = (List<User>)query.execute();
-		if(!results.isEmpty())
+		QueryResultIterable<RemoteObject> results = ofy.query(RemoteObject.class).fetch();
+		List<RemoteObject> ret = new ArrayList<RemoteObject>();
+		for(RemoteObject ro : results)
 		{
-			return results.get(0);
+			ret.add(ro);
 		}
-		return null;
-	}
-
-	public static Group getGroup(PersistenceManager pm, String name)
-	{
-		Query query = pm.newQuery(Group.class);
-		query.setFilter("name == \"" + name + "\"");
-		List<Group> groupResults = (List<Group>)query.execute();
-		// Group rootGroup = pm.getObjectById(Group.class, ROOT_GROUP_NAME);
-		if(null == groupResults || groupResults.isEmpty())
-		{
-			return null;
-		}
-		return groupResults.get(0);
-
+		return ret;
 	}
 
 	public static Group getGroup(String name)
 	{
-		Group group = (Group)memcache.get(Group.CACHE_NAME + name);
-		if(null == group)
-		{
-			PersistenceManager pm = PMF.get().getPersistenceManager();
-			try
-			{
-				Query query = pm.newQuery(Group.class);
-				query.setFilter("name == \"" + name + "\"");
-				List<Group> groupResults = (List<Group>)query.execute();
-				// Group rootGroup = pm.getObjectById(Group.class, ROOT_GROUP_NAME);
-				if(null == groupResults || groupResults.isEmpty())
-				{
-					return null;
-				}
-				group =  groupResults.get(0);
-				cacheGroup(group);
-			}
-			finally
-			{
-				pm.close();
-			}
-		}
+		Group group = ofy.find(Group.class, name);
 		return group;
-		
 	}
 
 	public static User getUser(String email)
 	{
-		User user = (User)memcache.get(User.CACHE_NAME + email);
-		if(null == user)
-		{
-			PersistenceManager pm = PMF.get().getPersistenceManager();
-			try
-			{
-				Query query = pm.newQuery(User.class);
-				query.setFilter("email == \"" + email + "\"");
-				List<User> userResults = (List<User>)query.execute();
-				if(null == userResults || userResults.isEmpty())
-				{
-					return null;
-				}
-				user =  userResults.get(0);
-				cacheUser(user);
-			}
-			finally
-			{
-				pm.close();
-			}
-		}
-		return user;
-		
+		return ofy.find(User.class, email);
 	}
 
 	private static long getContentLength(List<HTTPHeader> headers)

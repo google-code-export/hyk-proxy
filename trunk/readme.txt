@@ -1,4 +1,4 @@
-hyk-proxy 0.8.0beta  Read Me
+hyk-proxy 0.8.0rc1  Read Me
 Release 2010/01/31
 http://hyk-proxy.googlecode.com 
 
