@@ -62,8 +62,14 @@ public class FetchServiceImpl implements FetchService
 		this.group = group;
 		this.user = user;
 		blacklist.clear();
-		blacklist.addAll(group.getBlacklist());
-		blacklist.addAll(user.getBlacklist());
+		if(null != group.getBlacklist())
+		{
+			blacklist.addAll(group.getBlacklist());
+		}
+		if(null != user.getBlacklist())
+		{
+			blacklist.addAll(user.getBlacklist());
+		}
 	}
 
 	protected boolean cacheResponse(HttpRequestExchange req, HttpResponseExchange res)

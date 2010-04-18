@@ -9,21 +9,21 @@
  */
 package com.hyk.proxy.gae.server.account;
 
-import java.io.Serializable;
 import java.util.Set;
 
-import javax.jdo.annotations.IdentityType;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
+import javax.persistence.Id;
+
+import com.googlecode.objectify.annotation.Cached;
 
 /**
  *
  */
-@PersistenceCapable(identityType = IdentityType.APPLICATION)
-public class Group implements Serializable
+//@PersistenceCapable(identityType = IdentityType.APPLICATION)
+@Cached
+public class Group 
+//implements Serializable
 {
-	public static final String CACHE_NAME = "CACHE_GROUP";
+//	public static final String CACHE_NAME = "CACHE_GROUP";
 	
 	public String getName()
 	{
@@ -45,10 +45,10 @@ public class Group implements Serializable
 		this.blacklist = blacklist;
 	}
 
-	@PrimaryKey
-	@Persistent
+//	@PrimaryKey
+	@Id
 	private String name;
 	
-	@Persistent
+//	@Persistent
 	private Set<String> blacklist;
 }

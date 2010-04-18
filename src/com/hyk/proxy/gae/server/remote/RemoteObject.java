@@ -9,22 +9,16 @@
  */
 package com.hyk.proxy.gae.server.remote;
 
-import java.io.Serializable;
+import javax.persistence.Id;
 
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.IdentityType;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
+import com.googlecode.objectify.annotation.Cached;
 
 /**
  *
  */
-@PersistenceCapable(identityType = IdentityType.APPLICATION)
-public class RemoteObject implements Serializable
+@Cached
+public class RemoteObject
 {
-	public static final String CACHE_LIST_NAME = "RemoteObjectList";
-	
 	public String getUsername()
 	{
 		return username;
@@ -39,7 +33,7 @@ public class RemoteObject implements Serializable
 	{
 		return objid;
 	}
-
+	
 	public void setObjid(long objid)
 	{
 		this.objid = objid;
@@ -54,11 +48,9 @@ public class RemoteObject implements Serializable
 	{
 		this.type = type;
 	}
-
-	@Persistent
+	
 	private String username;
 	
-	@Persistent
 	private String groupname;
 	
 	public String getGroupname()
@@ -70,14 +62,9 @@ public class RemoteObject implements Serializable
 	{
 		this.groupname = groupname;
 	}
+    
+    @Id
+    private long objid;
 
-	@PrimaryKey
-    @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-    private Long id;
-	
-	@Persistent
-	private long objid;
-	
-	@Persistent
 	private RemoteObjectType type;
 }

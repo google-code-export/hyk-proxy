@@ -9,10 +9,7 @@
  */
 package com.hyk.proxy.gae.server.stat;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 
-import com.hyk.proxy.gae.server.util.PMF;
 
 /**
  *
@@ -33,28 +30,7 @@ public class BandwidthStatisticsService
 	
 	public void statBandwidth(String host, long incoming, long outgoing)
 	{
-		 PersistenceManager pm = PMF.get().getPersistenceManager();
-		 BandwidthStatisticsResult statisticsResult = pm.getObjectById(BandwidthStatisticsResult.class, host);
-		try
-		{
-			if(null != statisticsResult)
-			 {
-				statisticsResult.setIncoming(statisticsResult.getIncoming() + incoming);
-				statisticsResult.setOutgoing(statisticsResult.getOutgoing() + outgoing);
-			 }
-			 else
-			 {
-				 statisticsResult = new BandwidthStatisticsResult();
-				 statisticsResult.setTargetSiteHost(host);
-				 statisticsResult.setIncoming(incoming);
-				 statisticsResult.setOutgoing(outgoing);
-				 pm.makePersistent(statisticsResult);
-			 }
-		}
-		finally
-		{
-			pm.close();
-		}
+		
 		 
 	}
 }
