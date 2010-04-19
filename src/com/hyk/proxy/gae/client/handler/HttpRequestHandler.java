@@ -153,7 +153,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	protected void waitForwardBodyComplete() throws InterruptedException
 	{
 		int contentLength = forwardRequest.getContentLength();
-		if(contentLength > 0 && forwardRequest.getBody() == null)
+		if(contentLength > 0 && forwardRequest.getBody().size() == 0)
 		{
 			byte[] body = new byte[contentLength];
 			int cur = 0;
@@ -233,7 +233,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 		}
 
 //		int bodyLen = gaeRequest.getContentLength();
-//
 //		if(bodyLen > 0)
 //		{
 //			byte[] payload = new byte[bodyLen];

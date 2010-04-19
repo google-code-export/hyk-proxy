@@ -4,7 +4,7 @@
  *
  * Description: DelUser.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ11:38:31 ]
+ * @author yinqiwen [ 2010-4-9 | 11:38:31 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

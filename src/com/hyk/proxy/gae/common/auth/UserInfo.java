@@ -4,7 +4,7 @@
  *
  * Description: UserInfo.java 
  *
- * @author yinqiwen [ 2010-4-7 | обнГ09:04:45 ]
+ * @author yinqiwen [ 2010-4-7 | 09:04:45 PM]
  *
  */
 package com.hyk.proxy.gae.common.auth;

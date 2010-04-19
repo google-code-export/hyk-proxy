@@ -4,7 +4,7 @@
  *
  * Description: ChangePasswd.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ08:48:34 ]
+ * @author yinqiwen [ 2010-4-9 | 08:48:34 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

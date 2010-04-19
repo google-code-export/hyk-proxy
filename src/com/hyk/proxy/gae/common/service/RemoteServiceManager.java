@@ -4,7 +4,7 @@
  *
  * Description: RemoteServiceManager.java 
  *
- * @author yinqiwen [ 2010-4-7 | обнГ09:02:33 ]
+ * @author yinqiwen [ 2010-4-7 | 09:02:33 PM]
  *
  */
 package com.hyk.proxy.gae.common.service;

@@ -4,7 +4,7 @@
  *
  * Description: AuthRuntimeException.java 
  *
- * @author yinqiwen [ 2010-4-10 | обнГ09:43:23 ]
+ * @author yinqiwen [ 2010-4-10 | 09:43:23 PM]
  *
  */
 package com.hyk.proxy.gae.common.service;

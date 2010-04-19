@@ -4,7 +4,7 @@
  *
  * Description: AddUser.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ10:24:50 ]
+ * @author yinqiwen [ 2010-4-9 | 10:24:50 PM ]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

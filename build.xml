@@ -23,7 +23,7 @@
 		<pathelement location="${lib}/hyk-util.jar" />
 		<pathelement location="${lib}/slf4j-api-1.5.10.jar" />
 	</path>
-
+    <tstamp />
 	<target name="prepare">
 		<mkdir dir="${serverclass}" />
 		<mkdir dir="${clientclasses}" />
@@ -90,9 +90,18 @@
 		</jar>
 		<delete dir="${clientclasses}"/>
 	</target>
-
-	<target name="releaseclient" depends="jarclient">
+    
+	<target name="latest-build">
+		<property name="releaseclientname" value="${project_name}-client_${DSTAMP}${TSTAMP}"/>
+		<property name="releaseservername" value="${project_name}-server_${DSTAMP}${TSTAMP}"/>
+		<property name="releaseprojectname" value="${project_name}-project_${DSTAMP}${TSTAMP}"/>
+	</target>
+	<target name="official-build">
 		<property name="releaseclientname" value="${project_name}-client-${version}"/>
+		<property name="releaseservername" value="${project_name}-server-${version}"/>
+		<property name="releaseprojectname" value="${project_name}-project-${version}"/>
+	</target>
+	<target name="releaseclient" depends="jarclient, latest-build">
 		<property name="releaseclientdir" value="${releasedir}/${releaseclientname}"/>
 		<mkdir dir="${releaseclientdir}"/>
 		<copy todir="${releaseclientdir}/lib">
@@ -118,8 +127,7 @@
 		<delete dir="${releasedir}" />
 	</target>
 
-	<target name="releaseserver" depends="compile">
-		<property name="releaseservername" value="${project_name}-server-${version}"/>
+	<target name="releaseserver" depends="compile, official-build">
 		<property name="releaseserverdir" value="${releasedir}/${releaseservername}"/>
 		<mkdir dir="${releaseserverdir}"/>
 		<copy todir="${releaseserverdir}/war">
@@ -139,7 +147,7 @@
 		<delete dir="${releasedir}"/>
 	</target>
 
-	<target name="releaseproject" depends="compile">
+	<target name="releaseproject" depends="compile, official-build">
 		<property name="releaseprojectdir" value="${releasedir}/${project_name}" />
 		<mkdir dir="${releaseprojectdir}" />
 		<copy todir="${releaseprojectdir}">
@@ -153,7 +161,7 @@
 				<exclude name="war/**/image/**"/>
 			</fileset>
 		</copy>
-		<zip destfile="${project_name}-project-${version}.zip" basedir="${releasedir}" />
+		<zip destfile="${releaseprojectname}.zip" basedir="${releasedir}" />
 		<delete dir="${releasedir}" />
 	</target>
 

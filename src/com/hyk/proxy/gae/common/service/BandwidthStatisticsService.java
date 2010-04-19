@@ -4,7 +4,7 @@
  *
  * Description: BandwidthStatisticsService.java 
  *
- * @author yinqiwen [ 2010-4-5 | обнГ07:06:15 ]
+ * @author yinqiwen [ 2010-4-5 | 07:06:15 PM]
  *
  */
 package com.hyk.proxy.gae.common.service;
