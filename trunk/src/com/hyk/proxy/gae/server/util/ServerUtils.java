@@ -232,6 +232,11 @@ public class ServerUtils
 			exchange.addHeader(header.getName(), header.getValue());
 		}
 		exchange.setBody(res.getContent());
+		if(getContentLength(res) == 0 && null != res.getContent())
+		{
+			exchange.addHeader("content-length", "" + res.getContent().length);
+		}
+		
 		URL url = res.getFinalUrl();
 		if(null != url)
 		{

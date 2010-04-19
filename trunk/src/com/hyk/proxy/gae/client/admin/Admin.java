@@ -4,7 +4,7 @@
  *
  * Description: Admin.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ06:59:44 ]
+ * @author yinqiwen [ 2010-4-9 | 06:59:44 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin;

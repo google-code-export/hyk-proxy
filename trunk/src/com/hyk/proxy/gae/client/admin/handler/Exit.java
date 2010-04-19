@@ -4,7 +4,7 @@
  *
  * Description: Exit.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ10:19:07 ]
+ * @author yinqiwen [ 2010-4-9 | 10:19:07 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

@@ -4,7 +4,7 @@
  *
  * Description: Help.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ08:50:39 ]
+ * @author yinqiwen [ 2010-4-9 | 08:50:39 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

@@ -4,7 +4,7 @@
  *
  * Description: AddGroup.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ10:23:41 ]
+ * @author yinqiwen [ 2010-4-9 | 10:23:41 PM ]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

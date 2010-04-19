@@ -4,7 +4,7 @@
  *
  * Description: ClearScreenHandler.java 
  *
- * @author yinqiwen [ 2010-4-9 | обнГ08:34:45 ]
+ * @author yinqiwen [ 2010-4-9 | 08:34:45 PM]
  *
  */
 package com.hyk.proxy.gae.client.admin.handler;

@@ -4,7 +4,7 @@
  *
  * Description: AccountService.java 
  *
- * @author yinqiwen [ 2010-4-8 | обнГ07:50:48 ]
+ * @author yinqiwen [ 2010-4-8 | 07:50:48 PM ]
  *
  */
 package com.hyk.proxy.gae.common.service;

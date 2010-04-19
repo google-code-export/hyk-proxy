@@ -4,7 +4,7 @@
  *
  * Description: AppIdAuth.java 
  *
- * @author yinqiwen [ 2010-4-10 | ионГ10:32:39 ]
+ * @author yinqiwen [ 2010-4-10 | 10:32:39 PM]
  *
  */
 package com.hyk.proxy.gae.client.config;
