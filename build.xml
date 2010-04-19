@@ -148,6 +148,9 @@
 				<exclude name="release/**"/>
 				<exclude name="build/**"/>
 				<exclude name="dist/**"/>
+				<exclude name="latest-build/**"/>
+				<exclude name="war/**/*.class"/>
+				<exclude name="war/**/image/**"/>
 			</fileset>
 		</copy>
 		<zip destfile="${project_name}-project-${version}.zip" basedir="${releasedir}" />

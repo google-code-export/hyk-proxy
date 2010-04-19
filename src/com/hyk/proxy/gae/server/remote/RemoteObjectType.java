@@ -14,5 +14,5 @@ package com.hyk.proxy.gae.server.remote;
  */
 public enum RemoteObjectType 
 {
-	FETCH,ACCOUNT, SERVICE_MANAGER
+	FETCH,ACCOUNT, STAT, SERVICE_MANAGER
 }

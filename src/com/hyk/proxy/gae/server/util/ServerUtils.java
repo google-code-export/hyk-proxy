@@ -19,7 +19,6 @@ import javax.jdo.PersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.QueryResultIterable;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
@@ -33,11 +32,14 @@ import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
+import com.hyk.proxy.gae.common.stat.BandwidthStatReport;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
+import com.hyk.proxy.gae.server.config.DatastoreConfig;
 import com.hyk.proxy.gae.server.remote.RemoteObject;
 import com.hyk.proxy.gae.server.remote.RemoteObjectId;
 import com.hyk.proxy.gae.server.remote.RemoteObjectType;
+import com.hyk.proxy.gae.server.stat.BandwidthStatisticsResult;
 
 /**
  *
@@ -56,6 +58,19 @@ public class ServerUtils
 		ObjectifyService.register(Group.class);
 		ObjectifyService.register(RemoteObject.class);
 		ObjectifyService.register(RemoteObjectId.class);
+		ObjectifyService.register(BandwidthStatisticsResult.class);
+		ObjectifyService.register(DatastoreConfig.class);
+	}
+	
+	public static DatastoreConfig getDatastoreConfig()
+	{
+		DatastoreConfig config = ofy.find(DatastoreConfig.class, DatastoreConfig.ID);
+		if(null == config)
+		{
+			config = new DatastoreConfig();
+			storeObject(config);
+		}
+		return config;
 	}
 	
 	public static long storeObject(Object obj)
@@ -68,7 +83,28 @@ public class ServerUtils
 	{
 		ofy.delete(obj);
 	}
+	
+	public static void deleteType(Class clazz)
+	{
+		ofy.delete(ofy.query(clazz).fetchKeys());
+	}
 
+	public static List<BandwidthStatisticsResult> getBandwidthStatisticsResults()
+	{
+		QueryResultIterable<BandwidthStatisticsResult> results = ofy.query(BandwidthStatisticsResult.class).order("-outgoing").fetch();
+		List<BandwidthStatisticsResult> ret = new ArrayList<BandwidthStatisticsResult>();
+		for(BandwidthStatisticsResult result: results)
+		{
+			ret.add(result);
+		}
+		return ret;
+	}
+	
+	public static BandwidthStatisticsResult getBandwidthStatisticsResult(String host)
+	{
+		return ofy.find(BandwidthStatisticsResult.class, host);
+	}
+	
 	public static List<Group> getAllGroups()
 	{
 		QueryResultIterable<Group> results = ofy.query(Group.class).fetch();
@@ -202,6 +238,12 @@ public class ServerUtils
 			exchange.setRedirectURL(url.toString());
 		}
 		return exchange;
+	}
+	
+	public static BandwidthStatReport toBandwidthStatReport(BandwidthStatisticsResult result)
+	{
+		if(null == result) return null; 
+		return new BandwidthStatReport(result.getTargetSiteHost(), result.getIncoming(), result.getOutgoing());
 	}
 
 	public static String toString(Object obj)

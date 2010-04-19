@@ -26,6 +26,7 @@ public class Help implements CommandHandler
                                          "   -- To create group use \"groupadd\" command." + System.getProperty("line.separator") + 
                                          "   -- To delete group use \"groupdel\" command." + System.getProperty("line.separator") + 
                                          "   -- To change password use \"passwd\" command." + System.getProperty("line.separator") + 
+                                         "   -- To view bandwidth stat use \"stat\" command." + System.getProperty("line.separator") + 
                                          "   -- To print help use \"help\" command." + System.getProperty("line.separator") + 
                                          "   -- To add/delete web site to blacklist use \"blacklist\" command." + System.getProperty("line.separator") + 
                                          "   -- To exit use \"exit\" command." +  System.getProperty("line.separator") + 

@@ -9,12 +9,17 @@
  */
 package com.hyk.proxy.gae.server.stat;
 
+import java.io.Serializable;
+
 import javax.persistence.Id;
+
+import com.googlecode.objectify.annotation.Cached;
 
 /**
  *
  */
-public class BandwidthStatisticsResult
+@Cached
+public class BandwidthStatisticsResult implements Serializable
 {
 	public String getTargetSiteHost()
 	{
@@ -38,19 +43,31 @@ public class BandwidthStatisticsResult
 
 	public long getIncoming()
 	{
-		return Incoming;
+		return incoming;
 	}
 
 	public void setIncoming(long incoming)
 	{
-		Incoming = incoming;
+		this.incoming = incoming;
 	}
 
+	public BandwidthStatisticsResult()
+	{
+		
+	}
+	
+	public BandwidthStatisticsResult(String targetSiteHost, long outgoing, long incoming)
+	{
+		this.targetSiteHost = targetSiteHost;
+		this.outgoing = outgoing;
+		this.incoming = incoming;
+	}
+	
 	@Id
 	private String targetSiteHost;
-	
+
 	private long outgoing;
 	
-	private long Incoming;
+	private long incoming;
 	
 }
