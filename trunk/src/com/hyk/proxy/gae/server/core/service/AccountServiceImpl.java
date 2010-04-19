@@ -35,7 +35,7 @@ import com.hyk.proxy.gae.common.service.AccountService;
 import com.hyk.proxy.gae.common.service.AuthRuntimeException;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
-import com.hyk.proxy.gae.server.config.Config;
+import com.hyk.proxy.gae.server.config.XmlConfig;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.random.RandomUtil;
 
@@ -46,20 +46,20 @@ public class AccountServiceImpl implements AccountService
 {
 	protected Logger			logger					= LoggerFactory.getLogger(getClass());
 
-	private static final String	ROOT_NAME				= "root";
-	private static final String	ROOT_GROUP_NAME			= "root";
+	public static final String	ROOT_NAME				= "root";
+	public static final String	ROOT_GROUP_NAME			= "root";
 
-	private static final String	PUBLIC_GROUP_NAME		= "public";
+	public static final String	PUBLIC_GROUP_NAME		= "public";
 
-	private static final String	ANONYMOUSE_NAME			= "anonymouse";
-	private static final String	ANONYMOUSE_GROUP_NAME	= "anonymouse";
+	public static final String	ANONYMOUSE_NAME			= "anonymouse";
+	public static final String	ANONYMOUSE_GROUP_NAME	= "anonymouse";
 
-	private static final String	AUTH_FAILED				= "You have no authorization for this operation!";
-	private static final String	USER_NOTFOUND			= "User not found!";
-	private static final String	USER_EXIST				= "User already exist!";
-	private static final String	GRP_NOTFOUND			= "Group not found!";
-	private static final String	GRP_EXIST				= "Group already exist!";
-	private static final String	PASS_NOT_MATCH			= "The old password is not match!";
+	public static final String	AUTH_FAILED				= "You have no authorization for this operation!";
+	public static final String	USER_NOTFOUND			= "User not found!";
+	public static final String	USER_EXIST				= "User already exist!";
+	public static final String	GRP_NOTFOUND			= "Group not found!";
+	public static final String	GRP_EXIST				= "Group already exist!";
+	public static final String	PASS_NOT_MATCH			= "The old password is not match!";
 
 	private Group				group;
 	private User				user;
@@ -96,7 +96,7 @@ public class AccountServiceImpl implements AccountService
 			buffer.append("Hi, ").append(to).append("\r\n\r\n");
 			if(isCreate)
 			{
-				buffer.append("You account on ").append(Config.getInstance().getAppId() + ".appspot.com").append(" has been created.").append("\r\n");
+				buffer.append("You account on ").append(XmlConfig.getInstance().getAppId() + ".appspot.com").append(" has been created.").append("\r\n");
 				buffer.append("    Username:").append(to).append("\r\n");
 				buffer.append("    Password:").append(passwd).append("\r\n");
 				msg.setSubject("Your account has been activated");
@@ -104,13 +104,13 @@ public class AccountServiceImpl implements AccountService
 			else
 			{
 				msg.setSubject("Your account has been deleted.");
-				buffer.append("You account on ").append(Config.getInstance().getAppId() + ".appspot.com").append(" has been deleted.").append("\r\n");
+				buffer.append("You account on ").append(XmlConfig.getInstance().getAppId() + ".appspot.com").append(" has been deleted.").append("\r\n");
 			}
 
-			buffer.append("Thanks again for registering, admin@" + Config.getInstance().getAppId() + ".appspot.com");
+			buffer.append("Thanks again for registering, admin@" + XmlConfig.getInstance().getAppId() + ".appspot.com");
 			String msgBody = buffer.toString();
 
-			msg.setFrom(new InternetAddress("admin@" + Config.getInstance().getAppId() + ".appspotmail.com"));
+			msg.setFrom(new InternetAddress("admin@" + XmlConfig.getInstance().getAppId() + ".appspotmail.com"));
 			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to, "Mr. User"));
 
 			// msg.set

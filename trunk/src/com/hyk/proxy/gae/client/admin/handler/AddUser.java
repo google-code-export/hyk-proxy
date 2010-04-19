@@ -58,13 +58,17 @@ public class AddUser implements CommandHandler
 				{
 					Admin.outputln("Argument username required!");
 				}
-				String group = "public";
-				if(line.hasOption("g"))
+				else
 				{
-					group = line.getOptionValue("g");
+					String group = "public";
+					if(line.hasOption("g"))
+					{
+						group = line.getOptionValue("g");
+					}
+					String result = accountService.createUser(usernameargs[0], group, RandomUtil.generateRandomString(8));
+					Admin.outputln(result);
 				}
-				String result = accountService.createUser(usernameargs[0], group, RandomUtil.generateRandomString(8));
-				Admin.outputln(result);
+				
 			}
 		}
 		catch(Exception exp)

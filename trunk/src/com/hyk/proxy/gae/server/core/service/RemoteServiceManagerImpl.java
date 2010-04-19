@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.hyk.proxy.gae.common.auth.UserInfo;
 import com.hyk.proxy.gae.common.service.AccountService;
 import com.hyk.proxy.gae.common.service.AuthRuntimeException;
+import com.hyk.proxy.gae.common.service.BandwidthStatisticsService;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.common.service.RemoteServiceManager;
 import com.hyk.proxy.gae.server.account.Group;
@@ -38,6 +39,9 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 
 	private Map<String, FetchService>	fetchServiceTable	= new HashMap<String, FetchService>();
 	private Map<String, AccountService>	accountServiceTable	= new HashMap<String, AccountService>();
+	
+	private BandwidthStatisticsService bandwidthStatisticsService;
+	private BandwidthStatisticsServiceImpl bandwidthStatisticsServiceImpl;
 
 	public RemoteServiceManagerImpl(RPC rpc)
 	{
@@ -57,6 +61,19 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 		if(null == ros)
 		{
 			return;
+		}
+		//load STAT first
+		for(RemoteObject ro : ros)
+		{
+			switch(ro.getType())
+			{
+				case STAT:
+				{
+					bandwidthStatisticsServiceImpl = new BandwidthStatisticsServiceImpl();
+					bandwidthStatisticsService = (BandwidthStatisticsService)rpc.exportRemoteObject(bandwidthStatisticsServiceImpl, ro.getObjid());
+					break;
+				}
+			}
 		}
 		for(RemoteObject ro : ros)
 		{
@@ -87,7 +104,8 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			throw new AuthRuntimeException("Invalid username.");
 		}
 		Group group = ServerUtils.getGroup(groupname);
-		return new FetchServiceImpl(group, user);
+		getStatisticsService();
+		return new FetchServiceImpl(group, user, bandwidthStatisticsServiceImpl);
 	}
 
 	protected AccountServiceImpl createAccountServiceImpl(String username, String groupname)
@@ -111,7 +129,6 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			logger.error("Invalid username/passwd.");
 			throw new AuthRuntimeException("Invalid username/passwd.");
 		}
-		// Group group = ServerUtils.getGroup(user.getGroup());
 		FetchService remoteService = null;
 		if(!fetchServiceTable.containsKey(user.getEmail()))
 		{
@@ -126,6 +143,8 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			remoteService = fetchServiceTable.get(user.getEmail());
 			FetchServiceImpl service = (FetchServiceImpl)rpc.exportRawObject(remoteService);
 			service.setUserAndGroup(group, user);
+			getStatisticsService();
+			service.setBandwidthStatisticsService(bandwidthStatisticsServiceImpl);
 		}
 		return remoteService;
 
@@ -164,6 +183,29 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager
 			logger.error("Failed to get account service", e);
 			return null;
 		}
+	}
+	
+	protected BandwidthStatisticsService getStatisticsService()
+	{
+		if(null == bandwidthStatisticsService)
+		{
+			bandwidthStatisticsServiceImpl = new BandwidthStatisticsServiceImpl();
+			bandwidthStatisticsService = (BandwidthStatisticsService)rpc.exportRemoteObject(bandwidthStatisticsServiceImpl);
+			saveRemoteObject(bandwidthStatisticsService, RemoteObjectType.STAT, null, null);
+		}
+		return bandwidthStatisticsService;
+	}
+
+	@Override
+	public BandwidthStatisticsService getBandwidthStatisticsService(UserInfo user)
+	{
+		User root = ServerUtils.getUser(AccountServiceImpl.ROOT_NAME);
+		if(null == user || !user.getEmail().equals(AccountServiceImpl.ROOT_NAME) || !user.getPasswd().equals(root.getPasswd()))
+		{
+			logger.error("Invalid username/passwd.");
+			throw new AuthRuntimeException("Invalid username/passwd, MUST be root user");
+		}
+		return getStatisticsService();
 	}
 
 }

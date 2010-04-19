@@ -9,8 +9,8 @@ Changes in version 0.8.0rc1 (2010.4.xx)
    
 ** Improvement
    * Use objectify instead JDO
-   * Add a cron job to keep JVM warm
-   
+   * Support bandwidth stat 
+   * Add a cron job to keep JVM warm 
 
 ** Task
 

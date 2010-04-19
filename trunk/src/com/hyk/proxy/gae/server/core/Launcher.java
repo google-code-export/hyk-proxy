@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.RemoteServiceManager;
-import com.hyk.proxy.gae.server.config.Config;
+import com.hyk.proxy.gae.server.config.XmlConfig;
 import com.hyk.proxy.gae.server.core.rpc.HttpServletRpcChannel;
 import com.hyk.proxy.gae.server.core.rpc.XmppServletRpcChannel;
 import com.hyk.proxy.gae.server.core.service.AccountServiceImpl;
@@ -85,7 +85,7 @@ public class Launcher extends HttpServlet{
 		super.init(config);
 		try
 		{	
-			Config hykConfig = Config.init(config);
+			XmlConfig hykConfig = XmlConfig.init(config);
 			
 			Properties initProps = new Properties();
 			initProps.setProperty(RpcConstants.TIMER_CLASS, AppEngineTimer.class.getName());

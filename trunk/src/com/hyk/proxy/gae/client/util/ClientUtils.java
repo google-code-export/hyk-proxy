@@ -194,7 +194,7 @@ public class ClientUtils
 	{	
 //		int len = System.in.read(STDIN_BUFFER);
 //		return new String(STDIN_BUFFER, 0, len).trim();
-//		
+		
 		if(isEcho)
 		{
 			return console.readLine().trim();

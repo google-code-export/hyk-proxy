@@ -1,5 +1,5 @@
-#Sun Apr 11 11:13:49 CST 2010
+#Mon Apr 19 11:11:07 CST 2010
 eclipse.preferences.version=1
 filesCopiedToWebInfLib=datanucleus-appengine-1.0.6.final.jar|datanucleus-core-1.1.5.jar|datanucleus-jpa-1.1.5.jar|geronimo-jpa_3.0_spec-1.1.1.jar|geronimo-jta_1.1_spec-1.1.1.jar|jdo2-api-2.3-eb.jar|appengine-api-1.0-sdk-1.3.2.jar|appengine-api-labs-1.3.2.jar|appengine-jsr107cache-1.3.2.jar|jsr107cache-1.1.jar
-ormEnhancementInclusions=src/com/hyk/proxy/gae/server/stat/|src/com/hyk/proxy/gae/server/account/|src/com/hyk/proxy/gae/server/remote/
+ormEnhancementInclusions=
 validationExclusions=src/com/hyk/proxy/gae/client/**

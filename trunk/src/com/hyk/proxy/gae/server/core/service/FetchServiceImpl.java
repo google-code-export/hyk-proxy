@@ -30,10 +30,11 @@ import com.google.apphosting.api.ApiProxy.CapabilityDisabledException;
 import com.hyk.proxy.gae.common.http.header.SimpleNameValueListHeader;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
+import com.hyk.proxy.gae.common.service.BandwidthStatisticsService;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
-import com.hyk.proxy.gae.server.config.Config;
+import com.hyk.proxy.gae.server.config.XmlConfig;
 import com.hyk.proxy.gae.server.util.ServerUtils;
 import com.hyk.util.thread.ThreadLocalUtil;
 
@@ -50,11 +51,20 @@ public class FetchServiceImpl implements FetchService
 	private Group				group;
 	private User				user;
 
+	private BandwidthStatisticsServiceImpl bandwidthStatisticsService;
+	
 	private Set<String>			blacklist		= new HashSet<String>();
 
-	public FetchServiceImpl(Group group, User user)
+	public FetchServiceImpl(Group group, User user, BandwidthStatisticsServiceImpl bandwidthStatisticsService)
 	{
 		setUserAndGroup(group, user);
+		setBandwidthStatisticsService(bandwidthStatisticsService);
+	}
+
+	public void setBandwidthStatisticsService(BandwidthStatisticsServiceImpl bandwidthStatisticsService)
+	{
+		this.bandwidthStatisticsService = bandwidthStatisticsService;
+		bandwidthStatisticsService.loadConfig();
 	}
 
 	public void setUserAndGroup(Group group, User user)
@@ -127,7 +137,7 @@ public class FetchServiceImpl implements FetchService
 		res.setResponseCode(403);
 		res.addHeader("content-type", "text/html; charset=utf-8");
 
-		byte[] content = Config.getInstance().getBlacklistErrorPage();
+		byte[] content = XmlConfig.getInstance().getBlacklistErrorPage();
 		res.addHeader("content-length", "" + content.length);
 		res.setBody(content);
 		return res;
@@ -160,12 +170,11 @@ public class FetchServiceImpl implements FetchService
 			return createErrorResponse();
 		}
 		try
-		{
+		{	
 			ret = getCache(req);
 			if(null == ret)
 			{
 				HTTPRequest fetchReq = ServerUtils.toHTTPRequest(req);
-
 				HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
 				ret = ServerUtils.toHttpResponseExchange(fetchRes);
 				cacheResponse(req, ret);
@@ -179,6 +188,13 @@ public class FetchServiceImpl implements FetchService
 			// Store this value since the RPC framework would use this value to
 			// judge whole message compressing or not
 			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
+			if(bandwidthStatisticsService.isEnable())
+			{
+				int reqBodyLen = req.getContentLength();
+				int resBodyLen = ret.getContentLength();
+				String host = req.getHeaderValue("Host");
+				bandwidthStatisticsService.statBandwidth(host, reqBodyLen, resBodyLen);
+			}	
 		}
 		catch(IOException e)
 		{

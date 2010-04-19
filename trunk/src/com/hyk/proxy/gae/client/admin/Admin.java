@@ -30,12 +30,14 @@ import com.hyk.proxy.gae.client.admin.handler.Exit;
 import com.hyk.proxy.gae.client.admin.handler.Help;
 import com.hyk.proxy.gae.client.admin.handler.ListGroups;
 import com.hyk.proxy.gae.client.admin.handler.ListUsers;
+import com.hyk.proxy.gae.client.admin.handler.Stat;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.common.Version;
 import com.hyk.proxy.gae.common.auth.UserInfo;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.AccountService;
+import com.hyk.proxy.gae.common.service.BandwidthStatisticsService;
 import com.hyk.proxy.gae.common.service.RemoteServiceManager;
 import com.hyk.proxy.gae.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.RPC;
@@ -47,6 +49,9 @@ import com.hyk.rpc.core.RpcException;
 public class Admin
 {
 	private static final String			PROMOTE		= "$ ";
+	
+	private UserInfo userInfo ;
+	private RemoteServiceManager remoteServiceManager = null;
 
 	private Map<String, CommandHandler>	handlers	= new HashMap<String, CommandHandler>();
 
@@ -82,8 +87,19 @@ public class Admin
 		System.exit(0);
 	}
 
-	protected void registerCommandHandler(String user, AccountService accountService)
+	protected void registerCommandHandler(String user)
 	{
+		AccountService accountService = null;
+		try
+		{
+			accountService = remoteServiceManager.getAccountService(userInfo);
+		}
+		catch(Exception e)
+		{
+			// e.printStackTrace();
+			exit(e.getMessage());
+		}
+		
 		handlers.put(Exit.COMMAND, new Exit());
 		handlers.put(ClearScreen.COMMAND, new ClearScreen());
 		handlers.put(ChangePasswd.COMMAND, new ChangePasswd(user, accountService));
@@ -94,6 +110,7 @@ public class Admin
 		handlers.put(DeleteUser.COMMAND, new DeleteUser(accountService));
 		handlers.put(DeleteGroup.COMMAND, new DeleteGroup(accountService));
 		handlers.put(Blacklist.COMMAND, new Blacklist(accountService));
+		handlers.put(Stat.COMMAND, new Stat(remoteServiceManager, userInfo));
 		handlers.put(Help.COMMAND, new Help());
 	}
 
@@ -108,7 +125,7 @@ public class Admin
 		String passwd = ClientUtils.readFromStdin(false);
 
 		Executor executor = Executors.newCachedThreadPool();
-		RemoteServiceManager remoteServiceManager = null;
+		
 		if(config.isHttpEnable())
 		{
 			RPC rpc = ClientUtils.createHttpRPC(appid, executor);
@@ -124,26 +141,19 @@ public class Admin
 					new XmppAddress(appid + "@appspot.com"));
 		}
 
-		UserInfo userInfo = new UserInfo();
+		this.userInfo = new UserInfo();
 		userInfo.setEmail(user);
 		userInfo.setPasswd(passwd);
-		AccountService accountService = null;
-		try
-		{
-			accountService = remoteServiceManager.getAccountService(userInfo);
-		}
-		catch(Exception e)
-		{
-			// e.printStackTrace();
-			exit(e.getMessage());
-		}
+		
+		//BandwidthStatisticsService bandwidthStatisticsService = null;
+		
 		InputStream is = getClass().getResourceAsStream("welcome.txt");
 		byte[] buffer = new byte[4096];
 		int len = is.read(buffer);
 		String format = new String(buffer, 0, len);
 		outputln(String.format(format, Version.value, Help.USAGE, Version.value, Version.value));
 
-		registerCommandHandler(user, accountService);
+		registerCommandHandler(user);
 
 		while(true)
 		{
