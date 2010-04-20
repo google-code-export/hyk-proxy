@@ -404,8 +404,8 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         jLabel7.setText("Compress Trigger:");
 
-        compressorType.setMaximumRowCount(3);
-        compressorType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "GZ", "ZIP", "NONE" }));
+        compressorType.setMaximumRowCount(4);
+        compressorType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "GZ", "ZIP", "LZF", "NONE" }));
 
         compressorTrigger.setText("512");
 
@@ -804,7 +804,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         fetcherNumText.setText(config.getMaxFetcherForBigFile() + "");
         compressorTrigger.setText(config.getCompressorTrigger() + "");
         threadPoolSizeText.setText(config.getThreadPoolSize() + "");
-        compressorType.setSelectedItem(config.getCompressorType());
+        compressorType.setSelectedItem(config.getCompressorName().toUpperCase());
         fetchLimitTextField1.setText(config.getFetchLimitSize()+"");
         
         setVisible(true);

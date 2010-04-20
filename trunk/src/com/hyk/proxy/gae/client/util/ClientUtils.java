@@ -36,12 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.compress.CompressorFactory;
-import com.hyk.compress.DefaultCompressPreference;
+import com.hyk.compress.preference.DefaultCompressPreference;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
 import com.hyk.proxy.gae.client.httpserver.HttpServer;
 import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
 import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
+import com.hyk.proxy.gae.common.Constants;
 import com.hyk.proxy.gae.common.http.header.SetCookieHeaderValue;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
@@ -143,11 +144,11 @@ public class ClientUtils
 	public static RPC createHttpRPC(String appid, Executor workerExecutor) throws IOException, RpcException
 	{
 		Config config = Config.getInstance();
-		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
+		DefaultCompressPreference.init(CompressorFactory.getRegistCompressor(config.getCompressorName()).compressor, config.getCompressorTrigger());
 		Properties initProps = new Properties();
 		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
-		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
-		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", "/fetchproxy");
+		initProps.setProperty(RpcConstants.COMPRESS_PREFER, DefaultCompressPreference.class.getName());
+		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com",  Constants.HTTP_INVOKE_PATH);
 		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost", 8888, "/fetchproxy");
 		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
 		return new RPC(httpCleintRpcchannle, initProps);
@@ -156,10 +157,10 @@ public class ClientUtils
 	public static RPC createXmppRPC(XmppAccount account, Executor workerExecutor) throws IOException, RpcException, XMPPException
 	{
 		Config config = Config.getInstance();
-		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
+		DefaultCompressPreference.init(CompressorFactory.getRegistCompressor(config.getCompressorName()).compressor, config.getCompressorTrigger());
 		Properties initProps = new Properties();
 		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
-		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
+		initProps.setProperty(RpcConstants.COMPRESS_PREFER, DefaultCompressPreference.class.getName());
 		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
 		return new RPC(xmppRpcchannle, initProps);
 	}
@@ -192,16 +193,16 @@ public class ClientUtils
 
 	public static String readFromStdin(boolean isEcho) throws IOException
 	{	
-//		int len = System.in.read(STDIN_BUFFER);
-//		return new String(STDIN_BUFFER, 0, len).trim();
+		int len = System.in.read(STDIN_BUFFER);
+		return new String(STDIN_BUFFER, 0, len).trim();
 		
-		if(isEcho)
-		{
-			return console.readLine().trim();
-		}
-		else
-		{
-			return new String(console.readPassword()).trim();
-		}
+//		if(isEcho)
+//		{
+//			return console.readLine().trim();
+//		}
+//		else
+//		{
+//			return new String(console.readPassword()).trim();
+//		}
 	}
 }

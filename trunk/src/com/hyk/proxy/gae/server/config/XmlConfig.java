@@ -15,9 +15,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.hyk.compress.Compressor;
 import com.hyk.compress.CompressorFactory;
-import com.hyk.compress.CompressorType;
+import com.hyk.compress.compressor.Compressor;
 
 public class XmlConfig
 {
@@ -87,9 +86,9 @@ public class XmlConfig
 		
 		is = config.getServletContext().getResourceAsStream("/WEB-INF/hyk-proxy-server.xml");
 		doc = builder.parse(is);
-		String compressorType = doc.getElementsByTagName("compressor").item(0).getTextContent();
+		String compressorName = doc.getElementsByTagName("compressor").item(0).getTextContent();
 		String compressorTrigger = doc.getElementsByTagName("trigger").item(0).getTextContent();
-		instance.compressor = CompressorFactory.getCompressor(CompressorType.valueOfName(compressorType));
+		instance.compressor = CompressorFactory.getRegistCompressor(compressorName).compressor;
 		instance.compressTrigger = Integer.parseInt(compressorTrigger);
 		
 		NodeList ignoreList = doc.getElementsByTagName("content-type");

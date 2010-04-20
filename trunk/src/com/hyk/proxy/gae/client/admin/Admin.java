@@ -33,6 +33,7 @@ import com.hyk.proxy.gae.client.admin.handler.ListUsers;
 import com.hyk.proxy.gae.client.admin.handler.Stat;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.util.ClientUtils;
+import com.hyk.proxy.gae.common.Constants;
 import com.hyk.proxy.gae.common.Version;
 import com.hyk.proxy.gae.common.auth.UserInfo;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
@@ -130,7 +131,7 @@ public class Admin
 		{
 			RPC rpc = ClientUtils.createHttpRPC(appid, executor);
 			remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new HttpServerAddress(appid
-					+ ".appspot.com", "/fetchproxy"));
+					+ ".appspot.com",  Constants.HTTP_INVOKE_PATH));
 			//remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new HttpServerAddress("localhost",
 			//		8888, "/fetchproxy"));
 		}

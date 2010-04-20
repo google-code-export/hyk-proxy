@@ -1,7 +1,7 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.8.0rc1 (2010.4.xx)
+Changes in version 0.8.0rc1 (2010.4.20)
 -------------------------------------------
 
 ** Bug
@@ -11,6 +11,7 @@ Changes in version 0.8.0rc1 (2010.4.xx)
    * Use objectify instead JDO
    * Support bandwidth stat 
    * Add a cron job to keep JVM warm 
+   * Add an compress extension 'LZF' as default compressor
 
 ** Task
 

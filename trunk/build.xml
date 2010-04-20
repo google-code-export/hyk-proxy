@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="hyk-proxy" default="release">
+<project name="hyk-proxy" default="release-official">
 	<property name="root" value="." />
 
 	<property name='warlib' value='${root}/war/WEB-INF/lib' />
@@ -95,13 +95,16 @@
 		<property name="releaseclientname" value="${project_name}-client_${DSTAMP}${TSTAMP}"/>
 		<property name="releaseservername" value="${project_name}-server_${DSTAMP}${TSTAMP}"/>
 		<property name="releaseprojectname" value="${project_name}-project_${DSTAMP}${TSTAMP}"/>
+		<property name="release_dist_dir" value="${root}/latest-build"/>
 	</target>
 	<target name="official-build">
 		<property name="releaseclientname" value="${project_name}-client-${version}"/>
 		<property name="releaseservername" value="${project_name}-server-${version}"/>
 		<property name="releaseprojectname" value="${project_name}-project-${version}"/>
+		<property name="release_dist_dir" value="${root}"/>
 	</target>
-	<target name="releaseclient" depends="jarclient, latest-build">
+	
+	<target name="releaseclient" depends="jarclient">
 		<property name="releaseclientdir" value="${releasedir}/${releaseclientname}"/>
 		<mkdir dir="${releaseclientdir}"/>
 		<copy todir="${releaseclientdir}/lib">
@@ -123,11 +126,11 @@
 		<copy todir="${releaseclientdir}" file="${root}/readme.txt" />
 		<copy todir="${releaseclientdir}" file="${root}/changelog.txt" />
 		<copy todir="${releaseclientdir}" file="${root}/COPYING.GPLv3" />
-		<zip destfile="${releaseclientname}.zip" basedir="${releasedir}"/>
+		<zip destfile="${release_dist_dir}/${releaseclientname}.zip" basedir="${releasedir}"/>
 		<delete dir="${releasedir}" />
 	</target>
 
-	<target name="releaseserver" depends="compile, official-build">
+	<target name="releaseserver" depends="compile">
 		<property name="releaseserverdir" value="${releasedir}/${releaseservername}"/>
 		<mkdir dir="${releaseserverdir}"/>
 		<copy todir="${releaseserverdir}/war">
@@ -143,28 +146,29 @@
 		<copy todir="${releaseserverdir}" file="${root}/readme.txt" />
 		<copy todir="${releaseserverdir}" file="${root}/changelog.txt" />
 		<copy todir="${releaseserverdir}" file="${root}/COPYING.GPLv3" />
-		<zip destfile="${releaseservername}.zip" basedir="${releasedir}"/>
+		<zip destfile="${release_dist_dir}/${releaseservername}.zip" basedir="${releasedir}"/>
 		<delete dir="${releasedir}"/>
 	</target>
 
-	<target name="releaseproject" depends="compile, official-build">
+	<target name="releaseproject" depends="compile">
 		<property name="releaseprojectdir" value="${releasedir}/${project_name}" />
 		<mkdir dir="${releaseprojectdir}" />
 		<copy todir="${releaseprojectdir}">
 			<fileset dir="${root}">
 				<exclude name="*.zip"/>
+				<exclude name="*.log"/>
 				<exclude name="release/**"/>
 				<exclude name="build/**"/>
 				<exclude name="dist/**"/>
 				<exclude name="latest-build/**"/>
-				<exclude name="war/**/*.class"/>
-				<exclude name="war/**/image/**"/>
+				<exclude name="war/**/classes/**"/>
 			</fileset>
 		</copy>
-		<zip destfile="${releaseprojectname}.zip" basedir="${releasedir}" />
+		<zip destfile="${release_dist_dir}/${releaseprojectname}.zip" basedir="${releasedir}" />
 		<delete dir="${releasedir}" />
 	</target>
 
-	<target name="release" depends="releaseserver, releaseclient, releaseproject" />
+	<target name="release-official" depends="official-build, releaseserver, releaseclient, releaseproject" />
+	<target name="release-latest-build" depends="latest-build, releaseserver, releaseclient, releaseproject" />
 
 </project>

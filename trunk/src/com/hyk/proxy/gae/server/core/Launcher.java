@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.gae.common.Constants;
+import com.hyk.proxy.gae.common.extension.ExtensionsLauncher;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.RemoteServiceManager;
 import com.hyk.proxy.gae.server.config.XmlConfig;
@@ -83,6 +85,7 @@ public class Launcher extends HttpServlet{
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		ExtensionsLauncher.init();
 		try
 		{	
 			XmlConfig hykConfig = XmlConfig.init(config);
@@ -99,7 +102,7 @@ public class Launcher extends HttpServlet{
 			RPC xmppRpc = new RPC(transport, initProps);
 			createRemoteServiceManagerIfNotExist(xmppRpc);
 			
-			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(hykConfig.getAppId() + ".appspot.com", "/fetchproxy"));
+			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(hykConfig.getAppId() + ".appspot.com",  Constants.HTTP_INVOKE_PATH));
 			RPC httpRpc = new RPC(httpServletRpcChannel, initProps);
 			httpServletRpcChannel.setMaxMessageSize(10240000);
 			createRemoteServiceManagerIfNotExist(httpRpc);
