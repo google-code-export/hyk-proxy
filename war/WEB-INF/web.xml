@@ -10,21 +10,21 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet>
-		<servlet-name>HttpProxy</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.servlet.HttpProxyServlet</servlet-class>
+		<servlet-name>HttpInvoke</servlet-name>
+		<servlet-class>com.hyk.proxy.gae.server.core.servlet.HttpInvokeServlet</servlet-class>
 	</servlet>
 	<servlet>
-		<servlet-name>XmppProxy</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.servlet.XmppProxyServlet</servlet-class>
+		<servlet-name>XmppInvoke</servlet-name>
+		<servlet-class>com.hyk.proxy.gae.server.core.servlet.XmppInvokeServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>XmppProxy</servlet-name>
+		<servlet-name>XmppInvoke</servlet-name>
 		<url-pattern>/_ah/xmpp/message/chat/</url-pattern>
 	</servlet-mapping>
 
 	<servlet-mapping>
-		<servlet-name>HttpProxy</servlet-name>
-		<url-pattern>/fetchproxy</url-pattern>
+		<servlet-name>HttpInvoke</servlet-name>
+		<url-pattern>/invoke</url-pattern>
 	</servlet-mapping>
 
 	<servlet>
@@ -94,7 +94,4 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<location>/signoutredirect</location>
 	</error-page>
 
-	<welcome-file-list>
-		<welcome-file>index.jsp</welcome-file>
-	</welcome-file-list>
 </web-app>

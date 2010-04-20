@@ -18,8 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-
-import com.hyk.compress.CompressorType;
+import com.hyk.compress.compressor.gz.GZipCompressor;
 import com.hyk.proxy.gae.client.util.ClientUtils;
 
 /**
@@ -61,7 +60,7 @@ public class Config
 	private List<AppIdAuth>		appids							= new LinkedList<AppIdAuth>();
 	private List<XmppAccount>	accounts						= new LinkedList<XmppAccount>();
 
-	private CompressorType		compressorType					= CompressorType.GZ;
+	private String		compressorName					= GZipCompressor.NAME;
 	private int compressorTrigger = 256;
 	private int httpConnectionPoolSize = 5;
 	private int threadPoolSize = 20;
@@ -209,9 +208,9 @@ public class Config
 		return isHttpEnable;
 	}
 	
-	public CompressorType getCompressorType()
+	public String getCompressorName()
 	{
-		return compressorType;
+		return compressorName;
 	}
 
 	public int getCompressorTrigger()
@@ -295,7 +294,7 @@ public class Config
 			}
 			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TYPE))
 			{
-				compressorType = CompressorType.valueOfName(value);
+				compressorName = value.toLowerCase();
 			}
 			else if(key.equals(LOCAL_SERVER_COMPRESSOR_TRIGGER))
 			{

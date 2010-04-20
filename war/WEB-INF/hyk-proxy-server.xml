@@ -2,7 +2,7 @@
 
 <hyk-proxy>
    <compress-setting>
-       <compressor>gz</compressor>
+       <compressor>lzf</compressor>
        <trigger>512</trigger>
        <ignore>
            <content-type>audio</content-type>

@@ -12,6 +12,7 @@ package com.hyk.proxy.gae.client.launch.tui;
 import java.io.IOException;
 
 import com.hyk.proxy.gae.client.admin.Admin;
+import com.hyk.proxy.gae.common.extension.ExtensionsLauncher;
 
 /**
  *
@@ -27,6 +28,7 @@ public class AdminLauncher
 	{
 		try
 		{
+			ExtensionsLauncher.init();
 			new Admin().start();
 		}
 		catch(Exception e)

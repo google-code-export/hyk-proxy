@@ -8,12 +8,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import javax.net.ssl.SSLContext;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -22,23 +19,19 @@ import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.compress.CompressorFactory;
-import com.hyk.compress.DefaultCompressPreference;
 import com.hyk.proxy.gae.client.config.AppIdAuth;
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.XmppAccount;
-import com.hyk.proxy.gae.client.rpc.HttpClientRpcChannel;
-import com.hyk.proxy.gae.client.rpc.XmppRpcChannel;
 import com.hyk.proxy.gae.client.util.ClientUtils;
+import com.hyk.proxy.gae.common.Constants;
 import com.hyk.proxy.gae.common.auth.UserInfo;
+import com.hyk.proxy.gae.common.extension.ExtensionsLauncher;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.proxy.gae.common.service.FetchService;
 import com.hyk.proxy.gae.common.service.RemoteServiceManager;
 import com.hyk.proxy.gae.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
-import com.hyk.rpc.core.constant.RpcConstants;
-import com.hyk.rpc.core.service.NameService;
 import com.hyk.rpc.core.transport.RpcChannel;
 import com.hyk.util.buffer.ByteArrayPoolDaemon;
 
@@ -58,6 +51,7 @@ public class HttpServer
 	
     public HttpServer() throws RpcException, Exception
     {
+    	ExtensionsLauncher.init();
     	Config config = Config.getInstance();
     	Executor bossExecutor = Executors.newCachedThreadPool();
 		workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(config.getThreadPoolSize(), 0, 0);
@@ -68,22 +62,21 @@ public class HttpServer
     	bootstrap.bind(new InetSocketAddress(InetAddress.getByName(config.getLocalServerHost()), config.getLocalServerPort()));
     }
     
-	protected RPC createXmppRpc(XmppAccount account,Executor workerExecutor, Properties initProps) throws XMPPException, RpcException
-	{
-		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
-		rpcChannels.add(xmppRpcchannle);
-		return new RPC(xmppRpcchannle, initProps);
-	}
-
-	protected RPC createHttpRpc(AppIdAuth appid, Executor workerExecutor, Properties initProps) throws IOException, RpcException
-	{
-		
-		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com", "/fetchproxy");
-		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost",8888, "/fetchproxy");
-		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
-		rpcChannels.add(httpCleintRpcchannle);
-		return new RPC(httpCleintRpcchannle, initProps);
-	}
+//	protected RPC createXmppRpc(XmppAccount account,Executor workerExecutor, Properties initProps) throws XMPPException, RpcException
+//	{
+//		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
+//		rpcChannels.add(xmppRpcchannle);
+//		return new RPC(xmppRpcchannle, initProps);
+//	}
+//
+//	protected RPC createHttpRpc(AppIdAuth appid, Executor workerExecutor, Properties initProps) throws IOException, RpcException
+//	{
+//		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com", Constants.HTTP_INVOKE_PATH);
+//		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost",8888, "/fetchproxy");
+//		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
+//		rpcChannels.add(httpCleintRpcchannle);
+//		return new RPC(httpCleintRpcchannle, initProps);
+//	}
 
 	protected FetchService initXmppFetchService(AppIdAuth appid, RPC rpc) throws XMPPException
 	{
@@ -100,7 +93,7 @@ public class HttpServer
 	{
 		//RemoteServiceManager remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new HttpServerAddress("localhost",
 		//		8888, "/fetchproxy"));
-		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com", "/fetchproxy");
+		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com",  Constants.HTTP_INVOKE_PATH);
 		RemoteServiceManager remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, remoteAddress);
 		//NameService serv = rpc.getRemoteNaming(remoteAddress);
 		//return (FetchService)serv.lookup("fetch");
@@ -115,10 +108,10 @@ public class HttpServer
 		
 		Config config = Config.getInstance();
 		List<FetchService> fetchServices = new LinkedList<FetchService>();
-		DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
-		Properties initProps = new Properties();
-		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
-		initProps.setProperty(RpcConstants.COMPRESS_PREFER, "com.hyk.compress.DefaultCompressPreference");
+		//DefaultCompressPreference.init(CompressorFactory.getCompressor(config.getCompressorType()), config.getCompressorTrigger());
+		//Properties initProps = new Properties();
+		//initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getSessionTimeout()));
+		//initProps.setProperty(RpcConstants.COMPRESS_PREFER, DefaultCompressPreference.class.getName());
 		try
 		{
 			
@@ -129,7 +122,8 @@ public class HttpServer
 				List<XmppAccount> xmppAccounts = config.getAccounts();
 				for(XmppAccount account : xmppAccounts)
 				{
-					RPC rpc = createXmppRpc(account, workerExecutor, initProps);
+					//RPC rpc = createXmppRpc(account, workerExecutor, initProps);
+					RPC rpc = ClientUtils.createXmppRPC(account, workerExecutor);
 					for(AppIdAuth appid : appids)
 					{
 						try
@@ -151,7 +145,8 @@ public class HttpServer
 				{					
 					try
 					{
-						RPC rpc = createHttpRpc(appid, workerExecutor, initProps);
+						//RPC rpc = createHttpRpc(appid, workerExecutor, initProps);
+						RPC rpc = ClientUtils.createHttpRPC(appid.getAppid(), workerExecutor);
 						fetchServices.add(initHttpFetchService(appid, rpc));
 					}
 					catch(Exception e)
