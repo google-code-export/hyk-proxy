@@ -14,7 +14,7 @@
 	<property name="lib" value="${root}/lib" />
 	<property name="etc" value="${root}/etc" />
 	<property name="shell" value="${root}/shell" />
-	<property name="version" value="0.8.0rc1" />
+	<property name="version" value="0.8.0" />
 	<property name="release" value="release" />
 	<property name="versionfile" value="com/hyk/proxy/gae/common/Version.java" />
 	<property name="project_name" value="hyk-proxy" />

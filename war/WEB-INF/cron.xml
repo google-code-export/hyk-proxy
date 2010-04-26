@@ -5,4 +5,10 @@
     <description>Ping this app every 1 min to keep JVM warm</description>
     <schedule>every 1 minutes</schedule>
   </cron>
+  
+  <cron>
+    <url>/clear-stat-records</url>
+    <description>Clear stat records every 1 day</description>
+    <schedule>every 24 hours</schedule>
+  </cron>
 </cronentries>

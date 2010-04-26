@@ -124,6 +124,11 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 	@Override
 	public void clear()
 	{
+		clearRecord();
+	}
+	
+	public static void clearRecord()
+	{
 		memcache.delete(CACHE_NAME);
 		ServerUtils.deleteType(BandwidthStatisticsResult.class);
 	}
