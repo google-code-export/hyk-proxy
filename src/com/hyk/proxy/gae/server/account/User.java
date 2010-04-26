@@ -9,11 +9,13 @@
  */
 package com.hyk.proxy.gae.server.account;
 
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
+import com.googlecode.objectify.annotation.Serialized;
 
 /**
  *
@@ -60,18 +62,27 @@ public class User
 	{
 		this.blacklist = blacklist;
 	}
+	
+	public Map<String, Integer> getTrafficRestrictionTable()
+	{
+		return trafficRestrictionTable;
+	}
 
-//	@PrimaryKey
-//	@Persistent
+	public void setTrafficRestrictionTable(Map<String, Integer> trafficRestrictionTable)
+	{
+		this.trafficRestrictionTable = trafficRestrictionTable;
+	}
+
 	@Id
 	private String email;
-	
-//	@Persistent
+
 	private String passwd;
 
-//	@Persistent
 	private String group;
 	
-//	@Persistent
 	private Set<String> blacklist;
+	
+	@Serialized
+	private Map<String, Integer> trafficRestrictionTable;
+
 }

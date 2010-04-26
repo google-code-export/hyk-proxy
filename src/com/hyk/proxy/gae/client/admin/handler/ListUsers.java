@@ -33,12 +33,12 @@ public class ListUsers implements CommandHandler
 	public void execute(String[] args)
 	{
 		List<String[]> retValue = accountService.getUsersInfo();
-		String formater = "%20s%20s%20s%20s";
-		String header = String.format(formater, "Username", "Password", "Group", "Blacklist");
+		String formater = "%12s%12s%12s%24s%24s";
+		String header = String.format(formater, "Username", "Password", "Group", "Blacklist", "TrafficRestrictions");
 		Admin.outputln(header);
 		for(String[] line:retValue)
 		{
-			String output = String.format(formater, line[0], line[1], line[2], line[3]);
+			String output = String.format(formater, line[0], line[1], line[2], line[3], line[4]);
 			Admin.outputln(output);
 		}
 	}

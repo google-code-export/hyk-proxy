@@ -21,6 +21,7 @@ import org.jivesoftware.smack.XMPPException;
 import com.hyk.proxy.gae.client.admin.handler.AddGroup;
 import com.hyk.proxy.gae.client.admin.handler.AddUser;
 import com.hyk.proxy.gae.client.admin.handler.Blacklist;
+import com.hyk.proxy.gae.client.admin.handler.Traffic;
 import com.hyk.proxy.gae.client.admin.handler.ChangePasswd;
 import com.hyk.proxy.gae.client.admin.handler.ClearScreen;
 import com.hyk.proxy.gae.client.admin.handler.CommandHandler;
@@ -111,6 +112,7 @@ public class Admin
 		handlers.put(DeleteUser.COMMAND, new DeleteUser(accountService));
 		handlers.put(DeleteGroup.COMMAND, new DeleteGroup(accountService));
 		handlers.put(Blacklist.COMMAND, new Blacklist(accountService));
+		handlers.put(Traffic.COMMAND, new Traffic(accountService));
 		handlers.put(Stat.COMMAND, new Stat(remoteServiceManager, userInfo));
 		handlers.put(Help.COMMAND, new Help());
 	}
