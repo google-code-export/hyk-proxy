@@ -11,6 +11,8 @@ package com.hyk.proxy.gae.client.util;
 
 import java.io.Console;
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.KeyStore;
@@ -77,6 +79,18 @@ public class ClientUtils
 		TrustManager[] tm = tmf.getTrustManagers();
 		sslContext.init(km, tm, null);
 		return sslContext;
+	}
+	
+	public static boolean isIPV6Address(String address)
+	{
+		try
+		{
+			return InetAddress.getByName(address) instanceof Inet6Address;
+		}
+		catch(Throwable e)
+		{
+			return false;
+		}
 	}
 	
 	public static HttpResponse buildHttpServletResponse(HttpResponseExchange forwardResponse) throws IOException

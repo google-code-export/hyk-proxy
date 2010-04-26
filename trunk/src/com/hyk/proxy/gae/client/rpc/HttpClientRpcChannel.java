@@ -49,6 +49,7 @@ import org.jivesoftware.smack.util.Base64;
 
 import com.hyk.proxy.gae.client.config.Config;
 import com.hyk.proxy.gae.client.config.ProxyInfo;
+import com.hyk.proxy.gae.client.util.ClientUtils;
 import com.hyk.proxy.gae.common.http.message.HttpServerAddress;
 import com.hyk.rpc.core.transport.AbstractDefaultRpcChannel;
 import com.hyk.rpc.core.transport.RpcChannelData;
@@ -137,7 +138,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		setMaxMessageSize(10240000);
 		this.remoteAddress = remoteAddress;
 		// Java NIO is not support IPv6, here is a workaround
-		if(InetAddress.getByName(remoteAddress.getHost()) instanceof Inet6Address)
+		if(ClientUtils.isIPV6Address(remoteAddress.getHost()))
 		{
 			factory = new OioClientSocketChannelFactory(threadPool);
 		}
@@ -236,7 +237,16 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		if(clientChannel.getSocketChannel().isConnected())
 		{
-			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, remoteAddress.toPrintableString());
+			String url = remoteAddress.toPrintableString();
+			//This option is only active when there is no local proxy or just an anonymouse local proxy
+			if(config.isSimpleUrlEnable())
+			{
+				if(null ==  config.getProxyInfo() ||  null == config.getProxyInfo().getUser())
+				{
+					url = remoteAddress.getPath();
+				}
+			}
+			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, url);
 			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
 			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
 			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");

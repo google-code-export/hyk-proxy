@@ -37,4 +37,6 @@ public interface AccountService
 	public String operationOnGroupBlackList(String group, String host, Operation operation);
 	
 	public String operationOnUserBlackList(String user, String host, Operation operation);
+	
+	public String operationOnUserTraffic(String user, String host, int trafficRestriction);
 }

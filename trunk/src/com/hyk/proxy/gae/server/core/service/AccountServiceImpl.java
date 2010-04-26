@@ -10,8 +10,10 @@
 package com.hyk.proxy.gae.server.core.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -303,11 +305,12 @@ public class AccountServiceImpl implements AccountService
 		List<String[]> ret = new ArrayList<String[]>();
 		for(User u : users)
 		{
-			String[] value = new String[4];
+			String[] value = new String[5];
 			value[0] = u.getEmail();
 			value[1] = u.getPasswd();
 			value[2] = u.getGroup();
 			value[3] = ServerUtils.toString(u.getBlacklist());
+			value[4] = ServerUtils.toString(u.getTrafficRestrictionTable());
 			ret.add(value);
 		}
 		return ret;
@@ -441,5 +444,36 @@ public class AccountServiceImpl implements AccountService
 		ServerUtils.storeObject(u);
 		return null;
 
+	}
+
+	@Override
+	public String operationOnUserTraffic(String username, String host, int trafficRestriction)
+	{
+		if(assertRootAuth() != null)
+		{
+			return assertRootAuth();
+		}
+		User u = ServerUtils.getUser(username);
+		if(null == u)
+		{
+			return USER_NOTFOUND;
+		}
+		try
+		{
+			Map<String, Integer> restrictionTable = u.getTrafficRestrictionTable();
+			if(null == restrictionTable)
+			{
+				restrictionTable = new HashMap<String, Integer>();
+				u.setTrafficRestrictionTable(restrictionTable);
+			}
+			restrictionTable.put(host, trafficRestriction);
+			ServerUtils.storeObject(u);
+		}
+		catch(Throwable e)
+		{
+			logger.error("Failed to traffic.", e);
+			return "Failed to delete user." + e.getMessage();
+		}
+		return null;
 	}
 }

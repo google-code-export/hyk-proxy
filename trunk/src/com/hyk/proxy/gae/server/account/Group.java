@@ -18,13 +18,9 @@ import com.googlecode.objectify.annotation.Cached;
 /**
  *
  */
-//@PersistenceCapable(identityType = IdentityType.APPLICATION)
 @Cached
 public class Group 
-//implements Serializable
 {
-//	public static final String CACHE_NAME = "CACHE_GROUP";
-	
 	public String getName()
 	{
 		return name;
@@ -45,10 +41,9 @@ public class Group
 		this.blacklist = blacklist;
 	}
 
-//	@PrimaryKey
 	@Id
 	private String name;
-	
-//	@Persistent
+
 	private Set<String> blacklist;
+	
 }

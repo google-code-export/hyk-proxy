@@ -50,6 +50,8 @@ public class Config
 	public static final String   LOCAL_SERVER_HTTP_PROXY_USER  = "localserver.http.proxy.user";
 	public static final String   LOCAL_SERVER_HTTP_PROXY_PASSWD  = "localserver.http.proxy.password";
 	
+	public static final String   LOCAL_SERVER_RPC_SIMPLE_URL  = "localserver.rpc.http.simpleurl.enable";
+	
 	public static final String   LOCAL_SERVER_THREAD_POOL_SIZE  = "localserver.threadpoolsize";
 	
 	public static final String   LOCAL_SERVER_HTTP_PROXY_HOST_DEFAULT  = "localserver.http.proxy.host.default";
@@ -65,6 +67,8 @@ public class Config
 	private int httpConnectionPoolSize = 5;
 	private int threadPoolSize = 20;
 	
+	private boolean isSimpleUrlEnable = true;
+
 	private ProxyInfo proxy;
 	
 	private ProxyInfo defaultProxy = new ProxyInfo("www.google.com.hk");
@@ -312,6 +316,10 @@ public class Config
 			{
 				threadPoolSize = Integer.parseInt(value);
 			}
+			else if(key.equals(LOCAL_SERVER_RPC_SIMPLE_URL))
+			{
+				isSimpleUrlEnable = Boolean.parseBoolean(value);
+			}
 			else if(key.equals(LOCAL_SERVER_HTTP_PROXY_HOST))
 			{
 				proxy = new ProxyInfo();
@@ -345,6 +353,11 @@ public class Config
 		}
 		
 		return this;
+	}
+	
+	public boolean isSimpleUrlEnable()
+	{
+		return isSimpleUrlEnable;
 	}
 	
 	public void storeToConf(String comment) throws IOException

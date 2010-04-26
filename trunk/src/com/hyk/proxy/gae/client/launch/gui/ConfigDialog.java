@@ -405,7 +405,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         jLabel7.setText("Compress Trigger:");
 
         compressorType.setMaximumRowCount(4);
-        compressorType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "GZ", "ZIP", "LZF", "NONE" }));
+        compressorType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "LZF", "GZ", "ZIP", "NONE" }));
 
         compressorTrigger.setText("512");
 
@@ -699,7 +699,6 @@ public class ConfigDialog extends javax.swing.JDialog {
        
         for(XmppAccount account: xmppAccounts.values())
         {
-             System.out.println("3#####" +account.getJid());
             props.setProperty(Config.XMPP_USER_CONFIG + "." + i, account.getJid());
             props.setProperty(Config.XMPP_PASS_CONFIG + "." + i, account.getPasswd());
             props.setProperty(Config.XMPP_SERVER_HOST_CONFIG+ "." + i, account.getServerHost());
@@ -727,8 +726,8 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         props.setProperty(Config.LOCAL_SERVER_SESSION_TIMEOUT, rpcTimeoutText.getText().trim());
         props.setProperty(Config.LOCAL_SERVER_THREAD_POOL_SIZE, threadPoolSizeText.getText().trim());
-         props.setProperty(Config.LOCAL_SERVER_HTTP_MAX_FETCHER, fetcherNumText.getText().trim());
-         props.setProperty(Config.LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE, connectionPoolText.getText().trim());
+        props.setProperty(Config.LOCAL_SERVER_HTTP_MAX_FETCHER, fetcherNumText.getText().trim());
+        props.setProperty(Config.LOCAL_SERVER_HTTP_CONNECTION_POOL_SIZE, connectionPoolText.getText().trim());
         props.setProperty(Config.LOCAL_SERVER_HTTP_FETCH_LIMIT, fetchLimitTextField1.getText().trim());
         props.setProperty(Config.LOCAL_SERVER_COMPRESSOR_TRIGGER, compressorTrigger.getText().trim());
         props.setProperty(Config.LOCAL_SERVER_COMPRESSOR_TYPE, compressorType.getSelectedItem().toString());

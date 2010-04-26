@@ -12,6 +12,7 @@ package com.hyk.proxy.gae.server.core.service;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.common.service.BandwidthStatisticsService;
 import com.hyk.proxy.gae.common.service.FetchService;
+import com.hyk.proxy.gae.common.stat.BandwidthStatReport;
 import com.hyk.proxy.gae.server.account.Group;
 import com.hyk.proxy.gae.server.account.User;
 import com.hyk.proxy.gae.server.config.XmlConfig;
@@ -142,6 +144,46 @@ public class FetchServiceImpl implements FetchService
 		res.setBody(content);
 		return res;
 	}
+	
+	protected boolean authByTrafficRestriction(HttpRequestExchange req)
+	{
+		Map<String, Integer> trafficRestrictionTable = user.getTrafficRestrictionTable();
+		if(null == trafficRestrictionTable || trafficRestrictionTable.isEmpty())
+		{
+			return true;
+		}
+		String host = req.getHeaderValue("Host").trim();
+		String traficHost = host;
+		if(!trafficRestrictionTable.containsKey(traficHost))
+		{
+			//match all hosts
+			traficHost = "*";
+		}
+		if(!trafficRestrictionTable.containsKey(traficHost))
+		{
+			return true;
+		}
+		
+		int restriction = trafficRestrictionTable.get(traficHost);
+		if(restriction < 0) // no restriction
+		{
+			return true;
+		}
+		if(restriction == 0) // restrict all requests
+		{
+			return false;
+		}
+		BandwidthStatReport result = bandwidthStatisticsService.getStatResult(host);
+		if(null != result)
+		{
+			if(result.getIncoming() >= restriction || result.getOutgoing() >= restriction)
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
 
 	protected boolean authByBlacklist(HttpRequestExchange req)
 	{
@@ -164,13 +206,12 @@ public class FetchServiceImpl implements FetchService
 	public HttpResponseExchange fetch(HttpRequestExchange req)
 	{
 		HttpResponseExchange ret = null;
-
-		if(!authByBlacklist(req))
-		{
-			return createErrorResponse();
-		}
 		try
 		{	
+			if(!authByBlacklist(req) || !authByTrafficRestriction(req))
+			{
+				return createErrorResponse();
+			}
 			ret = getCache(req);
 			if(null == ret)
 			{
@@ -214,7 +255,7 @@ public class FetchServiceImpl implements FetchService
 		{
 			ret = new HttpResponseExchange().setResponseTooLarge(true);
 		}
-		catch(Exception e)
+		catch(Throwable e)
 		{
 			logger.error("Faile to fetch", e);
 			ret = new HttpResponseExchange();
