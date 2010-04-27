@@ -24,7 +24,7 @@ public class XmlConfig
 	private Compressor compressor;
 	private int compressTrigger;
 	
-	private byte[] blacklistErrorPage;
+	private String authErrorPage;
 
 	private int maxXmppMessageSize;
 	
@@ -53,9 +53,9 @@ public class XmlConfig
 		return ignorePatterns;
 	}
 	
-	public byte[] getBlacklistErrorPage()
+	public String getAuthErrorPage()
 	{
-		return blacklistErrorPage;
+		return authErrorPage;
 	}
 
 	private List<String> ignorePatterns = new ArrayList<String>(); 
@@ -109,7 +109,7 @@ public class XmlConfig
 		buffer.append(doc.getElementsByTagName("error-info").item(0).getTextContent());
 		buffer.append("</body></html>");
 		String bodystr = buffer.toString();
-		instance.blacklistErrorPage = bodystr.getBytes();
+		instance.authErrorPage = bodystr;
 
 		return instance;
 	}

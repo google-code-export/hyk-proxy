@@ -22,7 +22,7 @@ import com.hyk.rpc.core.annotation.Remote;
 public interface BandwidthStatisticsService
 {	
 	public BandwidthStatReport getStatResult(String host);
-	public BandwidthStatReport[] getStatResults();
+	public BandwidthStatReport[] getStatResults(int limit);
 	
 	//public void statBandwidth(String host, long incoming, long outgoing);
 	public void clear();

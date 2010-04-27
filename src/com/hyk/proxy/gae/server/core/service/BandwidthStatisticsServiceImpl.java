@@ -9,6 +9,7 @@
  */
 package com.hyk.proxy.gae.server.core.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,7 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 		Map<String, BandwidthStatisticsResult> stats = (Map<String, BandwidthStatisticsResult>)memcache.get(CACHE_NAME);
 		if(null != stats && !stats.isEmpty())
 		{
+			List<BandwidthStatisticsResult> stores = new ArrayList<BandwidthStatisticsResult>();
 			for(BandwidthStatisticsResult result:stats.values())
 			{
 				BandwidthStatisticsResult store = ServerUtils.getBandwidthStatisticsResult(result.getTargetSiteHost());
@@ -74,7 +76,11 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 					store.setIncoming(store.getIncoming() + result.getIncoming());
 					store.setOutgoing(store.getOutgoing() + result.getOutgoing());
 				}
-				ServerUtils.storeObject(store);
+				stores.add(store);
+			}
+			if(!stores.isEmpty())
+			{
+				ServerUtils.storeObjects(stores);
 			}
 			memcache.delete(CACHE_NAME);
 		}
@@ -93,9 +99,9 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 	}
 
 	@Override
-	public BandwidthStatReport[] getStatResults()
+	public BandwidthStatReport[] getStatResults(int limit)
 	{
-		List<BandwidthStatisticsResult> results = ServerUtils.getBandwidthStatisticsResults();
+		List<BandwidthStatisticsResult> results = ServerUtils.getBandwidthStatisticsResults(limit);
 		BandwidthStatReport[] ret = new BandwidthStatReport[results.size()];
 		for(int i = 0; i < ret.length; i++)
 		{

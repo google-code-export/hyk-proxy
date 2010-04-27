@@ -133,15 +133,16 @@ public class FetchServiceImpl implements FetchService
 		return null;
 	}
 
-	protected HttpResponseExchange createErrorResponse()
+	protected HttpResponseExchange createErrorResponse(String reason)
 	{
 		HttpResponseExchange res = new HttpResponseExchange();
 		res.setResponseCode(403);
 		res.addHeader("content-type", "text/html; charset=utf-8");
 
-		byte[] content = XmlConfig.getInstance().getBlacklistErrorPage();
-		res.addHeader("content-length", "" + content.length);
-		res.setBody(content);
+		String error = XmlConfig.getInstance().getAuthErrorPage();
+		String content = String.format(error, reason);
+		res.addHeader("content-length", "" + content.length());
+		res.setBody(content.getBytes());
 		return res;
 	}
 	
@@ -208,9 +209,13 @@ public class FetchServiceImpl implements FetchService
 		HttpResponseExchange ret = null;
 		try
 		{	
-			if(!authByBlacklist(req) || !authByTrafficRestriction(req))
+			if(!authByBlacklist(req))
 			{
-				return createErrorResponse();
+				return createErrorResponse("blacklist restriction");
+			}
+			if(!authByTrafficRestriction(req))
+			{
+				return createErrorResponse("your account:" + user.getEmail() + " has exceed the traffic limit today for the proxyed host:" + req.getHeaderValue("Host"));
 			}
 			ret = getCache(req);
 			if(null == ret)
