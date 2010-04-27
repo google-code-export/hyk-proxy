@@ -207,13 +207,13 @@ public class ClientUtils
 
 	public static String readFromStdin(boolean isEcho) throws IOException
 	{	
-//		int len = System.in.read(STDIN_BUFFER);
-//		return new String(STDIN_BUFFER, 0, len).trim();
+		int len = System.in.read(STDIN_BUFFER);
+		return new String(STDIN_BUFFER, 0, len).trim();
 		
-		if(isEcho)
-		{
-			return console.readLine().trim();
-		}
-		return new String(console.readPassword()).trim();
+//		if(isEcho)
+//		{
+//			return console.readLine().trim();
+//		}
+//		return new String(console.readPassword()).trim();
 	}
 }

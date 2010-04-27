@@ -30,6 +30,7 @@ import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
+import com.googlecode.objectify.Query;
 import com.hyk.proxy.gae.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.gae.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.gae.common.stat.BandwidthStatReport;
@@ -46,8 +47,8 @@ import com.hyk.proxy.gae.server.stat.BandwidthStatisticsResult;
  */
 public class ServerUtils
 {
-	protected static Logger					logger				= LoggerFactory.getLogger(ServerUtils.class);
-	
+	protected static Logger				logger		= LoggerFactory.getLogger(ServerUtils.class);
+
 	protected static MemcacheService	memcache	= MemcacheServiceFactory.getMemcacheService();
 
 	protected static Objectify			ofy			= ObjectifyService.begin();
@@ -61,7 +62,7 @@ public class ServerUtils
 		ObjectifyService.register(BandwidthStatisticsResult.class);
 		ObjectifyService.register(DatastoreConfig.class);
 	}
-	
+
 	public static DatastoreConfig getDatastoreConfig()
 	{
 		DatastoreConfig config = ofy.find(DatastoreConfig.class, DatastoreConfig.ID);
@@ -72,39 +73,52 @@ public class ServerUtils
 		}
 		return config;
 	}
-	
+
 	public static long storeObject(Object obj)
 	{
 		Key key = ofy.put(obj);
 		return key.getId();
 	}
 
+	public static void storeObjects(List objs)
+	{
+		ofy.put(objs);
+	}
+
 	public static void deleteObject(Object obj)
 	{
 		ofy.delete(obj);
 	}
-	
+
 	public static void deleteType(Class clazz)
 	{
-		ofy.delete(ofy.query(clazz).fetchKeys());
+		//AppEngine's limit for bulk deletion(500 entries one time)
+		Query query = ofy.query(clazz).limit(499);
+		QueryResultIterable keys = null;
+		do
+		{
+			keys = query.fetchKeys();
+			ofy.delete(keys);
+		}
+		while(query.countAll() > 0);
 	}
 
-	public static List<BandwidthStatisticsResult> getBandwidthStatisticsResults()
+	public static List<BandwidthStatisticsResult> getBandwidthStatisticsResults(int limit)
 	{
-		QueryResultIterable<BandwidthStatisticsResult> results = ofy.query(BandwidthStatisticsResult.class).order("-outgoing").fetch();
+		QueryResultIterable<BandwidthStatisticsResult> results = ofy.query(BandwidthStatisticsResult.class).limit(limit).order("-outgoing").fetch();
 		List<BandwidthStatisticsResult> ret = new ArrayList<BandwidthStatisticsResult>();
-		for(BandwidthStatisticsResult result: results)
+		for(BandwidthStatisticsResult result : results)
 		{
 			ret.add(result);
 		}
 		return ret;
 	}
-	
+
 	public static BandwidthStatisticsResult getBandwidthStatisticsResult(String host)
 	{
 		return ofy.find(BandwidthStatisticsResult.class, host);
 	}
-	
+
 	public static List<Group> getAllGroups()
 	{
 		QueryResultIterable<Group> results = ofy.query(Group.class).fetch();
@@ -140,7 +154,7 @@ public class ServerUtils
 		ro.setGroupname(groupname);
 		ro.setObjid(objId);
 		storeObject(ro);
-        
+
 	}
 
 	public static List<RemoteObject> loadRemoteObjects()
@@ -236,7 +250,7 @@ public class ServerUtils
 		{
 			exchange.addHeader("content-length", "" + res.getContent().length);
 		}
-		
+
 		URL url = res.getFinalUrl();
 		if(null != url)
 		{
@@ -244,10 +258,11 @@ public class ServerUtils
 		}
 		return exchange;
 	}
-	
+
 	public static BandwidthStatReport toBandwidthStatReport(BandwidthStatisticsResult result)
 	{
-		if(null == result) return null; 
+		if(null == result)
+			return null;
 		return new BandwidthStatReport(result.getTargetSiteHost(), result.getIncoming(), result.getOutgoing());
 	}
 

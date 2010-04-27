@@ -18,7 +18,7 @@ import com.hyk.proxy.gae.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.util.buffer.ByteArray;
-import com.hyk.util.codec.Base64;
+import com.hyk.codec.Base64;
 
 /**
  * @author yinqiwen
@@ -56,7 +56,7 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 		}
 		XmppAddress dataaddress = (XmppAddress)data.address;
 		JID jid = new JID(dataaddress.getJid());
-		Message msg = new MessageBuilder().withRecipientJids(jid).withMessageType(MessageType.CHAT).withBody(Base64.byteArrayBufferToBase64(data.content)).build();
+		Message msg = new MessageBuilder().withRecipientJids(jid).withMessageType(MessageType.CHAT).withBody(Base64.encodeToString(data.content.toByteArray(), false)).build();
 		{
 			int retry = RETRY;
 			while(SendResponse.Status.SUCCESS != xmpp.sendMessage(msg).getStatusMap().get(jid) && retry-- > 0)
@@ -74,7 +74,9 @@ public class XmppServletRpcChannel extends AbstractAppEngineRpcChannel
 		
 		try
 		{
-			ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
+			//ByteArray buffer = Base64.base64ToByteArrayBuffer(msg.getBody());
+			byte[] raw = Base64.decodeFast(msg.getBody());
+			ByteArray buffer = ByteArray.wrap(raw);
 			RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
 			processIncomingData(recv);
 		}
