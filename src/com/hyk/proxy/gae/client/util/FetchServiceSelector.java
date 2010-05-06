@@ -30,7 +30,6 @@ public class FetchServiceSelector
 	
 	public FetchServiceSelector(List<FetchService> fetchServices) throws RpcException 
 	{
-		super();
 		Collections.shuffle(fetchServices);
 		this.fetchServices = fetchServices;
 		asyncFetchServices = new ArrayList<AsyncFetchService>();

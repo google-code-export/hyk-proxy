@@ -60,14 +60,10 @@ import com.hyk.util.buffer.ByteArray;
  */
 public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 {
-	//private SimpleChannelUpstreamHandler	responseHandler	= new HttpResponseHandler();
-
 	private List<RpcChannelData>			recvList		= new LinkedList<RpcChannelData>();
 
 	private HttpServerAddress				remoteAddress;
 
-	// private ClientSocketChannelFactory factory = new
-	// NioClientSocketChannelFactory(threadPool, threadPool);
 	private ClientSocketChannelFactory		factory;
 
 	private HttpClientSocketChannelSelector	clientChannelSelector;
@@ -379,7 +375,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					chunkContent.readBytes(rawbuf, offset, len);
 					content.position(offset + len);
 				}
-
 			}
 		}
 	}

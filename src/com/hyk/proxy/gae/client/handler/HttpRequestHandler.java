@@ -106,6 +106,25 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler implements 
 	
 	protected HttpResponseExchange fetch(boolean isAsync) throws InterruptedException
 	{
+		if(null == fetchServiceSelector)
+		{
+			HttpResponseExchange error = new HttpResponseExchange();
+			error.setResponseCode(503);
+			error.addHeader("content-type", "text/html; charset=utf-8");
+			byte[] errorContent = ("<html><head> " +
+			                      "<title>503 Service Unavailable</title> +" +
+			                      "</head><body>" +
+			                      "<h1>Service Unavailable</h1> " +
+			                      "<p>hyk-proxy-client is not initialized completely, please retry after seconds. " +
+			                      "</body></html> ").getBytes();
+			error.addHeader("content-length", "" + errorContent.length);
+			error.setBody(errorContent);
+			if(isAsync)
+			{
+				callBack(new RpcCallbackResult<HttpResponseExchange>(error, null));
+			}
+			return error;
+		}
 		waitForwardBodyComplete();
 		if(logger.isDebugEnabled())
 		{
