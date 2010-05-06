@@ -62,27 +62,10 @@ public class HttpServer
     	bootstrap.bind(new InetSocketAddress(InetAddress.getByName(config.getLocalServerHost()), config.getLocalServerPort()));
     }
     
-//	protected RPC createXmppRpc(XmppAccount account,Executor workerExecutor, Properties initProps) throws XMPPException, RpcException
-//	{
-//		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
-//		rpcChannels.add(xmppRpcchannle);
-//		return new RPC(xmppRpcchannle, initProps);
-//	}
-//
-//	protected RPC createHttpRpc(AppIdAuth appid, Executor workerExecutor, Properties initProps) throws IOException, RpcException
-//	{
-//		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com", Constants.HTTP_INVOKE_PATH);
-//		//HttpServerAddress remoteAddress = new HttpServerAddress("localhost",8888, "/fetchproxy");
-//		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
-//		rpcChannels.add(httpCleintRpcchannle);
-//		return new RPC(httpCleintRpcchannle, initProps);
-//	}
 
 	protected FetchService initXmppFetchService(AppIdAuth appid, RPC rpc) throws XMPPException
 	{
 		RemoteServiceManager remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new XmppAddress(appid.getAppid() + "@appspot.com"));
-		//NameService serv = rpc.getRemoteNaming(new XmppAddress(appid.getAppid() + "@appspot.com"));
-		//FetchService fetchService = (FetchService)serv.lookup("fetch");
 		UserInfo info = new UserInfo();
 		info.setEmail(appid.getEmail());
 		info.setPasswd(appid.getPasswd());
@@ -91,12 +74,8 @@ public class HttpServer
 
 	protected FetchService initHttpFetchService(AppIdAuth appid, RPC rpc) throws XMPPException
 	{
-		//RemoteServiceManager remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new HttpServerAddress("localhost",
-		//		8888, "/fetchproxy"));
 		HttpServerAddress remoteAddress = new HttpServerAddress(appid.getAppid() + ".appspot.com",  Constants.HTTP_INVOKE_PATH);
 		RemoteServiceManager remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, remoteAddress);
-		//NameService serv = rpc.getRemoteNaming(remoteAddress);
-		//return (FetchService)serv.lookup("fetch");
 		UserInfo info = new UserInfo();
 		info.setEmail(appid.getEmail());
 		info.setPasswd(appid.getPasswd());

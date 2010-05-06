@@ -1,1 +1,1 @@
-package com.hyk.proxy.gae.common;    public class Version    {       public static final String value = "0.8.0";    }
+package com.hyk.proxy.gae.common;    public class Version    {       public static final String value = "0.8.0rc1";    }
