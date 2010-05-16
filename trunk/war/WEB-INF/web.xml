@@ -6,16 +6,16 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	version="2.5">
 	<servlet>
 		<servlet-name>launcher</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.Launcher</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.Launcher</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet>
 		<servlet-name>HttpInvoke</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.servlet.HttpInvokeServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.HttpInvokeServlet</servlet-class>
 	</servlet>
 	<servlet>
 		<servlet-name>XmppInvoke</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.servlet.XmppInvokeServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.XmppInvokeServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>XmppInvoke</servlet-name>
@@ -29,7 +29,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 
 	<servlet>
 		<servlet-name>mailhandler</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.core.servlet.EMailServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.EMailServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>mailhandler</servlet-name>
@@ -64,7 +64,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 
 	<servlet>
 		<servlet-name>Index</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.page.IndexServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.page.IndexServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>Index</servlet-name>
@@ -72,17 +72,17 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	</servlet-mapping>
 
 	<servlet>
-		<servlet-name>KeepJVMWarm</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.util.KeepJVMWarmTaskHandler</servlet-class>
+		<servlet-name>StatHandler</servlet-name>
+		<servlet-class>com.hyk.proxy.server.gae.util.BandwidthStatHandler</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>KeepJVMWarm</servlet-name>
-		<url-pattern>/keep-jvm-warm</url-pattern>
+		<servlet-name>StatHandler</servlet-name>
+		<url-pattern>/bandwidth-stat</url-pattern>
 	</servlet-mapping>
 
 	<servlet>
 		<servlet-name>ClearStatRecord</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.util.ClearStatRecordHandler</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.util.ClearStatRecordHandler</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>ClearStatRecord</servlet-name>
@@ -91,7 +91,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 
 	<servlet>
 		<servlet-name>Admin</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.page.AdminServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.page.AdminServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>Admin</servlet-name>
@@ -100,7 +100,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 
 	<servlet>
 		<servlet-name>SignOutRedirect</servlet-name>
-		<servlet-class>com.hyk.proxy.gae.server.page.SignoutRedirectServlet</servlet-class>
+		<servlet-class>com.hyk.proxy.server.gae.servlet.page.SignoutRedirectServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>SignOutRedirect</servlet-name>

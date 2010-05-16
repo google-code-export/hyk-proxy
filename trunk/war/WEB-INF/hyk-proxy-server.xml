@@ -3,7 +3,6 @@
 <hyk-proxy>
    <compress-setting>
        <compressor>lzf</compressor>
-       <trigger>512</trigger>
        <ignore>
            <content-type>audio</content-type>
            <content-type>video</content-type>
@@ -18,6 +17,8 @@
            <content-type>application/x-spoon</content-type>  
        </ignore>
    </compress-setting>
+   
+   <httpDownStreamEncrypter>se1</httpDownStreamEncrypter>
    
    <XMPP-setting>
       <MaxMessageSize>4096</MaxMessageSize>
