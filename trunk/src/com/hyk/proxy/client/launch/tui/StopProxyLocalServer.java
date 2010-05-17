@@ -10,10 +10,14 @@
 package com.hyk.proxy.client.launch.tui;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import com.hyk.proxy.client.config.Config;
+import com.hyk.proxy.client.config.Config.SimpleSocketAddress;
+import com.hyk.proxy.common.Constants;
 
 /**
  *
@@ -30,9 +34,11 @@ public class StopProxyLocalServer
 	{
 		Config config = Config.getInstance();
 		
-		Socket socket = new Socket();
-		socket.connect(new InetSocketAddress(config.getLocalProxyServerAddress().host, config.getLocalProxyServerAddress().port));
-		socket.getOutputStream().write(("OPTIONS stop HTTP/1.1\r\n\r\n").getBytes());
+		DatagramSocket socket = new DatagramSocket();
+		SimpleSocketAddress addr = config.getLocalProxyServerAddress();
+		byte[] data = Constants.STOP_CLIENT_COMMAND.getBytes();
+		DatagramPacket packet = new DatagramPacket(data, data.length, new InetSocketAddress(addr.host, addr.port));
+		socket.send(packet);
 		socket.close();
 		System.exit(1);
 	}

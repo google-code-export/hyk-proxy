@@ -15,4 +15,6 @@ package com.hyk.proxy.client.framework.event;
 public interface HttpProxyEventService
 {
 	public void handleEvent(HttpProxyEvent event);
+	
+	public void close() throws Exception;
 }

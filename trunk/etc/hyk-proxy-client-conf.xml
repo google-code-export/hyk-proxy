@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configure>
-	<localserver host="localhost" port="48101" />
+	<localserver host="localhost" port="48100" />
 
     <!-- Can config more than 1 hyk-proxy-server -->
 	<hyk-proxy-server appid="hykserver" user="root" passwd="hello"/>

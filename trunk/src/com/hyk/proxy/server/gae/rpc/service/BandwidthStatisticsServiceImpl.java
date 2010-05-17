@@ -15,6 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.appengine.api.labs.taskqueue.Queue;
+import com.google.appengine.api.labs.taskqueue.QueueFactory;
+import com.google.appengine.api.labs.taskqueue.TaskOptions;
+import com.google.appengine.api.labs.taskqueue.TaskOptions.Method;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.hyk.proxy.common.gae.stat.BandwidthStatisticsResult;
@@ -137,6 +141,12 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 	public static void clearRecord()
 	{
 		memcache.delete(CACHE_NAME);
-		ServerUtils.deleteType(BandwidthStatisticsResult.class);
+		if(!ServerUtils.deleteTypeWithLimit(BandwidthStatisticsResult.class, 1000))
+		{
+			Queue queue = QueueFactory.getDefaultQueue();
+			TaskOptions task = TaskOptions.Builder.url("/clear-stat-records").method(Method.GET);
+			queue.add(task);
+		}
+		//ServerUtils.deleteType(BandwidthStatisticsResult.class);
 	}
 }
