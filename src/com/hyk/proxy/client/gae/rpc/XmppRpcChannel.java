@@ -57,7 +57,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		ConnectionConfiguration connConfig = account.connectionConfig;
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
-		xmppConnection.login(account.name, account.passwd, Constants.NAME);
+		xmppConnection.login(account.name, account.passwd, Constants.CLIENT_NAME);
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);
 		super.start();

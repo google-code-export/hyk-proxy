@@ -3,10 +3,10 @@
 <information>
    <stable-release>
       <version>0.8.0rc1</version>
-      <link></link>
+      <link>http://code.google.com/p/hyk-proxy/downloads/list</link>
    </stable-release>
-   <latest-release>
+   <latest-unstable-release>
        <version></version>
-       <link></link>
-   </latest-release>
+       <link>http://hyk-proxy.googlecode.com/svn/trunk/latest-build/</link>
+   </latest-unstable-release>
 </information>

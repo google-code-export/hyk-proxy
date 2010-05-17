@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.common.Constants;
+import com.hyk.proxy.common.Version;
 import com.hyk.proxy.common.gae.auth.Group;
 import com.hyk.proxy.common.gae.auth.User;
 import com.hyk.proxy.common.rpc.service.AccountService;
@@ -174,5 +175,12 @@ public class RemoteServiceManagerImpl implements RemoteServiceManager, Serializa
 		}
 		BandwidthStatisticsService impl = new BandwidthStatisticsServiceImpl();
 		return (BandwidthStatisticsService)rpc.exportRemoteObject(impl);
+	}
+
+
+	@Override
+	public String getServerVersion()
+	{
+		return Version.value;
 	}
 }

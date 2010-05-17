@@ -36,6 +36,7 @@ import com.hyk.proxy.common.gae.auth.User;
 import com.hyk.proxy.common.gae.stat.BandwidthStatisticsResult;
 import com.hyk.proxy.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.common.http.message.HttpResponseExchange;
+import com.hyk.proxy.server.gae.appid.AppIdShareItem;
 import com.hyk.proxy.server.gae.config.DatastoreConfig;
 import com.hyk.proxy.server.gae.rpc.remote.RemoteObject;
 import com.hyk.proxy.server.gae.rpc.remote.RemoteObjectId;
@@ -59,6 +60,7 @@ public class ServerUtils
 		ObjectifyService.register(RemoteObjectId.class);
 		ObjectifyService.register(BandwidthStatisticsResult.class);
 		ObjectifyService.register(DatastoreConfig.class);
+		ObjectifyService.register(AppIdShareItem.class);
 	}
 
 	public static DatastoreConfig getDatastoreConfig()
@@ -99,6 +101,25 @@ public class ServerUtils
 			ofy.delete(keys);
 		}
 		while(query.countAll() > 0);
+	}
+	
+	public static boolean deleteTypeWithLimit(Class clazz, int limit)
+	{
+		//AppEngine's limit for bulk deletion(500 entries one time)
+		Query query = ofy.query(clazz).limit(500);
+		QueryResultIterable keys = null;
+		do
+		{
+			keys = query.fetchKeys();
+			ofy.delete(keys);
+			limit -= 500;
+		}
+		while(query.countAll() > 0 && limit > 0);
+		if(query.countAll() > 0)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public static List<BandwidthStatisticsResult> getBandwidthStatisticsResults(int limit)
@@ -154,6 +175,7 @@ public class ServerUtils
 		}
 		return ret;
 	}
+
 
 	public static Group getGroup(String name)
 	{

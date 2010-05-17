@@ -25,4 +25,6 @@ public interface RemoteServiceManager
 	public AccountService getAccountService(User user);
 	
 	public BandwidthStatisticsService getBandwidthStatisticsService(User user);
+	
+	public String getServerVersion();
 }

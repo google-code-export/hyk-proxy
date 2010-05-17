@@ -16,12 +16,14 @@ public class Constants
 {
 	public static final String	HTTP_INVOKE_PATH		= "/invoke";
 	
-	public  static final String MASTER_APPID = "hyk-proxy-master";
+	public static final String MASTER_APPID = "hyk-proxy-master";
+	
+	public static final String STOP_CLIENT_COMMAND = "StopClient";
 
 	public static final String OFFICIAL_SITE = "http://hyk-proxy.googlecode.com";
 	public static final String LATEST_VERSION = "http://hyk-proxy.googlecode.com/svn/trunk/update/version.xml";
 	
-	public static final String	NAME					= "hyk-proxy-client";
+	public static final String	CLIENT_NAME					= "hyk-proxy-client";
 
 	public static final String	ROOT_NAME				= "root";
 	public static final String	ROOT_GROUP_NAME			= "root";

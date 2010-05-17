@@ -29,39 +29,6 @@ public class SimpleSecurityService implements SecurityService
 		this.step = step;
 	}
 
-//	@Override
-//	public InputStream getDecryptInputStream(final InputStream input)
-//	{
-//		// TODO Auto-generated method stub
-//		return new InputStream()
-//		{
-//			@Override
-//			public int read() throws IOException
-//			{
-//				int v = input.read();
-//				if(v < 0)
-//				{
-//					return v;
-//				}
-//				return decrypt((byte)v);
-//			}
-//		};
-//	}
-//
-//	@Override
-//	public OutputStream getEncryptOutputStream(final OutputStream output)
-//	{
-//		return new OutputStream()
-//		{
-//
-//			@Override
-//			public void write(int b) throws IOException
-//			{
-//				output.write(encrypt((byte)b));
-//			}
-//		};
-//	}
-
 	@Override
 	public String getName()
 	{

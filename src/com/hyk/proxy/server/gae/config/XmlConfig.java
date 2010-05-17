@@ -17,6 +17,7 @@ import org.xml.sax.SAXException;
 
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.compressor.Compressor;
+import com.hyk.proxy.common.Constants;
 
 public class XmlConfig
 {
@@ -29,6 +30,13 @@ public class XmlConfig
 	
 	private String httpDownStreamEncrypter;
 	
+	private boolean isMasterNode;
+	
+	public boolean isMasterNode()
+	{
+		return isMasterNode;
+	}
+
 	public String getHttpDownStreamEncrypter()
 	{
 		return httpDownStreamEncrypter;
@@ -88,7 +96,6 @@ public class XmlConfig
 		is = config.getServletContext().getResourceAsStream("/WEB-INF/hyk-proxy-server.xml");
 		doc = builder.parse(is);
 		String compressorName = doc.getElementsByTagName("compressor").item(0).getTextContent();
-		String compressorTrigger = doc.getElementsByTagName("trigger").item(0).getTextContent();
 		instance.compressor = CompressorFactory.getRegistCompressor(compressorName).compressor;
 		
 		NodeList ignoreList = doc.getElementsByTagName("content-type");
@@ -112,7 +119,7 @@ public class XmlConfig
 		buffer.append("</body></html>");
 		String bodystr = buffer.toString();
 		instance.authErrorPage = bodystr;
-
+		instance.isMasterNode = instance.appId.equals(Constants.MASTER_APPID);
 		return instance;
 	}
 }

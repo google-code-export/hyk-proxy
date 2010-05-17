@@ -21,4 +21,4 @@ if $cygwin; then
   CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
 fi
 
-java  -cp "$CLASSPATH" com.hyk.proxy.gae.client.launch.tui.StartProxyLocalServer
+java  -cp "$CLASSPATH" -DHYK_PROXY_CLIENT_HOME=$HYK_PROXY_HOME" com.hyk.proxy.client.launch.tui.StartProxyLocalServer

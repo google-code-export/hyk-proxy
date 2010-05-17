@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.ExtensionsLauncher;
 import com.hyk.proxy.common.http.message.HttpServerAddress;
+import com.hyk.proxy.common.rpc.service.MasterNodeService;
 import com.hyk.proxy.common.rpc.service.RemoteServiceManager;
 import com.hyk.proxy.server.gae.config.XmlConfig;
 import com.hyk.proxy.server.gae.rpc.channel.HttpServletRpcChannel;
@@ -25,6 +26,7 @@ import com.hyk.proxy.server.gae.rpc.remote.AppEngineTimer;
 import com.hyk.proxy.server.gae.rpc.remote.AppengineRemoteObjectIdGenerator;
 import com.hyk.proxy.server.gae.rpc.remote.RemoteObject;
 import com.hyk.proxy.server.gae.rpc.service.AccountServiceImpl;
+import com.hyk.proxy.server.gae.rpc.service.MasterNodeServiceImpl;
 import com.hyk.proxy.server.gae.rpc.service.RemoteServiceManagerImpl;
 import com.hyk.proxy.server.gae.util.HttpMessageCompressPreference;
 import com.hyk.proxy.server.gae.util.ServerUtils;
@@ -54,10 +56,9 @@ public class Launcher extends HttpServlet{
 		return httpServletRpcChannel;
 	}
 	
-	protected void createRemoteServiceManagerIfNotExist(RPC rpc)
+	protected void createInitialServiceIfNotExist(RPC rpc, boolean isMasterNode)
 	{
 		List<RemoteObject> ros = ServerUtils.loadRemoteObjects();
-		//logger.error("####Found " + ros.size() + " remote objects!");
 		RemoteObjectReference rsmf = null;
 		for(RemoteObject ro:ros)
 		{
@@ -66,24 +67,50 @@ public class Launcher extends HttpServlet{
 			{
 				continue;
 			}
-			
-			//logger.error("####Remote Type is " + rf.getImpl().getClass().getName());
-			if(rf.getImpl() instanceof RemoteServiceManager)
+			if(!isMasterNode)
 			{
-				rsmf = rf;
-				break;
+				if(rf.getImpl() instanceof RemoteServiceManager)
+				{
+					rsmf = rf;
+					break;
+				}
+			}
+			else
+			{
+				if(rf.getImpl() instanceof MasterNodeService)
+				{
+					rsmf = rf;
+					break;
+				}
 			}
 		}
 		if(null == rsmf)
 		{
-			RemoteServiceManagerImpl rsm = new RemoteServiceManagerImpl(rpc);
-			rpc.getLocalNaming().bind(RemoteServiceManager.NAME, rsm);
+			if(!isMasterNode)
+			{
+				RemoteServiceManagerImpl rsm = new RemoteServiceManagerImpl(rpc);
+				rpc.getLocalNaming().bind(RemoteServiceManager.NAME, rsm);
+			}
+			else
+			{
+				MasterNodeService rsm = new MasterNodeServiceImpl();
+				rpc.getLocalNaming().bind(MasterNodeService.NAME, rsm);
+			}
+			
 		}
 		else
 		{
-			RemoteServiceManagerImpl rsm = (RemoteServiceManagerImpl)rsmf.getImpl();
-			rsm.init(rpc);
-			rpc.getLocalNaming().bind(RemoteServiceManager.NAME, rpc.exportRemoteObject(rsm, rsmf.getObjID()));
+			if(!isMasterNode)
+			{
+				RemoteServiceManagerImpl rsm = (RemoteServiceManagerImpl)rsmf.getImpl();
+				rsm.init(rpc);
+				rpc.getLocalNaming().bind(RemoteServiceManager.NAME, rpc.exportRemoteObject(rsm, rsmf.getObjID()));
+			}
+			else
+			{
+				MasterNodeServiceImpl rsm = (MasterNodeServiceImpl)rsmf.getImpl();
+				rpc.getLocalNaming().bind(MasterNodeService.NAME, rpc.exportRemoteObject(rsm, rsmf.getObjID()));
+			}
 		}
 	}
 	
@@ -106,14 +133,18 @@ public class Launcher extends HttpServlet{
 			xmppServletRpcChannel = transport;	
 			xmppServletRpcChannel.setMaxMessageSize(hykConfig.getMaxXmppMessageSize());
 			RPC xmppRpc = new RPC(transport, initProps);
-			createRemoteServiceManagerIfNotExist(xmppRpc);
+			
+			createInitialServiceIfNotExist(xmppRpc, hykConfig.isMasterNode());
 			
 			httpServletRpcChannel = new HttpServletRpcChannel(new HttpServerAddress(hykConfig.getAppId() + ".appspot.com",  Constants.HTTP_INVOKE_PATH));
 			RPC httpRpc = new RPC(httpServletRpcChannel, initProps);
 			httpServletRpcChannel.setMaxMessageSize(10240000);
-			createRemoteServiceManagerIfNotExist(httpRpc);
+			createInitialServiceIfNotExist(httpRpc, hykConfig.isMasterNode());
 			
-			AccountServiceImpl.checkDefaultAccount();
+			if(!hykConfig.isMasterNode())
+			{
+				AccountServiceImpl.checkDefaultAccount();
+			}
 			
 			if(logger.isInfoEnabled())
 			{
