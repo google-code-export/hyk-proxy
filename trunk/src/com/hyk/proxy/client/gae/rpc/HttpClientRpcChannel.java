@@ -56,8 +56,6 @@ import com.hyk.proxy.common.secure.SecurityServiceFactory.RegistSecurityService;
 
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.rpc.core.transport.impl.AbstractDefaultRpcChannel;
-import com.hyk.serializer.impl.SerailizerStream;
-import com.hyk.util.buffer.ByteArray;
 
 /**
  *

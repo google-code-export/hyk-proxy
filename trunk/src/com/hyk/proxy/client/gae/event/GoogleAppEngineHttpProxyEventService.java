@@ -13,9 +13,7 @@ import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;

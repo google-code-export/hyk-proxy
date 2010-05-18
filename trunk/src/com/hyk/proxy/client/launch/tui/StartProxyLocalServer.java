@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.launch.LocalProxyServer;
 import com.hyk.proxy.common.ExtensionsLauncher;
+import com.hyk.proxy.common.update.ProductReleaseDetail.ReleaseDetail;
 
 
 /**
@@ -28,7 +29,13 @@ public class StartProxyLocalServer
 		try 
 		{
 			ExtensionsLauncher.init();
-			System.out.println(new LocalProxyServer().launch());
+			LocalProxyServer localProxyServer = new LocalProxyServer();
+			System.out.println(localProxyServer.launch());
+			ReleaseDetail detail = localProxyServer.checkForUpdates().getNewerRelease();
+			if(null != detail)
+			{
+				
+			}
 		} 
 		catch (Exception e) 
 		{

@@ -46,6 +46,7 @@ public class GUILauncher extends javax.swing.JFrame {
     			break;
     		}
     	}
+    	
        
         ExtensionsLauncher.init();
         initComponents();
