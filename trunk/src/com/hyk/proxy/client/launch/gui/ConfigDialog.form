@@ -559,42 +559,39 @@
                       <EmptySpace min="-2" pref="66" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jLabel13" min="-2" max="-2" attributes="0"/>
+                              <Component id="isHttpSimpleUrlEnable" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jLabel10" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel13" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="42" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jLabel10" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="connectionPoolText" pref="50" max="32767" attributes="1"/>
+                                          <Component id="rpcTimeoutText" alignment="0" pref="50" max="32767" attributes="1"/>
+                                          <Component id="fetcherNumText" alignment="0" pref="50" max="32767" attributes="1"/>
                                       </Group>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="1" attributes="0">
-                                          <Component id="rpcTimeoutText" pref="65" max="32767" attributes="1"/>
-                                          <Component id="connectionPoolText" pref="65" max="32767" attributes="1"/>
-                                      </Group>
+                                      <EmptySpace min="-2" pref="52" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" alignment="1" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                          <Component id="fetchLimitTextField1" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="threadPoolSizeText" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="jComboBox1" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="compressorType" alignment="0" max="32767" attributes="1"/>
                                       </Group>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="103" alignment="0" groupAlignment="0" attributes="0">
-                                              <Component id="compressorTrigger" alignment="0" pref="59" max="32767" attributes="1"/>
-                                              <Component id="fetcherNumText" alignment="0" pref="59" max="32767" attributes="1"/>
-                                              <Component id="threadPoolSizeText" alignment="1" pref="59" max="32767" attributes="1"/>
-                                              <Component id="compressorType" alignment="1" min="-2" pref="59" max="-2" attributes="1"/>
-                                          </Group>
-                                          <Component id="fetchLimitTextField1" alignment="1" min="-2" pref="50" max="-2" attributes="0"/>
-                                      </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="-2" pref="107" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -626,44 +623,37 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="compressorTrigger" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jComboBox1" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="threadPoolSizeText" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel13" min="-2" max="-2" attributes="0"/>
-                          <Component id="fetchLimitTextField1" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="fetchLimitTextField1" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="109" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="isHttpSimpleUrlEnable" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="84" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="jLabel7">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Compress Trigger:"/>
-              </Properties>
-            </Component>
             <Component class="javax.swing.JComboBox" name="compressorType">
               <Properties>
-                <Property name="maximumRowCount" type="int" value="3"/>
+                <Property name="maximumRowCount" type="int" value="4"/>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                  <StringArray count="3">
-                    <StringItem index="0" value="GZ"/>
-                    <StringItem index="1" value="ZIP"/>
-                    <StringItem index="2" value="NONE"/>
+                  <StringArray count="4">
+                    <StringItem index="0" value="LZF"/>
+                    <StringItem index="1" value="GZ"/>
+                    <StringItem index="2" value="ZIP"/>
+                    <StringItem index="3" value="NONE"/>
                   </StringArray>
                 </Property>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JTextField" name="compressorTrigger">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="512"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="threadPoolSizeText">
@@ -719,6 +709,27 @@
             <Component class="javax.swing.JTextField" name="fetchLimitTextField1">
               <Properties>
                 <Property name="text" type="java.lang.String" value="250000"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JRadioButton" name="isHttpSimpleUrlEnable">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="EnableSimpleURL"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel7">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="HTTP Encrypter:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JComboBox" name="jComboBox1">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="3">
+                    <StringItem index="0" value="SE1"/>
+                    <StringItem index="1" value="NONE"/>
+                    <StringItem index="2" value=" "/>
+                  </StringArray>
+                </Property>
               </Properties>
             </Component>
           </SubComponents>

@@ -66,7 +66,7 @@ public class UDPCommandServer implements Runnable
 		}
 	}
 	
-	public void stop() throws IOException
+	public void stop() throws IOException, InterruptedException
 	{
 		running = false;
 		DatagramSocket socket = new DatagramSocket();
@@ -74,6 +74,7 @@ public class UDPCommandServer implements Runnable
 		DatagramPacket packet = new DatagramPacket(data, data.length, new InetSocketAddress(address.host, address.port));
 		socket.send(packet);
 		socket.close();
+		Thread.sleep(500);
 	}
 	
 	@Override
@@ -92,6 +93,7 @@ public class UDPCommandServer implements Runnable
 				logger.error("Failed to execute UDP command.", e);
 			}
 		}
+		udpSock.close();
 		
 	}
 	

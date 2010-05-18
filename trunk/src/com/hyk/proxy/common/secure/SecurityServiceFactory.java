@@ -9,6 +9,7 @@
  */
 package com.hyk.proxy.common.secure;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +39,11 @@ public class SecurityServiceFactory
 	static
 	{
 		registerSecurityService(new NoneSecurityService());
+	}
+	
+	public static Collection<RegistSecurityService> getAllRegistSecurityServices()
+	{
+		return NAME_TO_REGISTE_SECURITY_SERVICE_TABLE.values();
 	}
 	
 	public static RegistSecurityService getRegistSecurityService(String name)

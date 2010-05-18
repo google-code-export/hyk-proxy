@@ -4,7 +4,7 @@
  *
  * Description: Config.java 
  *
- * @author yinqiwen [ 2010-5-14 | ÏÂÎç08:49:33 ]
+ * @author yinqiwen [ 2010-5-14 | 08:49:33 PM]
  *
  */
 package com.hyk.proxy.client.config;
@@ -122,8 +122,7 @@ public class Config
 				connectionConfig.setSecurityMode(ConnectionConfiguration.SecurityMode.enabled);
 				connectionConfig.setSocketFactory(SSLSocketFactory.getDefault());
 			}
-			
-			
+
 			return this;
 		}
 
@@ -231,9 +230,9 @@ public class Config
 	@XmlElement
 	private ProxyInfo		defaultLocalProxy;
 
-	@XmlTransient
 	private ConnectionMode	client2ServerConnectionMode;
 
+	@XmlTransient
 	public ConnectionMode getClient2ServerConnectionMode()
 	{
 		return client2ServerConnectionMode;
@@ -243,9 +242,8 @@ public class Config
 	{
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
-	
-	private String httpUpStreamEncrypter;
-	
+
+	private String	httpUpStreamEncrypter;
 
 	public String getHttpUpStreamEncrypter()
 	{
@@ -260,7 +258,7 @@ public class Config
 
 	public void init()
 	{
-		for(HykProxyServerAuth auth:hykProxyServerAuths)
+		for(HykProxyServerAuth auth : hykProxyServerAuths)
 		{
 			if(auth.user == null || auth.user.equals(""))
 			{
@@ -282,7 +280,7 @@ public class Config
 		{
 			localProxy = null;
 		}
-		
+
 		if(null == httpUpStreamEncrypter)
 		{
 			httpUpStreamEncrypter = NoneSecurityService.NAME;
@@ -294,7 +292,7 @@ public class Config
 	{
 		client2ServerConnectionMode = ConnectionMode.fromInt(mode);
 	}
-	
+
 	int getConnectionMode()
 	{
 		return client2ServerConnectionMode.value;
@@ -339,7 +337,6 @@ public class Config
 	{
 		return compressor;
 	}
-
 
 	public int getMaxFetcherNumber()
 	{

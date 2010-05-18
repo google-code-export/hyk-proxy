@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.launch.LocalProxyServer;
+import com.hyk.proxy.common.ExtensionsLauncher;
 
 
 /**
@@ -26,6 +27,7 @@ public class StartProxyLocalServer
 	{
 		try 
 		{
+			ExtensionsLauncher.init();
 			System.out.println(new LocalProxyServer().launch());
 		} 
 		catch (Exception e) 
