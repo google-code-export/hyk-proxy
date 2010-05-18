@@ -14,14 +14,14 @@ public class LZFCompressor implements Compressor
 	@Override
 	public ByteDataBuffer compress(ByteDataBuffer data) throws IOException
 	{
-		ByteDataBuffer ret = ByteDataBuffer.allocate(data.size() / 3);
+		ByteDataBuffer ret = ByteDataBuffer.allocate(data.readableBytes() / 3);
 		return compress(data, ret);
 	}
 
 	@Override
 	public ByteDataBuffer decompress(ByteDataBuffer data) throws IOException
 	{
-		ByteDataBuffer ret = ByteDataBuffer.allocate(data.size() * 3);
+		ByteDataBuffer ret = ByteDataBuffer.allocate(data.readableBytes() * 3);
 		LZFInputStream lzfis = new LZFInputStream(data.getInputStream());
 		int b;
 		while((b = lzfis.read()) != -1)

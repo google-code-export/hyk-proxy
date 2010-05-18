@@ -204,7 +204,7 @@ public class LocalProxyServer implements ManageResource
 			}
 			if(fetchServices.isEmpty())
 			{
-				return "No fetch service found, please check you configuration.";
+				throw new IllegalArgumentException("No fetch service found, please check you configuration.");
 			}
 			server = new HttpLocalProxyServer(config.getLocalProxyServerAddress(), workerExecutor, esf);
 			updateChecker = new UpdateCheck(fetchServices.get(0));

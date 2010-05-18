@@ -19,6 +19,7 @@ if $cygwin; then
     format=windows
   fi
   CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
+  HYK_PROXY_HOME=`cygpath --path --$format "$HYK_PROXY_HOME"`
 fi
 
 echo $CLASSPATH

@@ -52,11 +52,11 @@ public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 		ByteDataBuffer content = data.content;
 		if(logger.isDebugEnabled())
 		{
-			logger.debug("Send result back with body len:" + data.content.size());
+			logger.debug("Send result back with body len:" + data.content.readableBytes());
 		}
 		HttpServletResponse out = httpServletResponseCache.get();
 		out.setStatus(200);
-		out.setContentLength(content.size() + 4);
+		out.setContentLength(content.readableBytes() + 4);
 		RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(XmlConfig.getInstance().getHttpDownStreamEncrypter());
 		ByteBuffer secid = ByteBuffer.allocate(4);
 		secid.putInt(reg.id);

@@ -10,6 +10,7 @@
 package com.hyk.proxy.common.update;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 import javax.xml.bind.JAXBContext;
@@ -66,6 +67,27 @@ public class UpdateCheck
 			
 		}
 		return null;
+	}
+	
+	public static void main(String[] args)
+	{
+		try
+		{
+			JAXBContext context = JAXBContext.newInstance(ProductReleaseDetail.class);
+			Unmarshaller unmarshaller = context.createUnmarshaller();
+			
+			InputStream is = new FileInputStream("update/version.xml");
+			ProductReleaseDetail latestVersion = (ProductReleaseDetail)unmarshaller.unmarshal(is);
+			System.out.println(latestVersion.stableRelease.version);
+			System.out.println(latestVersion.stableRelease.links.get(0).type);
+			System.out.println(latestVersion.stableRelease.links.get(0).link);
+			System.out.println(latestVersion.stableRelease.links.get(1).type);
+			System.out.println(latestVersion.stableRelease.links.get(1).link);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 }

@@ -10,8 +10,6 @@
 package com.hyk.proxy.common.http.message;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import com.hyk.serializer.SerializerInput;
 import com.hyk.serializer.SerializerOutput;
