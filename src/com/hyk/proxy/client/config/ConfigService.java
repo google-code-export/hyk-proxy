@@ -4,7 +4,7 @@
  *
  * Description: ConfigService.java 
  *
- * @author yinqiwen [ 2010-5-14 | ÏÂÎç08:42:16 ]
+ * @author yinqiwen [ 2010-5-14 | 08:42:16 PM ]
  *
  */
 package com.hyk.proxy.client.config;
@@ -68,17 +68,17 @@ public class ConfigService
 		}
 	}
 	
-//	public static void main(String [] args) throws Exception
-//	{
-//		Config cfg = getDefaultConfig();
-//		cfg.init();
-//		System.out.println(cfg.getLocalProxyServerAddress().host);
-//		System.out.println(cfg.getHykProxyServerAuths().get(0).appid);
-//		System.out.println(cfg.getCompressor());
-//		System.out.println(cfg.getXmppAccounts().get(0).jid);
-//		System.out.println(cfg.getClient2ServerConnectionMode());
-//		cfg.setClient2ServerConnectionMode(ConnectionMode.XMPP2GAE);
-//		saveConfig(cfg);
-//		
-//	}
+	public static void main(String [] args) throws Exception
+	{
+		Config cfg = getDefaultConfig();
+		cfg.init();
+		System.out.println(cfg.getLocalProxyServerAddress().host);
+		System.out.println(cfg.getHykProxyServerAuths().get(0).appid);
+		System.out.println(cfg.getCompressor());
+		System.out.println(cfg.getXmppAccounts().get(0).jid);
+		System.out.println(cfg.getClient2ServerConnectionMode());
+		cfg.setClient2ServerConnectionMode(ConnectionMode.XMPP2GAE);
+		saveConfig(cfg);
+		
+	}
 }

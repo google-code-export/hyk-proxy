@@ -59,7 +59,7 @@ public class LocalProxyServer implements ManageResource
 
 	public LocalProxyServer()
 	{
-		ExtensionsLauncher.init();
+		
 	}
 
 	protected FetchService initXmppFetchService(HykProxyServerAuth appid, RPC rpc) throws XMPPException
@@ -99,7 +99,7 @@ public class LocalProxyServer implements ManageResource
 	protected List<HykProxyServerAuth> retrieveShareAppIds(Config config) throws IOException, RpcException, XMPPException
 	{
 		MasterNodeService master = null;
-		RPC rpc;
+		RPC rpc = null;
 		if(config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
 		{
 			rpc = ClientUtils.createHttpRPC(Constants.MASTER_APPID, workerExecutor);
@@ -140,7 +140,7 @@ public class LocalProxyServer implements ManageResource
 		}
 		finally
 		{
-			//rpc.close();
+			rpc.close();
 		}
 	}
 
@@ -231,7 +231,7 @@ public class LocalProxyServer implements ManageResource
 		}
 		for(RPC rpc : rpcs)
 		{
-			// rpc.close();
+			 rpc.close();
 		}
 		rpcs.clear();
 		workerExecutor.shutdownNow();

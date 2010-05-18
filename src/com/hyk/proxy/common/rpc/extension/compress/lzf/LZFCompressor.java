@@ -9,6 +9,8 @@ import com.hyk.io.ByteDataBuffer;
 public class LZFCompressor implements Compressor
 {
 
+	public  static final String NAME = "lzf";
+	
 	@Override
 	public ByteDataBuffer compress(ByteDataBuffer data) throws IOException
 	{

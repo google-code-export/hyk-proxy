@@ -31,7 +31,7 @@ public class AppIdDialog extends javax.swing.JDialog {
     public AppIdDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        //setIconImage(new ImageIcon(getClass().getResource("/image/appengine.png")).getImage());
+        setIconImage(new ImageIcon(getClass().getResource("/image/appengine.png")).getImage());
     }
 
     public void startAddAppId( UICallback callback)
