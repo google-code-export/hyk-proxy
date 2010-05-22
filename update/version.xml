@@ -2,12 +2,10 @@
 
 <information>
    <stable-release>
-      <version>0.8.0rc1</version>
-      <link type="source">http://code.google.com/p/hyk-proxy/downloads/list/1</link>
-      <link type="client">http://code.google.com/p/hyk-proxy/downloads/list/2</link>
+      <version>0.8.5</version>
+      <link type="source">http://hyk-proxy.googlecode.com/files/hyk-proxy-project-0.8.5.zip</link>
+      <link type="client">http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.8.5.zip</link>
+	  <link type="client">http://hyk-proxy.googlecode.com/files/hyk-proxy-server-0.8.5.zip</link>
    </stable-release>
-   <latest-unstable-release>
-       <version>nb1123234</version>
-       <link type="source">http://hyk-proxy.googlecode.com/svn/trunk/latest-build/</link>
-   </latest-unstable-release>
+   <latest-unstable-release />
 </information>

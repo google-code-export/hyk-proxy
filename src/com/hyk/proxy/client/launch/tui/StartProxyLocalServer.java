@@ -12,37 +12,57 @@ package com.hyk.proxy.client.launch.tui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.client.framework.status.StatusMonitor;
 import com.hyk.proxy.client.launch.LocalProxyServer;
 import com.hyk.proxy.common.ExtensionsLauncher;
 import com.hyk.proxy.common.update.ProductReleaseDetail.ReleaseDetail;
-
 
 /**
  *
  */
 public class StartProxyLocalServer
 {
-	protected static Logger				logger			= LoggerFactory.getLogger(StartProxyLocalServer.class);
+	protected static Logger	logger	= LoggerFactory.getLogger(StartProxyLocalServer.class);
 
 	public static void main(String[] args)
 	{
-		try 
+		try
 		{
 			ExtensionsLauncher.init();
 			LocalProxyServer localProxyServer = new LocalProxyServer();
-			System.out.println(localProxyServer.launch());
-			ReleaseDetail detail = localProxyServer.checkForUpdates().getNewerRelease();
-			if(null != detail)
+			localProxyServer.launch(new StatusMonitor()
 			{
-				
-			}
-		} 
-		catch (Exception e) 
+				@Override
+				public void notifyStatus(String status)
+				{
+					System.out.println(status);
+				}
+
+				@Override
+				public void clearStatusHistory()
+				{
+				}
+
+				@Override
+				public void notifyRunDetail(String detail)
+				{
+					System.out.println(detail);
+					
+				}
+			});
+			// ReleaseDetail detail =
+			// localProxyServer.checkForUpdates().getNewerRelease();
+			// if(null != detail)
+			// {
+			//				
+			// }
+		}
+		catch(Exception e)
 		{
 			logger.error("Failed to start local server.", e);
 			System.exit(-1);
 		}
-		
+
 	}
 
 }

@@ -89,7 +89,7 @@
 				<attribute name="Version" value="${version}"/>
 				<attribute name="Extension-Dirs" value="./etc"/>
 				<attribute name="Class-Path" value="../etc ../lib/hyk-rpc.jar 
-					../lib/hyk-util.jar  ../lib/smackx.jar ../lib/commons-cli-1.2.jar 
+					../lib/hyk-util.jar ../lib/commons-cli-1.2.jar 
 					../lib/smack.jar ../lib/netty-3.1.5.GA.jar 
 					../lib/log4j-1.2.14.jar ../lib/slf4j-log4j12-1.5.10.jar 
 					../lib/slf4j-api-1.5.10.jar "/>
@@ -146,9 +146,21 @@
 				<exclude name="**/com/hyk/proxy/client/**"/>
 				<exclude name="**/hyk-proxy.cert"/>
 				<exclude name="**/hyk-proxy-client.conf"/>
+				<exclude name="**/appengine-jsr*.jar"/>
+				<exclude name="**/datanucleus*.jar"/>
+				<exclude name="**/jdo*.jar"/>
+				<exclude name="**/jsr*.jar"/>
 				<exclude name="**/log4j.properties"/>
 				<exclude name="**/hyk-proxy-client.conf.sample"/>
 			</fileset>
+		</copy>
+		<copy todir="${releaseserverdir}/seattle">
+			<fileset dir="seattle">
+				<include name="hyk-proxy.seattle.repy"/>
+			</fileset>
+		</copy>
+		<copy todir="${releaseserverdir}">
+			<fileset dir="install"/>
 		</copy>
 		<copy todir="${releaseserverdir}" file="${root}/readme.txt" />
 		<copy todir="${releaseserverdir}" file="${root}/changelog.txt" />
@@ -162,12 +174,21 @@
 		<mkdir dir="${releaseprojectdir}" />
 		<copy todir="${releaseprojectdir}">
 			<fileset dir="${root}">
+				<exclude name="**/appengine*.jar"/>
+				<exclude name="**/datanucleus*.jar"/>
+				<exclude name="**/jdo*.jar"/>
+				<exclude name="**/jsr*.jar"/>
+				<exclude name="**/geronimo*.jar"/>
 				<exclude name="*.zip"/>
+				<exclude name="*.conf"/>
 				<exclude name="*.log"/>
 				<exclude name="release/**"/>
+				<exclude name="resource/**"/>
+				<exclude name="update/**"/>
 				<exclude name="build/**"/>
 				<exclude name="dist/**"/>
 				<exclude name="latest-build/**"/>
+				<exclude name="hyk-proxy*/**"/>
 				<exclude name="war/**/classes/**"/>
 			</fileset>
 		</copy>

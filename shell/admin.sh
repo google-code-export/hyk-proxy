@@ -22,4 +22,4 @@ if $cygwin; then
   HYK_PROXY_HOME=`cygpath --path --$format "$HYK_PROXY_HOME"`
 fi
 
-java  -cp "$CLASSPATH" "-DHYK_PROXY_CLIENT_HOME=$HYK_PROXY_HOME" com.hyk.proxy.client.gae.admin.Admin
+java  -cp "$CLASSPATH" "-DHYK_PROXY_CLIENT_HOME=$HYK_PROXY_HOME" com.hyk.proxy.client.application.gae.admin.Admin

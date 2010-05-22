@@ -4,7 +4,7 @@
  *
  * Description: UpdateCheck.java 
  *
- * @author yinqiwen [ 2010-5-16 | ÏÂÎç07:06:21 ]
+ * @author yinqiwen [ 2010-5-16 | 07:06:21 PM ]
  *
  */
 package com.hyk.proxy.common.update;
@@ -33,7 +33,21 @@ public class UpdateCheck
 	protected Logger	logger	= LoggerFactory.getLogger(getClass());
 	private FetchService fetchService;
 	
-	public UpdateCheck(FetchService fetchService)
+	public static class UpdateCheckFactory
+	{
+		static UpdateCheck instance;
+		public static UpdateCheck getUpdateChecker()
+		{
+			return instance;
+		}
+		
+		public static void initSingletonInstance(FetchService fetchService)
+		{
+			instance = new UpdateCheck(fetchService);
+		}
+	}
+	
+	private UpdateCheck(FetchService fetchService)
 	{
 		this.fetchService = fetchService;
 	}
@@ -42,6 +56,7 @@ public class UpdateCheck
 	{
 		HttpRequestExchange req = new HttpRequestExchange();
 		req.method = "GET";
+		req.setHeader("Host", "hyk-proxy.googlecode.com");
 		req.url = Constants.LATEST_VERSION;
 		return req;
 	}
@@ -67,6 +82,20 @@ public class UpdateCheck
 			
 		}
 		return null;
+		
+//		try
+//		{
+//			JAXBContext context = JAXBContext.newInstance(ProductReleaseDetail.class);
+//			Unmarshaller unmarshaller = context.createUnmarshaller();
+//			InputStream is = new FileInputStream("update/version.xml");
+//			ProductReleaseDetail latestVersion = (ProductReleaseDetail)unmarshaller.unmarshal(is);
+//			return new UpdateCheckResults(latestVersion);
+//		}
+//		catch(Exception e)
+//		{
+//			logger.error("Failed to retrieve latest product version.", e);
+//		}
+//		return null;
 	}
 	
 	public static void main(String[] args)

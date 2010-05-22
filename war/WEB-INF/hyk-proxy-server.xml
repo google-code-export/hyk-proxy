@@ -21,7 +21,7 @@
    <httpDownStreamEncrypter>se1</httpDownStreamEncrypter>
    
    <XMPP-setting>
-      <MaxMessageSize>4096</MaxMessageSize>
+      <MaxMessageSize>40960</MaxMessageSize>
    </XMPP-setting>
    
    <auth>

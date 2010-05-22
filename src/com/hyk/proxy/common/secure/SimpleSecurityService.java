@@ -4,7 +4,7 @@
  *
  * Description: SimpleSecurityService.java 
  *
- * @author yinqiwen [ 2010-5-15 | обнГ10:32:03 ]
+ * @author yinqiwen [ 2010-5-15 | 10:32:03 PM]
  *
  */
 package com.hyk.proxy.common.secure;
@@ -35,7 +35,7 @@ public class SimpleSecurityService implements SecurityService
 		return "se" + step;
 	}
 
-	private byte decrypt(byte value)
+	public byte decrypt(byte value)
 	{
 		int v = value & 0xff;
 		v += step;
@@ -56,7 +56,7 @@ public class SimpleSecurityService implements SecurityService
 		return value;
 	}
 
-	private byte encrypt(byte value)
+	public byte encrypt(byte value)
 	{
 		int k = value & 0xff;
 		int v = k - step;

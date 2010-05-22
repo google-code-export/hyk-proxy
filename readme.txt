@@ -1,5 +1,5 @@
-hyk-proxy 0.8.0rc1  Read Me
-Release 2010/01/31
+hyk-proxy 0.8.5  Read Me
+Release 2010/05/22
 http://hyk-proxy.googlecode.com 
 
 This file is part of hyk-proxy.                                   
@@ -21,6 +21,7 @@ Dependencies
 ------------
 1. You need to install JRE/JDK(1.6+).
 2. You need to install Google App Engine SDK(Java) (use the latest version)
+3. You may need intall seattle SDK if you want to use seattle platform
 
 INSTALL:
 GAE server part：（GAE server部分）
@@ -32,14 +33,19 @@ GAE server part：（GAE server部分）
     修改war/WEB-INF/appengine-web.xml， 将'<application>'值改为自己创建的appid
  4. execute appcfg update (make sure you are in the directory 'hyk-proxy-server-[version]')
     执行appcfg.cmd/appcfg.sh update war上传
+
+Seattle server part:
+ 1. Login seattle
+ 2. apply some resources
+ 3. run your application
     
-GAE client part: （GAE client部分）
+Client part: （Client部分）
   1. unzip hyk-proxy-client-[version].zip
     任意目录下解压hyk-proxy-client-[version].zip
   2. cd hyk-proxy-client-[version] 
     进入解压的目录
-  3. modify etc/hyk-proxy-client.properties, refer the comment for more information
-    参照注释修改etc/hyk-proxy-client.properties
+  3. modify etc/hyk-proxy-client.conf.xml, refer the comment for more information
+    参照注释修改etc/hyk-proxy-client.conf.xml
   4. execute bin/start.bat(start.sh) to start the local server, execute bin/stop.bat to stop it
     执行bin/start.bat(start.sh)启动local server，bin/stop.bat(stop.sh)停止
 

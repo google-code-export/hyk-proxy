@@ -75,8 +75,16 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 			}
 			else
 			{
-				HttpProxyEvent event = new HttpProxyEvent(HttpProxyEventType.RECV_HTTPS_REQUEST, e.getMessage(), e.getChannel());
-				eventService.handleEvent(event);
+				if(e.getMessage() instanceof HttpRequest)
+				{
+					HttpProxyEvent event = new HttpProxyEvent(HttpProxyEventType.RECV_HTTPS_REQUEST, e.getMessage(), e.getChannel());
+					eventService.handleEvent(event);
+				}
+				else
+				{
+					HttpProxyEvent event = new HttpProxyEvent(HttpProxyEventType.RECV_HTTPS_CHUNK, e.getMessage(), e.getChannel());
+					eventService.handleEvent(event);
+				}	
 			}
 		}
 		else
@@ -86,19 +94,19 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 			{
 				isReadingChunks = false;
 			}
-			else
-			{
-				HttpProxyEvent event = new HttpProxyEvent(HttpProxyEventType.RECV_HTTP_CHUNK, chunk, e.getChannel());
-				eventService.handleEvent(event);
-			}
+			HttpProxyEvent event = new HttpProxyEvent(HttpProxyEventType.RECV_HTTP_CHUNK, chunk, e.getChannel());
+			eventService.handleEvent(event);
 		}
 	}
 
 	@Override
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
 	{
-		eventService.close();
-		eventService = null;
+		if(null != eventService)
+		{
+			eventService.close();
+			eventService = null;
+		}
 		super.channelClosed(ctx, e);
 	}
 
@@ -106,8 +114,11 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
 	{
 		logger.error("exceptionCaught.", e.getCause());
-		eventService.close();
-		eventService = null;
+		if(null != eventService)
+		{
+			eventService.close();
+			eventService = null;
+		}
 		if(e.getChannel().isOpen())
 		{
 			e.getChannel().close();

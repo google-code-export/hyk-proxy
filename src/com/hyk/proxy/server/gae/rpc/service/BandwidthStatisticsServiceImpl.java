@@ -141,7 +141,7 @@ public class BandwidthStatisticsServiceImpl implements BandwidthStatisticsServic
 	public static void clearRecord()
 	{
 		memcache.delete(CACHE_NAME);
-		if(!ServerUtils.deleteTypeWithLimit(BandwidthStatisticsResult.class, 1000))
+		if(!ServerUtils.deleteTypeWithLimit(BandwidthStatisticsResult.class, 500))
 		{
 			Queue queue = QueueFactory.getDefaultQueue();
 			TaskOptions task = TaskOptions.Builder.url("/clear-stat-records").method(Method.GET);

@@ -162,6 +162,10 @@ public class FetchServiceImpl implements FetchService, Serializable, Reloadable
 		{
 			return true;
 		}
+		if(null == req.getHeaderValue("Host"))
+		{
+			return true;
+		}
 		String host = req.getHeaderValue("Host").trim();
 		String traficHost = host;
 		if(!trafficRestrictionTable.containsKey(traficHost))
@@ -205,6 +209,10 @@ public class FetchServiceImpl implements FetchService, Serializable, Reloadable
 			{
 				return false;
 			}
+			if(null == req.getHeaderValue("Host"))
+			{
+				return true;
+			}
 			if(req.getHeaderValue("Host").indexOf(host) != -1)
 			{
 				return false;
@@ -244,7 +252,7 @@ public class FetchServiceImpl implements FetchService, Serializable, Reloadable
 			// Store this value since the RPC framework would use this value to
 			// judge whole message compressing or not
 			ThreadLocalUtil.getThreadLocalUtil(String.class).setThreadLocalObject(contentType);
-			if(bandwidthStatisticsService.isEnable())
+			if(bandwidthStatisticsService.isEnable() && null != req.getHeaderValue("Host"))
 			{
 				int reqBodyLen = req.getContentLength();
 				int resBodyLen = ret.getContentLength();

@@ -4,7 +4,7 @@
  *
  * Description: NoneSecurityService.java 
  *
- * @author yinqiwen [ 2010-5-15 | обнГ11:07:57 ]
+ * @author yinqiwen [ 2010-5-15 | 11:07:57 PM ]
  *
  */
 package com.hyk.proxy.common.secure;

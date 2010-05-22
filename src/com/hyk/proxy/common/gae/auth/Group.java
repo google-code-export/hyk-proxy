@@ -4,7 +4,7 @@
  *
  * Description: Group.java 
  *
- * @author yinqiwen [ 2010-4-7 | обнГ09:09:01 ]
+ * @author yinqiwen [ 2010-4-7 | 09:09:01 PM ]
  *
  */
 package com.hyk.proxy.common.gae.auth;

@@ -25,7 +25,7 @@ public class SysTray
     {
         final SystemTray tray = SystemTray.getSystemTray();
          PopupMenu popup = new PopupMenu();
-         final TrayIcon      trayIcon = new TrayIcon(ImageUtil.IDLE.getImage(),
+         final TrayIcon      trayIcon = new TrayIcon(ImageUtil.GAE.getImage(),
                         "hyk-proxy-client", popup);
          trayIcon.addActionListener(new ActionListener() {
                  public void actionPerformed(ActionEvent e) {
