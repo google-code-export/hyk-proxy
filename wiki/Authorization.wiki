@@ -1,5 +1,5 @@
 #labels Featured
-#`hyk-proxy用户/组/权限的概念`.
+#用户组权限的概念
 =用户/组概念=
 
 从V0.8.0beta开始引入用户/组概念
@@ -26,13 +26,13 @@ V0.8.0beta提供了一个admin(admin.sh/admin.bat)工具用于管理用户组管
 =访问控制=
   * hyk-proxy-client启动时针对一个appid提供用户名、密码（编辑hyk-proxy-client.conf），为空情况下默认为anonymouse:anonymouse
   * hyk-proxy-server对此进行鉴权，并设置访问权限， blacklist
-  * blacklist只支持*为通配符
+  * blacklist只支持`*`为通配符
 
 =流量控制=
   * hyk-proxy V0.8.5引入用户流量控制，在流量统计开启时生效，若某用户访问的站点流量超过限制，则直接返回403错误
   * 流量控制按站点，用户控制，但流量统计结果只是按站点统计
   * 在admin工具中，开启流量统计用stat on; 控制用户流量用traffic命令
-  * traffic只支持*为通配符
+  * traffic只支持`*`为通配符
 
 =注意=
   * 创建用户时，用户名必须是Email格式，随机创建的密码会发送到此邮箱
