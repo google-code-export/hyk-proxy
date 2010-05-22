@@ -22,6 +22,7 @@ Changes in version 0.8.5 (2010.5.22)
    * Auto close dos window after launching GUI(win only)
    * Integrate appcfgwrapper as the server part installer
    * Self define User-Agent Header setting
+   * Delete some unused jars.
 
 ** Task
 
