@@ -22,6 +22,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.util.StringUtils;
 
+import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
+import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.secure.NoneSecurityService;
 
@@ -68,13 +70,13 @@ public class Config
 
 	public static class ProxyInfo
 	{
-		@XmlAttribute
+		@XmlElement
 		public String	host;
-		@XmlAttribute
+		@XmlElement
 		public int		port	= 80;
-		@XmlAttribute
+		@XmlElement
 		public String	user;
-		@XmlAttribute
+		@XmlElement
 		public String	passwd;
 	}
 
@@ -219,12 +221,18 @@ public class Config
 		this.maxFetcherNumber = maxFetcherNumber;
 	}
 
+	//@XmlElement
 	private ProxyInfo	localProxy;
 
 	@XmlElement(name = "localProxy")
 	public void setHykProxyClientLocalProxy(ProxyInfo localProxy)
 	{
 		this.localProxy = localProxy;
+	}
+	//@XmlElement(name = "localProxy")
+	public ProxyInfo getHykProxyClientLocalProxy()
+	{
+		return localProxy;
 	}
 
 	@XmlElement
@@ -242,6 +250,18 @@ public class Config
 	{
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
+	
+	private String proxyEventServiceFactoryClass = GoogleAppEngineHttpProxyEventServiceFactory.class.getName();
+	
+	public String getProxyEventServiceFactoryClass()
+	{
+		return proxyEventServiceFactoryClass;
+	}
+	@XmlElement
+	public void setProxyEventServiceFactoryClass(String proxyEventServiceFactoryClass)
+	{
+		this.proxyEventServiceFactoryClass = proxyEventServiceFactoryClass;
+	}
 
 	private String	httpUpStreamEncrypter;
 
@@ -256,10 +276,26 @@ public class Config
 		this.httpUpStreamEncrypter = httpUpStreamEncrypter;
 	}
 
-	public void init()
+	public void init() throws Exception
 	{
-		for(HykProxyServerAuth auth : hykProxyServerAuths)
+		if(localProxy != null && (null == localProxy.host || localProxy.host.isEmpty()))
 		{
+			localProxy = null;
+		}
+		
+		if(defaultLocalProxy != null && (null == defaultLocalProxy.host || defaultLocalProxy.host.isEmpty()))
+		{
+			defaultLocalProxy = null;
+		}
+		for(int i = 0; i < hykProxyServerAuths.size(); i++)
+		{
+			HykProxyServerAuth auth = hykProxyServerAuths.get(i);
+			if(auth.appid == null || auth.appid.trim().isEmpty())
+			{
+				hykProxyServerAuths.remove(i);
+				i--;
+				continue;
+			}
 			if(auth.user == null || auth.user.equals(""))
 			{
 				auth.user = Constants.ANONYMOUSE_NAME;
@@ -268,17 +304,34 @@ public class Config
 			{
 				auth.passwd = Constants.ANONYMOUSE_NAME;
 			}
-		}
-		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE) && null != xmppAccounts)
-		{
-			for(XmppAccount account : xmppAccounts)
+			auth.appid = auth.appid.trim();
+			auth.user = auth.user.trim();
+			auth.passwd = auth.passwd.trim();
+			if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
 			{
-				account.init();
+				activateDefaultProxy();
 			}
 		}
-		if(localProxy != null && null == localProxy.host)
+		
+		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE))
 		{
-			localProxy = null;
+			for(int i = 0; i < xmppAccounts.size(); i++)
+			{
+				XmppAccount account = xmppAccounts.get(i);
+				if(account.jid == null || account.jid.isEmpty())
+				{
+					xmppAccounts.remove(i);
+					i--;
+				}
+				else
+				{
+					account.init();
+				}
+			}
+		}
+		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE) && (null == xmppAccounts || xmppAccounts.isEmpty()))
+		{
+			throw new Exception("Since the connection mode is " + ConnectionMode.XMPP2GAE + ", at least one XMPP account needed.");
 		}
 
 		if(null == httpUpStreamEncrypter)
@@ -346,11 +399,6 @@ public class Config
 	public List<XmppAccount> getXmppAccounts()
 	{
 		return xmppAccounts;
-	}
-
-	public ProxyInfo getHykProxyClientLocalProxy()
-	{
-		return localProxy;
 	}
 
 	public void activateDefaultProxy()

@@ -11,6 +11,8 @@
 
 package com.hyk.proxy.client.launch.gui;
 
+import com.hyk.compress.CompressorFactory;
+import com.hyk.compress.CompressorFactory.RegistCompressor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +31,9 @@ import com.hyk.proxy.client.config.ConfigService;
 import com.hyk.proxy.client.config.Config.ConnectionMode;
 import com.hyk.proxy.client.config.Config.ProxyInfo;
 import com.hyk.proxy.client.config.Config.XmppAccount;
+import com.hyk.proxy.common.secure.SecurityServiceFactory;
+import com.hyk.proxy.common.secure.SecurityServiceFactory.RegistSecurityService;
+import java.util.Collection;
 //import com.hyk.proxy.common.rpc.extension.compress.lzf.LZFCompressor;
 //import com.hyk.proxy.common.secure.SecurityServiceFactory;
 //import com.hyk.proxy.common.secure.SimpleSecurityService;
@@ -410,8 +415,15 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Connection", jPanel2);
 
-        compressorType.setMaximumRowCount(4);
-        compressorType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "LZF", "GZ", "ZIP", "NONE" }));
+        Collection<RegistCompressor> allCompressors = CompressorFactory.getAllRegistCompressors();
+        compressorType.setMaximumRowCount(allCompressors.size());
+        ArrayList<String> modelStrList = new ArrayList<String>();
+        for(RegistCompressor compressor:allCompressors)
+        {
+            modelStrList.add(compressor.compressor.getName());
+        }
+        compressorType.setModel(new javax.swing.DefaultComboBoxModel(modelStrList.toArray()));
+        compressorType.setSelectedItem("lzf");
 
         threadPoolSizeText.setText("25");
 
@@ -439,14 +451,22 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         jLabel7.setText("HTTP Encrypter:");
 
-        encrypterCombox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "SE1", "NONE", " " }));
+        Collection<RegistSecurityService> allSecServs = SecurityServiceFactory.getAllRegistSecurityServices();
+        encrypterCombox.setMaximumRowCount(allSecServs.size());
+        ArrayList<String> secModelStrList = new ArrayList<String>();
+        for(RegistSecurityService sec:allSecServs)
+        {
+            secModelStrList.add(sec.service.getName());
+        }
+        encrypterCombox.setModel(new javax.swing.DefaultComboBoxModel(secModelStrList.toArray()));
+        encrypterCombox.setSelectedItem("se1");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(52, 52, 52)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -465,14 +485,14 @@ public class ConfigDialog extends javax.swing.JDialog {
                             .addComponent(fetchLimitTextField1)
                             .addComponent(threadPoolSizeText)
                             .addComponent(encrypterCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(compressorType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(compressorType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(isHttpSimpleUrlEnable))
-                .addContainerGap(111, Short.MAX_VALUE))
+                .addContainerGap(77, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(22, 22, 22)
+                .addGap(27, 27, 27)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rpcTimeoutText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9))
@@ -502,7 +522,7 @@ public class ConfigDialog extends javax.swing.JDialog {
                     .addComponent(jLabel13))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(isHttpSimpleUrlEnable)
-                .addContainerGap(74, Short.MAX_VALUE))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Advance", jPanel3);
@@ -786,12 +806,13 @@ public class ConfigDialog extends javax.swing.JDialog {
             disableHttpProxy();
         }
 
-        rpcTimeoutText.setText(config.getRpcTimeOut()/1000 + "");
+        rpcTimeoutText.setText(config.getRpcTimeOut() + "");
         connectionPoolText.setText(config.getHttpConnectionPoolSize() + "");
         fetcherNumText.setText(config.getMaxFetcherNumber() + "");
         //compressorTrigger.setText(config.getCompressorTrigger() + "");
         threadPoolSizeText.setText(config.getThreadPoolSize() + "");
-        compressorType.setSelectedItem(config.getCompressor().toUpperCase());
+        compressorType.setSelectedItem(config.getCompressor());
+        encrypterCombox.setSelectedItem(config.getHttpUpStreamEncrypter());
         fetchLimitTextField1.setText(config.getFetchLimitSize()+"");
         isHttpSimpleUrlEnable.setSelected(config.isSimpleURLEnable());
         setVisible(true);

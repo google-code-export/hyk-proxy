@@ -19,6 +19,7 @@ import java.security.KeyStore;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -40,32 +41,34 @@ import org.slf4j.LoggerFactory;
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.preference.DefaultCompressPreference;
 import com.hyk.proxy.client.config.Config;
+import com.hyk.proxy.client.config.Config.ConnectionMode;
 import com.hyk.proxy.client.config.Config.XmppAccount;
-import com.hyk.proxy.client.gae.rpc.HttpClientRpcChannel;
-import com.hyk.proxy.client.gae.rpc.XmppRpcChannel; //import com.hyk.proxy.client.httpserver.HttpServer;
+import com.hyk.proxy.client.application.gae.rpc.HttpClientRpcChannel;
+import com.hyk.proxy.client.application.gae.rpc.XmppRpcChannel; //import com.hyk.proxy.client.httpserver.HttpServer;
 //import com.hyk.proxy.client.rpc.HttpClientRpcChannel;
 //import com.hyk.proxy.client.rpc.XmppRpcChannel;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.http.header.SetCookieHeaderValue;
 import com.hyk.proxy.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.common.http.message.HttpServerAddress;
+import com.hyk.proxy.common.rpc.service.MasterNodeService;
 import com.hyk.proxy.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.constant.RpcConstants;
-import com.hyk.util.buffer.ByteArray;
 
 /**
  *
  */
 public class ClientUtils
 {
-	protected static Logger		logger					= LoggerFactory.getLogger(ClientUtils.class);
+	protected static Logger				logger					= LoggerFactory.getLogger(ClientUtils.class);
 
-	private static byte[]		STDIN_BUFFER			= new byte[1024];
-	private static Console		console					= System.console();
+	private static byte[]				STDIN_BUFFER			= new byte[1024];
+	private static Console				console					= System.console();
 
-	private static final String	ContentRangeValueHeader	= "bytes";
+	private static final String			ContentRangeValueHeader	= "bytes";
+	private static MasterNodeService	master					= null;
 
 	public static SSLContext initSSLContext() throws Exception
 	{
@@ -167,6 +170,32 @@ public class ClientUtils
 		return new XmppAddress(appid + "@appspot.com");
 	}
 
+	public static MasterNodeService getMasterNodeService(Config config) throws IOException, RpcException, XMPPException
+	{
+		if(null != master)
+		{
+			return master;
+		}
+		RPC rpc = null;
+		if(config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
+		{
+			rpc = ClientUtils.createHttpRPC(Constants.MASTER_APPID, Executors.newCachedThreadPool());
+			master = rpc.getRemoteService(MasterNodeService.class, MasterNodeService.NAME,
+					ClientUtils.createHttpServerAddress(Constants.MASTER_APPID));
+
+		}
+		else
+		{
+			if(null != config.getXmppAccounts())
+			{
+				XmppAccount account = config.getXmppAccounts().get(0);
+				rpc = ClientUtils.createXmppRPC(account, Executors.newCachedThreadPool());
+				master = rpc.getRemoteService(MasterNodeService.class, MasterNodeService.NAME, ClientUtils.createXmppAddress(Constants.MASTER_APPID));
+			}
+		}
+		return master;
+	}
+
 	public static RPC createHttpRPC(String appid, Executor workerExecutor) throws IOException, RpcException
 	{
 		Config config = Config.getInstance();
@@ -220,13 +249,13 @@ public class ClientUtils
 
 	public static String readFromStdin(boolean isEcho) throws IOException
 	{
-		int len = System.in.read(STDIN_BUFFER);
-		return new String(STDIN_BUFFER, 0, len).trim();
+		// int len = System.in.read(STDIN_BUFFER);
+		// return new String(STDIN_BUFFER, 0, len).trim();
 
-		// if(isEcho)
-		// {
-		// return console.readLine().trim();
-		// }
-		// return new String(console.readPassword()).trim();
+		if(isEcho)
+		{
+			return console.readLine().trim();
+		}
+		return new String(console.readPassword()).trim();
 	}
 }

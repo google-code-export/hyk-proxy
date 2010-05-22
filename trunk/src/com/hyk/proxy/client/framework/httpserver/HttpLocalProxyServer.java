@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.config.Config.SimpleSocketAddress;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceFactory;
+import com.hyk.proxy.client.framework.status.StatusMonitor;
 
 
 /**
@@ -40,7 +41,7 @@ public class HttpLocalProxyServer
     private Channel serverChannel;
     private Executor bossExecutor = Executors.newCachedThreadPool();
 	
-    public HttpLocalProxyServer(SimpleSocketAddress address, final ThreadPoolExecutor workerExecutor, final HttpProxyEventServiceFactory eventServiceFactory) 
+    public HttpLocalProxyServer(SimpleSocketAddress address, final ThreadPoolExecutor workerExecutor, final HttpProxyEventServiceFactory eventServiceFactory, StatusMonitor monitor) 
     {
     	
 		//this.workerExecutor = workerExecutor;
@@ -65,6 +66,7 @@ public class HttpLocalProxyServer
 			}
 		});
 		serverChannel = bootstrap.bind(new InetSocketAddress(address.host, address.port));
+		monitor.notifyRunDetail("Local Http Server Running... \nat " + address.host + ":" + address.port);
     }
     
     public void close()

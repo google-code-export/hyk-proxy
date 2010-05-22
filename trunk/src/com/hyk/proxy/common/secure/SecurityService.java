@@ -4,7 +4,7 @@
  *
  * Description: Secure.java 
  *
- * @author yinqiwen [ 2010-5-15 | обнГ10:28:48 ]
+ * @author yinqiwen [ 2010-5-15 | 10:28:48 PM]
  *
  */
 package com.hyk.proxy.common.secure;

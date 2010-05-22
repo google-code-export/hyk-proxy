@@ -4,7 +4,7 @@
  *
  * Description: HttpProxyService.java 
  *
- * @author yinqiwen [ 2010-5-13 | обнГ07:50:44 ]
+ * @author yinqiwen [ 2010-5-13 | 07:50:44 PM ]
  *
  */
 package com.hyk.proxy.client.framework.event;

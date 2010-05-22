@@ -141,7 +141,7 @@ public class Launcher extends HttpServlet{
 			httpServletRpcChannel.setMaxMessageSize(10240000);
 			createInitialServiceIfNotExist(httpRpc, hykConfig.isMasterNode());
 			
-			if(!hykConfig.isMasterNode())
+			//if(!hykConfig.isMasterNode())
 			{
 				AccountServiceImpl.checkDefaultAccount();
 			}

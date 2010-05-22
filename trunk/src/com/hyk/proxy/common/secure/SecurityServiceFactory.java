@@ -4,7 +4,7 @@
  *
  * Description: SecurityServiceFactory.java 
  *
- * @author yinqiwen [ 2010-5-15 | обнГ10:39:00 ]
+ * @author yinqiwen [ 2010-5-15 | 10:39:00 PM ]
  *
  */
 package com.hyk.proxy.common.secure;

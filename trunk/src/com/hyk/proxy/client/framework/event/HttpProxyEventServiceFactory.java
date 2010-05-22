@@ -4,7 +4,7 @@
  *
  * Description: HttpProxyEventServiceFactory.java 
  *
- * @author yinqiwen [ 2010-5-13 | обнГ08:47:48 ]
+ * @author yinqiwen [ 2010-5-13 | 08:47:48 PM ]
  *
  */
 package com.hyk.proxy.client.framework.event;
@@ -15,4 +15,6 @@ package com.hyk.proxy.client.framework.event;
 public interface HttpProxyEventServiceFactory
 {
 	public HttpProxyEventService createHttpProxyEventService();
+	
+	public void close();
 }

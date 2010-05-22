@@ -1,20 +1,27 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.8.0rc1 (2010.5.xx)
+Changes in version 0.8.5 (2010.5.22)
 -------------------------------------------
 
 ** Bug
-   * Handle exception when checking IPv4 adddress 
-   * URL decode bug when GUI saving config
-   
+   * No exception handler for checking adddress is IPv4 or IPV6
+   * File path decode bug when GUI saving config
+   * Can not set max XMPP message more than 4k at server side
+   * GUI change default compressor to lzf
    
 ** Improvement
    * Add traffic control support
    * Add simple url support(for some edge cases)
-   * Replace current Base64 lib 
+   * Replace current Base64 implementation 
    * Support auto update checking
    * Support encrypt on http connection
+   * Support AppId share plan
+   * Support Seattle platform
+   * Improve GUI's performance, look and feel
+   * Auto close dos window after launching GUI(win only)
+   * Integrate appcfgwrapper as the server part installer
+   * Self define User-Agent Header setting
 
 ** Task
 
