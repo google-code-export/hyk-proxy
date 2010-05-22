@@ -1,22 +1,22 @@
-#summary One-sentence summary of this page.
 #labels Featured,Phase-QA
+#hyk-proxy特性列表.
 
 = 简介 =
 
 hyk-proxy按发布版本计划实现的特性列表
 
+= hyk-proxy 0.8.5特性（released） =
 
-= hyk-proxy 0.8.5特性（coming soon） =
-
- * Client重构以更容易支持其它类型server/network -- done
- * 支持appid分享计划 -- 0%
- * 支持普通HTTP连接的加密以及第三方加密(需要hack code), 默认开启加密  -- 90%
- * 支持自动更新检查（Client & Server） -- 0%
- * Server集成appcfgwrapper安装工具 -- 0%
- * 升级Base64实现（MIG64实现, encode加速三倍，decode无改善， 仅在XMPP模式下生效）-- done
- * 升级RPC框架,支持Remote Object Storage（大量的bugfix以及性能改善） -- done 
- * 支持按用户流量控制（在流量统计开启时生效）-- done
- * 支持HTTP连接简单URL方式（一种针对特殊firewall的边缘情况）-- done
+ * Client重构以更容易支持其它类型server/network -- 100%
+ * 支持appid分享计划 -- 100%
+ * 支持普通HTTP连接的加密以及第三方加密(需要hack code), 默认开启加密  -- 100%
+ * 支持自动更新检查（Client & Server） -- 100%
+ * Server集成appcfgwrapper安装工具 -- 100%
+ * 升级Base64实现（MIG64实现, encode加速三倍，decode无改善， 仅在XMPP模式下生效）-- 100%
+ * 升级RPC框架,支持Remote Object Storage（大量的bugfix以及性能改善） -- 100% 
+ * 支持按用户流量控制（在流量统计开启时生效）-- 100%
+ * 支持HTTP连接简单URL方式（一种针对特殊firewall的边缘情况）-- 100%
+ * 支持Seattle云计算平台 -- 100%
 
 = hyk-proxy已经实现的特性 =
  * 支持多AppId
@@ -24,6 +24,7 @@ hyk-proxy按发布版本计划实现的特性列表
  * XMPP模式支持多XMPP帐号分担负载
  * 支持上行/下行压缩，压缩则可选择LZF，GZIP， ZIP
  * 下行压缩支持按content-type过滤
+ * 多线程下载大文件
  * 支持local proxy for hyk-proxy-client
  * 支持IPV6
  * 支持用户/组管理，以及相关site黑名单配置
