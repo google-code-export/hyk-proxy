@@ -149,10 +149,15 @@ class ConnectionHandler:
             host = self.path[:i]        
             path = self.path[i:]
         else:
-            #print "XXXX" , self.path     
-            pass
+            path = self.path
+            start = self.client_buffer.lower().find('host:')  
+            if index > 0:
+                end = self.client_buffer.lower().find('\n', start)
+                if end > 0:
+                    host = self.client_buffer[start+5:end].strip()
+            
         self._connect_target(host)
-        self.target.send('%s %s %s\nConnection:close\r\n'%(self.method, path, self.protocol)+
+        self.target.send('%s %s %s\n'%(self.method, path, self.protocol)+
                          self.client_buffer)
         #print self.client_buffer
         self.client_buffer = ''
