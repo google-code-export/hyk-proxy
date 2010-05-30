@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.io.ByteDataBuffer;
+import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.common.http.message.HttpServerAddress;
 import com.hyk.proxy.common.secure.SecurityServiceFactory;
 import com.hyk.proxy.common.secure.SecurityServiceFactory.RegistSecurityService;
@@ -49,7 +49,7 @@ public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 	@Override
 	protected void send(RpcChannelData data) throws IOException
 	{
-		ByteDataBuffer content = data.content;
+		ChannelDataBuffer content = data.content;
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Send result back with body len:" + data.content.readableBytes());
@@ -61,9 +61,13 @@ public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 		ByteBuffer secid = ByteBuffer.allocate(4);
 		secid.putInt(reg.id);
 		out.getOutputStream().write(secid.array());
-		byte[] sent = content.toByteArray();
-		sent = reg.service.encrypt(sent);
-		out.getOutputStream().write(sent);
+		ByteBuffer[] bufs = ChannelDataBuffer.asByteBuffers(content);
+		//byte[] sent = ChannelDataBuffer.asByteArray(content);
+		bufs = reg.service.encrypt(bufs);
+		for(ByteBuffer buf:bufs)
+		{
+			out.getOutputStream().write(buf.array(), buf.position(), buf.remaining());
+		}
 		out.getOutputStream().flush();
 		
 	}
@@ -88,7 +92,8 @@ public class HttpServletRpcChannel extends AbstractAppEngineRpcChannel
 				ByteBuffer bufferContent = ByteBuffer.wrap(content);
 				int secid = bufferContent.getInt();
 				RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(secid);
-				ByteDataBuffer buffer = ByteDataBuffer.wrap(reg.service.decrypt(bufferContent));
+				bufferContent = reg.service.decrypt(bufferContent);
+				ChannelDataBuffer buffer = ChannelDataBuffer.wrap(bufferContent.array(), bufferContent.position(), bufferContent.remaining());
 				RpcChannelData recv = new RpcChannelData(buffer, new SimpleSockAddress(request.getRemoteHost(), request.getRemotePort()));
 				processIncomingData(recv);
 			}

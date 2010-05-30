@@ -55,6 +55,7 @@ import com.hyk.proxy.common.rpc.service.MasterNodeService;
 import com.hyk.proxy.common.xmpp.XmppAddress;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
+import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.constant.RpcConstants;
 
 /**
@@ -179,10 +180,9 @@ public class ClientUtils
 		RPC rpc = null;
 		if(config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
 		{
-			rpc = ClientUtils.createHttpRPC(Constants.MASTER_APPID, Executors.newCachedThreadPool());
+			rpc = ClientUtils.createHttpRPC(Executors.newCachedThreadPool());
 			master = rpc.getRemoteService(MasterNodeService.class, MasterNodeService.NAME,
 					ClientUtils.createHttpServerAddress(Constants.MASTER_APPID));
-
 		}
 		else
 		{
@@ -196,17 +196,17 @@ public class ClientUtils
 		return master;
 	}
 
-	public static RPC createHttpRPC(String appid, Executor workerExecutor) throws IOException, RpcException
+	public static RPC createHttpRPC( Executor workerExecutor) throws IOException, RpcException
 	{
 		Config config = Config.getInstance();
 		DefaultCompressPreference.init(CompressorFactory.getRegistCompressor(config.getCompressor()).compressor);
 		Properties initProps = new Properties();
 		initProps.setProperty(RpcConstants.SESSIN_TIMEOUT, Integer.toString(config.getRpcTimeOut() * 1000));
 		initProps.setProperty(RpcConstants.COMPRESS_PREFER, DefaultCompressPreference.class.getName());
-		HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", Constants.HTTP_INVOKE_PATH);
+		//HttpServerAddress remoteAddress = new HttpServerAddress(appid + ".appspot.com", Constants.HTTP_INVOKE_PATH);
 		// HttpServerAddress remoteAddress = new HttpServerAddress("localhost",
 		// 8888, Constants.HTTP_INVOKE_PATH);
-		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor, remoteAddress);
+		HttpClientRpcChannel httpCleintRpcchannle = new HttpClientRpcChannel(workerExecutor);
 		return new RPC(httpCleintRpcchannle, initProps);
 	}
 
@@ -219,6 +219,22 @@ public class ClientUtils
 		initProps.setProperty(RpcConstants.COMPRESS_PREFER, DefaultCompressPreference.class.getName());
 		XmppRpcChannel xmppRpcchannle = new XmppRpcChannel(workerExecutor, account);
 		return new RPC(xmppRpcchannle, initProps);
+	}
+	
+	public static String extractAppId(Address addr)
+	{
+		if(addr instanceof HttpServerAddress)
+		{
+			String host = ((HttpServerAddress)addr).getHost();
+			return host.substring(0, host.indexOf('.'));
+		}
+		
+		if(addr instanceof XmppAddress)
+		{
+			String jid = ((XmppAddress)addr).getJid();
+			return jid.substring(0, jid.indexOf('@'));
+		}
+		return null;
 	}
 
 	public static boolean isHTTPServerReachable(String appid)

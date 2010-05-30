@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.config.Config.SimpleSocketAddress;

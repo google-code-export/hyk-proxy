@@ -15,13 +15,16 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -46,7 +49,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jivesoftware.smack.util.Base64;
 
-import com.hyk.io.ByteDataBuffer;
+import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.client.application.gae.GoogleAppEngineApplicationConfig;
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.config.Config.ProxyInfo;
@@ -54,7 +57,6 @@ import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.common.http.message.HttpServerAddress;
 import com.hyk.proxy.common.secure.SecurityServiceFactory;
 import com.hyk.proxy.common.secure.SecurityServiceFactory.RegistSecurityService;
-
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.rpc.core.transport.impl.AbstractDefaultRpcChannel;
 
@@ -63,33 +65,41 @@ import com.hyk.rpc.core.transport.impl.AbstractDefaultRpcChannel;
  */
 public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 {
-	private List<RpcChannelData>			recvList		= new LinkedList<RpcChannelData>();
+	private List<RpcChannelData>				recvList	= new LinkedList<RpcChannelData>();
 
-	private HttpServerAddress				remoteAddress;
+	private static Map<Channel, HttpServerAddress> addressTable = new ConcurrentHashMap<Channel, HttpServerAddress>();
 
-	private ClientSocketChannelFactory		factory;
+	private static ClientSocketChannelFactory	factory;
 
-	private HttpClientSocketChannelSelector	clientChannelSelector;
+	private HttpClientSocketChannelSelector		clientChannelSelector;
 
-	private Config							config;
+	private Config								config;
 
 	class HttpClientSocketChannel
 	{
 		SocketChannel	socketChannel;
+		HttpServerAddress remoteAddress;
 
-		public HttpClientSocketChannel()
+		public HttpClientSocketChannel(HttpServerAddress remoteAddress)
 		{
 			this.socketChannel = null;
+			this.remoteAddress = remoteAddress;
 		}
 
 		public synchronized SocketChannel getSocketChannel()
 		{
 			if(null == socketChannel || !socketChannel.isConnected())
 			{
-				socketChannel = connectProxyServer();
+				socketChannel = connectProxyServer(remoteAddress);
+				if(null == socketChannel)
+				{
+					// try again
+					config.activateDefaultProxy();
+					socketChannel = connectProxyServer(remoteAddress);
+				}
 			}
 			return socketChannel;
-			//return connectProxyServer();
+			// return connectProxyServer();
 		}
 
 		public void close()
@@ -97,70 +107,107 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			if(socketChannel != null && socketChannel.isOpen())
 			{
 				socketChannel.close();
+				socketChannel = null;
 			}
 		}
 	}
 
 	class HttpClientSocketChannelSelector
 	{
-		private List<HttpClientSocketChannel>	clientChannels;
+		private Map<String, HttpClientSocketChannel[]>	clientChannels = new HashMap<String, HttpClientSocketChannel[]>();
 		private int								cursor;
+		private final int maxHttpConnectionSizePerAppid;
 
-		public HttpClientSocketChannelSelector(List<HttpClientSocketChannel> clientChannels)
+		public HttpClientSocketChannelSelector(int maxHttpConnectionSizePerAppid)
 		{
 			super();
-			this.clientChannels = clientChannels;
+			this.maxHttpConnectionSizePerAppid = maxHttpConnectionSizePerAppid;
 		}
 
-		public synchronized HttpClientSocketChannel select()
+		public synchronized HttpClientSocketChannel select(HttpServerAddress remoteAddress)
 		{
-			if(cursor >= clientChannels.size())
+			HttpClientSocketChannel[] channels = clientChannels.get(remoteAddress.getHost());
+			if(null == channels)
+			{
+				channels = new HttpClientSocketChannel[maxHttpConnectionSizePerAppid];
+				clientChannels.put(remoteAddress.getHost(), channels);
+			}
+			if(cursor >= channels.length)
 			{
 				cursor = 0;
 			}
-			HttpClientSocketChannel channle = clientChannels.get(cursor++);
-			return channle;
+			HttpClientSocketChannel channel = channels[cursor];
+			if(null == channel)
+			{
+				channel = new HttpClientSocketChannel(remoteAddress);
+				channels[cursor] = channel;
+			}
+			cursor++;
+			return channel;
 		}
 
 		public void close()
 		{
-			for(HttpClientSocketChannel channel : clientChannels)
+			for(HttpClientSocketChannel[] channels : clientChannels.values())
 			{
-				channel.close();
+				if(null != channels)
+				{
+					for(HttpClientSocketChannel channel:channels)
+					{
+						if(null != channel)
+						{
+							channel.close();
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private static void initClientSocketChannelFactory(Executor threadPool, Config config)
+	{
+		if(null == factory)
+		{
+			String targetAddr = null;
+			if(null != config.getHykProxyClientLocalProxy())
+			{
+				targetAddr = config.getHykProxyClientLocalProxy().host;
+			}
+			else
+			{
+				if(!config.getHykProxyServerAuths().isEmpty())
+				{
+					targetAddr = config.getHykProxyServerAuths().get(0).appid + ".appspot.com";
+				}
+			}
+			if(null == targetAddr || ClientUtils.isIPV6Address(targetAddr))
+			{
+				factory = new OioClientSocketChannelFactory(threadPool);
+			}
+			else
+			{
+				factory = new NioClientSocketChannelFactory(threadPool, threadPool);
 			}
 		}
 	}
 
-	public HttpClientRpcChannel(Executor threadPool, HttpServerAddress remoteAddress) throws IOException
+	public HttpClientRpcChannel(Executor threadPool) throws IOException
 	{
 		super(threadPool);
 		setMaxMessageSize(10240000);
-		this.remoteAddress = remoteAddress;
+		//this.remoteAddress = remoteAddress;
+		this.config = Config.getInstance();
 		// Java NIO is not support IPv6, here is a workaround
-		if(ClientUtils.isIPV6Address(remoteAddress.getHost()))
-		{
-			factory = new OioClientSocketChannelFactory(threadPool);
-		}
-		else
-		{
-			factory = new NioClientSocketChannelFactory(threadPool, threadPool);
-		}
+		initClientSocketChannelFactory(threadPool, config);
 		start();
-		List<HttpClientSocketChannel> clientChannels = new ArrayList<HttpClientSocketChannel>();
-		int maxHttpConnectionSize = Config.getInstance().getHttpConnectionPoolSize();
-		for(int i = 0; i < maxHttpConnectionSize; i++)
-		{
-			clientChannels.add(new HttpClientSocketChannel());
-		}
-		clientChannelSelector = new HttpClientSocketChannelSelector(clientChannels);
-		config = Config.getInstance();
+		//List<HttpClientSocketChannel> clientChannels = new ArrayList<HttpClientSocketChannel>();
+		int maxHttpConnectionSize = config.getHttpConnectionPoolSize();
+		clientChannelSelector = new HttpClientSocketChannelSelector(maxHttpConnectionSize);
 	}
 
-	private synchronized SocketChannel connectProxyServer()
+	private synchronized SocketChannel connectProxyServer(HttpServerAddress remoteAddress)
 	{
-		
 		ChannelPipeline pipeline = pipeline();
-
 		pipeline.addLast("decoder", new HttpResponseDecoder());
 		// pipeline.addLast("aggregator", new
 		// HttpChunkAggregator(maxMessageSize));
@@ -187,7 +234,9 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		if(!future.isSuccess())
 		{
 			logger.error("Failed to connect proxy server.", future.getCause());
+			return null;
 		}
+		addressTable.put(channel, remoteAddress);
 		return channel;
 	}
 
@@ -232,61 +281,58 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			logger.debug("send  data to:" + data.address.toPrintableString());
 		}
-		HttpClientSocketChannel clientChannel = clientChannelSelector.select();
-
-		if(clientChannel.getSocketChannel().isConnected())
+		HttpServerAddress remoteAddress = (HttpServerAddress)data.address;
+		HttpClientSocketChannel clientChannel = clientChannelSelector.select(remoteAddress);
+		String url = data.address.toPrintableString();
+		// This option is only active when there is no local proxy or just an
+		// anonymouse local proxy
+		if(config.isSimpleURLEnable())
 		{
-			String url = remoteAddress.toPrintableString();
-			//This option is only active when there is no local proxy or just an anonymouse local proxy
-			if(config.isSimpleURLEnable())
+			if(null == config.getHykProxyClientLocalProxy() || null == config.getHykProxyClientLocalProxy().user)
 			{
-				if(null ==  config.getHykProxyClientLocalProxy() ||  null == config.getHykProxyClientLocalProxy().user)
-				{
-					url = remoteAddress.getPath();
-				}
+				url = remoteAddress.getPath();
 			}
-			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, url);
-			request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
-			request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
-			//request.setHeader(HttpHeaders.Names.CONNECTION, "close");
-			if(null != config.getHykProxyClientLocalProxy())
+		}
+		HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, url);
+		request.setHeader("Host", remoteAddress.getHost() + ":" + remoteAddress.getPort());
+		request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
+		// request.setHeader(HttpHeaders.Names.CONNECTION, "close");
+		if(null != config.getHykProxyClientLocalProxy())
+		{
+			ProxyInfo info = config.getHykProxyClientLocalProxy();
+			if(null != info.user)
 			{
-				ProxyInfo info = config.getHykProxyClientLocalProxy();
-				if(null != info.user)
-				{
-					String userpass = info.user + ":" + info.passwd;
-					String encode = Base64.encodeBytes(userpass.getBytes());
-					request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION, "Basic " + encode);
-				}
+				String userpass = info.user + ":" + info.passwd;
+				String encode = Base64.encodeBytes(userpass.getBytes());
+				request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION, "Basic " + encode);
 			}
-			request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
-			request.setHeader(HttpHeaders.Names.USER_AGENT, GoogleAppEngineApplicationConfig.getSimulateUserAgent());
-			request.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
-			//byte[] sent = data.content.toByteArray();
-			//ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(SimpleSecureService.encrypt(sent));
-			
-			
-			RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(config.getHttpUpStreamEncrypter());
-			ByteBuffer idbuf = ByteBuffer.allocate(4);
-			idbuf.putInt(reg.id).flip();
-			ByteBuffer[] bufs = reg.service.encrypt(data.content.buffers());
-			ByteBuffer[] newbufs = new ByteBuffer[bufs.length + 1];
-			newbufs[0] = idbuf;
-			System.arraycopy(bufs, 0, newbufs, 1, bufs.length);
-			ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(newbufs);
-			request.setHeader("Content-Length", String.valueOf(buffer.readableBytes()));
-			
-			request.setContent(buffer);
+		}
+		request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
+		request.setHeader(HttpHeaders.Names.USER_AGENT, GoogleAppEngineApplicationConfig.getSimulateUserAgent());
+		request.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
+
+		RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(config.getHttpUpStreamEncrypter());
+		ByteBuffer idbuf = ByteBuffer.allocate(4);
+		idbuf.putInt(reg.id).flip();
+		ByteBuffer[] bufs = reg.service.encrypt(ChannelDataBuffer.asByteBuffers(data.content));
+		ByteBuffer[] newbufs = new ByteBuffer[bufs.length + 1];
+		newbufs[0] = idbuf;
+		System.arraycopy(bufs, 0, newbufs, 1, bufs.length);
+		ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(newbufs);
+		request.setHeader("Content-Length", String.valueOf(buffer.readableBytes()));
+
+		request.setContent(buffer);
+		ChannelFuture result = clientChannel.getSocketChannel().write(request).awaitUninterruptibly();
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Send data to remote server " + remoteAddress);
+		}
+		//try again
+		if(!result.isSuccess())
+		{
+			clientChannel.close();
 			clientChannel.getSocketChannel().write(request).awaitUninterruptibly();
 		}
-		else
-		{
-			if(logger.isDebugEnabled())
-			{
-				logger.debug("Channel is close.");
-			}
-		}
-
 	}
 
 	@Override
@@ -298,10 +344,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	@ChannelPipelineCoverage("one")
 	class HttpResponseHandler extends SimpleChannelUpstreamHandler
 	{
-		private volatile boolean	readingChunks = false;
-		//private ByteDataBuffer content;
-		private ChannelBuffer content;
-
+		private volatile boolean	readingChunks	= false;
+		// private ByteDataBuffer content;
+		private ChannelBuffer		content;
+		
+		
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
 		{
@@ -309,27 +356,31 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			{
 				config.activateDefaultProxy();
 			}
+			if(e.getCause() instanceof IOException)
+			{
+				e.getChannel().close();
+			}
 			super.exceptionCaught(ctx, e);
 		}
-		
+
 		@Override
 		public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
 		{
+			addressTable.remove(e.getChannel());
 			if(logger.isDebugEnabled())
 			{
 				logger.debug("Connection closed.");
 			}
 		}
-		
-		private void notifyRpcReader()
+
+		private void notifyRpcReader(Channel channel)
 		{
+			int secid = content.readInt();
+			RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(secid);
 			ByteBuffer data = content.toByteBuffer();
-			RegistSecurityService reg = SecurityServiceFactory.getRegistSecurityService(data.getInt());
 			data = reg.service.decrypt(data);
-			//byte[] data = content.toByteArray();
-			//SimpleSecureService.decrypt(data);
-			//content = ByteDataBuffer.wrap(data);
-			RpcChannelData recv = new RpcChannelData(ByteDataBuffer.wrap(data), remoteAddress);
+
+			RpcChannelData recv = new RpcChannelData(ChannelDataBuffer.wrap(data.array(), data.position(), data.remaining()), addressTable.get(channel));
 			synchronized(recvList)
 			{
 				recvList.add(recv);
@@ -344,14 +395,13 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			if(!readingChunks)
 			{
 				HttpResponse response = (HttpResponse)e.getMessage();
-
+				
 				int bodyLen = (int)response.getContentLength();
 				if(logger.isDebugEnabled())
 				{
-					logger.debug("Recv message:" + response + " with len:" + bodyLen);
+					logger.debug("Recv message:" + response + " with len:" + bodyLen + " from " + addressTable.get(e.getChannel()));
 				}
-				//content = ByteDataBuffer.allocate(bodyLen);
-				
+
 				if(response.getStatus().getCode() == 200 && response.isChunked())
 				{
 					readingChunks = true;
@@ -359,15 +409,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				}
 				else
 				{
-					//content = response.getContent();
 					if(response.getStatus().equals(HttpResponseStatus.OK) && bodyLen > 0)
 					{
-						// response.g
-						//ChannelBuffer body = response.getContent();
-						//body.readBytes(content.getOutputStream(), bodyLen);
-						//content.flip();
 						content = response.getContent();
-						notifyRpcReader();
+						notifyRpcReader(e.getChannel());
 					}
 					else
 					{
@@ -376,7 +421,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 							logger.debug("Recv message with no body or error rsponse" + response);
 						}
 					}
-				}	
+				}
 			}
 			else
 			{
@@ -384,20 +429,13 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				if(chunk.isLast())
 				{
 					readingChunks = false;
-					//content.
-					notifyRpcReader();
+					// content.
+					notifyRpcReader(e.getChannel());
 				}
 				else
 				{
 					ChannelBuffer chunkContent = chunk.getContent();
 					content.writeBytes(chunkContent);
-					//chunkContent.readBytes(content.getOutputStream(), chunkContent.readableBytes());
-					//chunkContent.read
-					//byte[] rawbuf = content.rawbuffer();
-					//int offset = content.position();
-					//int len = chunkContent.readableBytes();
-					//chunkContent.readBytes(rawbuf, offset, len);
-					//content.position(offset + len);
 				}
 			}
 		}

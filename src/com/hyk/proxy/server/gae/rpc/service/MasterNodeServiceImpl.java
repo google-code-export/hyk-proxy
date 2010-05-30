@@ -39,7 +39,7 @@ public class MasterNodeServiceImpl implements MasterNodeService, Serializable
 			ret.add(ro);
 		}
 		Collections.shuffle(ret);
-		int maxRet = 5;
+		int maxRet = 2;
 		List<String> appids = new ArrayList<String>();
 		for(int i = 0; i < ret.size() && i < maxRet ; i++)
 		{

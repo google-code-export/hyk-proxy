@@ -9,14 +9,13 @@
  */
 package com.hyk.proxy.client.launch;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.config.ConfigService;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceFactory;
@@ -50,22 +49,22 @@ public class LocalProxyServer implements ManageResource
 			}
 			Config config = ConfigService.getDefaultConfig();
 			workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(config.getThreadPoolSize(), 0, 0);
-			commandServer = new UDPCommandServer(config.getLocalProxyServerAddress());
-			commandServer.addManageResource(this);
-			workerExecutor.execute(commandServer);
-
-			// List<FetchService> fetchServices = null;
+//			workerExecutor =  new ThreadPoolExecutor(config.getThreadPoolSize(), Integer.MAX_VALUE,
+//                    5000, TimeUnit.MILLISECONDS,
+//                    new SynchronousQueue<Runnable>());
 			switch(config.getClient2ServerConnectionMode())
 			{
 				default:
 				{
 					esf = (HttpProxyEventServiceFactory)Class.forName(config.getProxyEventServiceFactoryClass().trim()).getConstructor(Config.class,
-							Executor.class, StatusMonitor.class).newInstance(config, workerExecutor, monitor);
+							ExecutorService.class, StatusMonitor.class).newInstance(config, workerExecutor, monitor);
 					break;
 				}
 			}
 			server = new HttpLocalProxyServer(config.getLocalProxyServerAddress(), workerExecutor, esf, monitor);
-
+			commandServer = new UDPCommandServer(config.getLocalProxyServerAddress());
+			commandServer.addManageResource(this);
+			workerExecutor.execute(commandServer);
 			// return fetchServices.size() + " fetch service is working.";
 		}
 		catch(Exception e)
@@ -89,7 +88,12 @@ public class LocalProxyServer implements ManageResource
 			esf.close();
 			esf = null;
 		}
-		workerExecutor.shutdownNow();
+		if(null != workerExecutor)
+		{
+			workerExecutor.shutdown();
+			workerExecutor = null;
+		}
+		
 	}
 
 }

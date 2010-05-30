@@ -68,18 +68,18 @@ public class ConfigService
 		}
 	}
 	
-	public static void main(String [] args) throws Exception
-	{
-		Config cfg = getDefaultConfig();
-		cfg.init();
-		System.out.println(cfg.getLocalProxyServerAddress().host);
-		System.out.println(cfg.getHykProxyServerAuths().get(0).appid);
-		System.out.println(cfg.getCompressor());
-		System.out.println(cfg.getXmppAccounts().get(0).jid);
-		System.out.println(cfg.getClient2ServerConnectionMode());
-		//System.out.println(cfg.getHykProxyClientLocalProxy().host);
-		cfg.setClient2ServerConnectionMode(ConnectionMode.XMPP2GAE);
-		saveConfig(cfg);
-		
-	}
+//	public static void main(String [] args) throws Exception
+//	{
+//		Config cfg = getDefaultConfig();
+//		cfg.init();
+//		System.out.println(cfg.getLocalProxyServerAddress().host);
+//		System.out.println(cfg.getHykProxyServerAuths().get(0).appid);
+//		System.out.println(cfg.getCompressor());
+//		System.out.println(cfg.getXmppAccounts().get(0).jid);
+//		System.out.println(cfg.getClient2ServerConnectionMode());
+//		//System.out.println(cfg.getHykProxyClientLocalProxy().host);
+//		cfg.setClient2ServerConnectionMode(ConnectionMode.XMPP2GAE);
+//		saveConfig(cfg);
+//		
+//	}
 }

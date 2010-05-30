@@ -133,7 +133,7 @@ public class Admin
 
 		if(config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
 		{
-			RPC rpc = ClientUtils.createHttpRPC(appid, executor);
+			RPC rpc = ClientUtils.createHttpRPC(executor);
 			remoteServiceManager = rpc.getRemoteService(RemoteServiceManager.class, RemoteServiceManager.NAME, new HttpServerAddress(appid
 					+ ".appspot.com", Constants.HTTP_INVOKE_PATH));
 			// remoteServiceManager =

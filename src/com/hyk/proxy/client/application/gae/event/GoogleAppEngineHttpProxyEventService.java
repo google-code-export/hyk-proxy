@@ -38,7 +38,9 @@ import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventS
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.framework.event.HttpProxyEvent;
 import com.hyk.proxy.client.framework.event.HttpProxyEventService;
+import com.hyk.proxy.client.framework.event.HttpProxyEventServiceStateListener;
 import com.hyk.proxy.client.util.ClientUtils;
+import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.http.header.ContentRangeHeaderValue;
 import com.hyk.proxy.common.http.header.RangeHeaderValue;
 import com.hyk.proxy.common.http.message.HttpRequestExchange;
@@ -68,6 +70,8 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 	private RangeHttpProxyChunkedInput	chunkedInput;
 
 	private Executor					workerExecutor;
+	
+	private HttpProxyEventServiceStateListener listener;
 
 	GoogleAppEngineHttpProxyEventService(FetchServiceSelector selector, SSLContext sslContext, Executor workerExecutor)
 	{
@@ -153,7 +157,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		int fetchLimit = 200000;
 
 		// if(recvReq.getContentLength() > fetchLimit)
-		if(recvReq.getContentLength() > 1024000) // GAE's limit 1M
+		if(recvReq.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT) // GAE's limit 1M
 		{
 			ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(0, fetchLimit - 1, recvReq.getContentLength());
 			gaeRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, contentRange);
@@ -229,7 +233,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 	protected void asyncFetch(HttpRequestExchange req) throws InterruptedException
 	{
 		waitForwardBodyComplete();
-		AsyncFetchService fetchService = selector.selectAsync();
+		AsyncFetchService fetchService = selector.selectAsync(req);
 		fetchService.fetch(req, this);
 		if(logger.isDebugEnabled())
 		{
@@ -241,7 +245,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 	protected HttpResponseExchange syncFetch(HttpRequestExchange req) throws InterruptedException
 	{
 		waitForwardBodyComplete();
-		FetchService fetchService = selector.select();
+		FetchService fetchService = selector.select(req);
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Send proxy request");
@@ -415,4 +419,45 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 			chunkedInput.close();
 		}
 	}
+
+	@Override
+	public boolean isAbleToHandle(HttpProxyEvent event)
+	{
+		switch(event.getType())
+		{
+			case RECV_HTTP_REQUEST:
+			case RECV_HTTPS_REQUEST:
+			{
+				HttpRequest request = (HttpRequest)event.getSource();
+				if(request.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT)
+				{
+					return false;
+				}
+				HttpMethod method = request.getMethod();
+				if(!method.getName().equals(HttpMethod.GET) && !method.getName().equals(HttpMethod.POST)
+					&& !method.getName().equals(HttpMethod.PUT) && !method.getName().equals(HttpMethod.DELETE)
+					&& !method.getName().equals(HttpMethod.HEAD))
+				{
+					return false;
+				}
+				
+				if(!method.getName().equals(HttpMethod.PUT) && !method.getName().equals(HttpMethod.POST))
+				{
+					if(request.getContentLength() > 0)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public void addHttpProxyEventServiceStateListener(HttpProxyEventServiceStateListener listener)
+	{
+		this.listener = listener;
+		
+	}
+
 }

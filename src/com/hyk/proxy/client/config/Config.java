@@ -21,9 +21,10 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
-import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.secure.NoneSecurityService;
 
@@ -33,6 +34,8 @@ import com.hyk.proxy.common.secure.NoneSecurityService;
 @XmlRootElement(name = "Configure")
 public class Config
 {
+	protected Logger	logger	= LoggerFactory.getLogger(getClass());
+
 	public static enum ConnectionMode
 	{
 		HTTP2GAE(1), XMPP2GAE(2);
@@ -98,14 +101,27 @@ public class Config
 			// String name = null;
 			if(server.equals(GTALK_SERVER_NAME))
 			{
-				this.serverHost = GTALK_SERVER;
-				this.serverPort = GTALK_SERVER_PORT;
+				if(null == this.serverHost || this.serverHost.isEmpty())
+				{
+					this.serverHost = GTALK_SERVER;
+				}
+				if(0 == this.serverPort)
+				{
+					this.serverPort = GTALK_SERVER_PORT;
+				}
+				
 				this.name = jid;
 			}
 			else if(server.equals(OVI_SERVER_NAME))
 			{
-				this.serverHost = OVI_SERVER;
-				this.serverPort = OVI_SERVER_PORT;
+				if(null == this.serverHost || this.serverHost.isEmpty())
+				{
+					this.serverHost = OVI_SERVER;
+				}
+				if(0 == this.serverPort)
+				{
+					this.serverPort = OVI_SERVER_PORT;
+				}
 				this.name = StringUtils.parseName(jid);
 				this.isOldSSLEnable = true;
 			}
@@ -114,6 +130,10 @@ public class Config
 				if(null == this.serverHost || this.serverHost.isEmpty())
 				{
 					this.serverHost = server;
+				}
+				if(0 == this.serverPort)
+				{
+					this.serverPort = DEFAULT_PORT;
 				}
 				this.name = StringUtils.parseName(jid);
 			}
@@ -133,7 +153,7 @@ public class Config
 		@XmlAttribute
 		public String					passwd;
 		@XmlAttribute
-		public int						serverPort	= DEFAULT_PORT;
+		public int						serverPort;
 		@XmlAttribute
 		public String					serverHost;
 		@XmlAttribute(name = "oldSSLEnable")
@@ -221,7 +241,7 @@ public class Config
 		this.maxFetcherNumber = maxFetcherNumber;
 	}
 
-	//@XmlElement
+	// @XmlElement
 	private ProxyInfo	localProxy;
 
 	@XmlElement(name = "localProxy")
@@ -229,7 +249,8 @@ public class Config
 	{
 		this.localProxy = localProxy;
 	}
-	//@XmlElement(name = "localProxy")
+
+	// @XmlElement(name = "localProxy")
 	public ProxyInfo getHykProxyClientLocalProxy()
 	{
 		return localProxy;
@@ -250,13 +271,14 @@ public class Config
 	{
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
-	
-	private String proxyEventServiceFactoryClass = GoogleAppEngineHttpProxyEventServiceFactory.class.getName();
-	
+
+	private String	proxyEventServiceFactoryClass	= GoogleAppEngineHttpProxyEventServiceFactory.class.getName();
+
 	public String getProxyEventServiceFactoryClass()
 	{
 		return proxyEventServiceFactoryClass;
 	}
+
 	@XmlElement
 	public void setProxyEventServiceFactoryClass(String proxyEventServiceFactoryClass)
 	{
@@ -282,7 +304,7 @@ public class Config
 		{
 			localProxy = null;
 		}
-		
+
 		if(defaultLocalProxy != null && (null == defaultLocalProxy.host || defaultLocalProxy.host.isEmpty()))
 		{
 			defaultLocalProxy = null;
@@ -307,12 +329,12 @@ public class Config
 			auth.appid = auth.appid.trim();
 			auth.user = auth.user.trim();
 			auth.passwd = auth.passwd.trim();
-			if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
-			{
-				activateDefaultProxy();
-			}
+//			if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
+//			{
+//				activateDefaultProxy();
+//			}
 		}
-		
+
 		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE))
 		{
 			for(int i = 0; i < xmppAccounts.size(); i++)

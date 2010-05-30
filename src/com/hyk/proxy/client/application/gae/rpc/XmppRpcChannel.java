@@ -32,7 +32,7 @@ import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.transport.RpcChannelData;
 import com.hyk.rpc.core.transport.impl.AbstractDefaultRpcChannel;
 import com.hyk.codec.Base64;
-import com.hyk.io.ByteDataBuffer;
+import com.hyk.io.buffer.ChannelDataBuffer;
 
 /**
  * @author yinqiwen
@@ -129,7 +129,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			}
 			semaphore.acquire();
 			//chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
-			chat.sendMessage(Base64.encodeToString(data.content.toByteArray(), false));
+			chat.sendMessage(Base64.encodeToString(ChannelDataBuffer.asByteArray(data.content), false));
 			Thread.sleep(1000);
 		}
 		catch(XMPPException e)
@@ -160,7 +160,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 			String content = message.getBody();
 			byte[] raw = Base64.decodeFast(content);
 			//ByteArray buffer = Base64.base64ToByteArrayBuffer(content);
-			ByteDataBuffer buffer = ByteDataBuffer.wrap(raw);
+			ChannelDataBuffer buffer = ChannelDataBuffer.wrap(raw);
 			RpcChannelData recv = new RpcChannelData(buffer, new XmppAddress(jid));
 			synchronized(recvList)
 			{

@@ -9,7 +9,7 @@
  */
 package com.hyk.proxy.client.application.mix.event;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +29,12 @@ public class MixProxyEventServiceFactory implements HttpProxyEventServiceFactory
 	private Logger		logger	= LoggerFactory.getLogger(getClass());
 	private HttpProxyEventServiceFactory delegatefactory;
 	private GoogleAppEngineHttpProxyEventServiceFactory mainEventFactory;
-	public MixProxyEventServiceFactory(Config config, Executor workerExecutor, StatusMonitor monitor)
+	public MixProxyEventServiceFactory(Config config, ExecutorService workerExecutor, StatusMonitor monitor)
 	{
 		try
 		{
 			delegatefactory = (HttpProxyEventServiceFactory)Class.forName(MixApplicationConfig.getDelegateEventServiceFactoryClass().trim()).getConstructor(Config.class,
-					Executor.class, StatusMonitor.class).newInstance(config, workerExecutor, monitor);
+					ExecutorService.class, StatusMonitor.class).newInstance(config, workerExecutor, monitor);
 			mainEventFactory = new GoogleAppEngineHttpProxyEventServiceFactory(config, workerExecutor, monitor);
 		}
 		catch(Exception e)

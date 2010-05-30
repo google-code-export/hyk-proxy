@@ -152,7 +152,7 @@ class ConnectionHandler:
             path = self.path
             start = self.client_buffer.lower().find('host:')  
             if index > 0:
-                end = self.client_buffer.lower().find('\n', start)
+                end = self.client_buffer.find('\n', start)
                 if end > 0:
                     host = self.client_buffer[start+5:end].strip()
             

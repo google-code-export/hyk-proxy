@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configure>
+    <AppIdBindings>
+        <!-- 
+        <Binding appid="hyk-proxy-demo">
+            <site>twitter</site>
+            <site>youtube</site>
+        </Binding>
+         -->
+    </AppIdBindings>
+
+   <HttpProxyUserAgent choice="FireFox36">
+       <UserAgent name="Chrome41">
+          Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/532.5 (KHTML, like Gecko) Chrome/4.1.249.1045 Safari/532.5
+       </UserAgent>
+       <UserAgent name="FireFox36">
+          Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.3) Gecko/20100403 Firefox/3.6.3
+       </UserAgent>
+   </HttpProxyUserAgent>
+   
+</Configure>

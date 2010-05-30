@@ -14,6 +14,8 @@ package com.hyk.proxy.client.framework.event;
  */
 public interface HttpProxyEventServiceFactory
 {
+//	public boolean isableToHandle(HttpProxyEvent event);
+	
 	public HttpProxyEventService createHttpProxyEventService();
 	
 	public void close();

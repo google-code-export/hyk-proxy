@@ -732,6 +732,10 @@ public class ConfigDialog extends javax.swing.JDialog {
         	localProxy.passwd = new String(localHttpProxyPassText.getPassword()).trim();
         	config.setHykProxyClientLocalProxy(localProxy);
         }
+        else
+        {
+        	config.setHykProxyClientLocalProxy(null);
+        }
         config.setRpcTimeOut(Integer.parseInt(rpcTimeoutText.getText().trim()));
         config.setThreadPoolSize(Integer.parseInt(threadPoolSizeText.getText().trim()));
         config.setSimpleURLEnable(isHttpSimpleUrlEnable.isSelected());

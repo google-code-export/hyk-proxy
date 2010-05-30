@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configure>
+   <DelegateEventServiceFactoryClass>com.hyk.proxy.client.application.seattle.event.SeattleProxyEventServiceFactory</DelegateEventServiceFactoryClass>
+   
+   <DelegateRules>
+      <MatchHost></MatchHost>
+      <MatchUrl></MatchUrl>
+      <MatchMethod>DELETE</MatchMethod>
+      <MatchMethod>OPTIONS</MatchMethod>
+      <MatchEventType>RECV_HTTPS_REQUEST</MatchEventType>
+      <MatchEventType>RECV_HTTPS_CHUNK</MatchEventType>
+   </DelegateRules>
+   
+</Configure>

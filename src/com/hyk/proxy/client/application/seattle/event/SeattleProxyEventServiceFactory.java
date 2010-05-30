@@ -9,7 +9,7 @@
  */
 package com.hyk.proxy.client.application.seattle.event;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -30,7 +30,7 @@ public class SeattleProxyEventServiceFactory implements HttpProxyEventServiceFac
 	private ClientSocketChannelFactory			factory;
 	private ListSelector<SimpleSocketAddress>	selector;
 
-	public SeattleProxyEventServiceFactory(Config config, Executor workerExecutor, StatusMonitor monitor)
+	public SeattleProxyEventServiceFactory(Config config, ExecutorService workerExecutor, StatusMonitor monitor)
 	{
 		factory = new NioClientSocketChannelFactory(workerExecutor, workerExecutor);
 		selector = new ListSelector<SimpleSocketAddress>(SeattleApplicationConfig.getSeattleServerAddress());
@@ -46,7 +46,6 @@ public class SeattleProxyEventServiceFactory implements HttpProxyEventServiceFac
 	@Override
 	public void close()
 	{
-		// TODO Auto-generated method stub
 
 	}
 

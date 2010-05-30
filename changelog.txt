@@ -1,8 +1,25 @@
 hyk-proxy Changelog
 ===================
 
-Changes in version 0.8.5 (2010.5.22)
+Changes in version 0.8.6 (2010.6.xx)
 -------------------------------------------
+
+** Bug
+   * Pure IPV6 support(Need future testing)
+   * English grammer error 
+   * Can not detect connection broken
+   * Can not change XMPP setting for GTALK/OVI
+   * Client hanged with many appids(6+)
+   * GUI:Can not set null local proxy 
+   * GUI:Wrong upgrade link 
+   
+** Improvement
+   * Add site&appid binding support
+   * Add host match delegation in Mix mode
+   * Client: Start-up time optimization  
+   * Upgrade RPC framework(consume less memory)
+
+** Task
 
 ** Bug
    * No exception handler for checking adddress is IPv4 or IPV6
