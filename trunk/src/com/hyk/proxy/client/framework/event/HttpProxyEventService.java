@@ -14,7 +14,11 @@ package com.hyk.proxy.client.framework.event;
  */
 public interface HttpProxyEventService
 {
-	public void handleEvent(HttpProxyEvent event);
+	public boolean isAbleToHandle(HttpProxyEvent event);
 	
+	public void addHttpProxyEventServiceStateListener(HttpProxyEventServiceStateListener listener);
+	
+	public void handleEvent(HttpProxyEvent event);
+
 	public void close() throws Exception;
 }

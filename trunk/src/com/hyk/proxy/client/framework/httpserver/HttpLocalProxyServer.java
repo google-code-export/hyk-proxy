@@ -15,6 +15,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.execution.ExecutionHandler;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.hyk.proxy.client.config.Config.SimpleSocketAddress;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceFactory;
 import com.hyk.proxy.client.framework.status.StatusMonitor;
+import com.hyk.proxy.client.util.ClientUtils;
 
 
 /**
@@ -42,10 +44,16 @@ public class HttpLocalProxyServer
     private Executor bossExecutor = Executors.newCachedThreadPool();
 	
     public HttpLocalProxyServer(SimpleSocketAddress address, final ThreadPoolExecutor workerExecutor, final HttpProxyEventServiceFactory eventServiceFactory, StatusMonitor monitor) 
-    {
-    	
+    {	
 		//this.workerExecutor = workerExecutor;
-    	bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));	
+    	if(ClientUtils.isIPV6Address(address.host))
+    	{
+    		bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(bossExecutor, workerExecutor));	
+    	}
+    	else
+    	{
+    		bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));	
+    	}
     	// Set up the event pipeline factory.
     	//httpServerPipelineFactory = new HttpServerPipelineFactory(workerExecutor, ClientUtils.initSSLContext(), this);
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory()

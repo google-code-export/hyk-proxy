@@ -9,13 +9,18 @@
  */
 package com.hyk.proxy.client.launch.tui;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.framework.status.StatusMonitor;
 import com.hyk.proxy.client.launch.LocalProxyServer;
 import com.hyk.proxy.common.ExtensionsLauncher;
+import com.hyk.proxy.common.update.UpdateCheckResults;
+import com.hyk.proxy.common.update.ProductReleaseDetail.Link;
 import com.hyk.proxy.common.update.ProductReleaseDetail.ReleaseDetail;
+import com.hyk.proxy.common.update.UpdateCheck.UpdateCheckFactory;
 
 /**
  *
@@ -50,17 +55,33 @@ public class StartProxyLocalServer
 					
 				}
 			});
-			// ReleaseDetail detail =
-			// localProxyServer.checkForUpdates().getNewerRelease();
-			// if(null != detail)
-			// {
-			//				
-			// }
+			
 		}
 		catch(Exception e)
 		{
 			logger.error("Failed to start local server.", e);
 			System.exit(-1);
+		}
+		
+		if(null != UpdateCheckFactory.getUpdateChecker())
+		{
+			UpdateCheckResults result = UpdateCheckFactory.getUpdateChecker().checkForUpdates();
+			if(null != result)
+			{
+				ReleaseDetail detail = result.getNewerRelease();
+				if(null != detail)
+				{
+					String newVersion = detail.version;
+			        List<Link> links = detail.links;
+			        String notice = String.format(UpdateCheckResults.NOTICE_FORMATTER, newVersion, "", "");
+			        System.out.println(notice);
+			        System.out.println(UpdateCheckResults.NOTICE_DOWNLOAD);
+			        for (Link link : links) 
+			        {
+			        	System.out.println(link.type + " " +  link.link);
+			        }
+				}
+			}
 		}
 
 	}

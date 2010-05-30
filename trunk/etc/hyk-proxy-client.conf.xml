@@ -51,5 +51,4 @@
 	<proxyEventServiceFactoryClass>com.hyk.proxy.client.application.mix.event.MixProxyEventServiceFactory
 	</proxyEventServiceFactoryClass>
 	-->
-	
 </Configure>

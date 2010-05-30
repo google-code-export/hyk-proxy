@@ -5,7 +5,12 @@
       <version>0.8.5</version>
       <link type="source">http://hyk-proxy.googlecode.com/files/hyk-proxy-project-0.8.5.zip</link>
       <link type="client">http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.8.5.zip</link>
-	  <link type="client">http://hyk-proxy.googlecode.com/files/hyk-proxy-server-0.8.5.zip</link>
+	  <link type="server">http://hyk-proxy.googlecode.com/files/hyk-proxy-server-0.8.5.zip</link>
    </stable-release>
-   <latest-unstable-release />
+   <latest-unstable-release>
+      <version>nb201005301708</version>
+      <link type="source">http://hyk-proxy.googlecode.com/svn/trunk/latest-build/hyk-proxy-project_201005301708.zip</link>
+      <link type="client">http://hyk-proxy.googlecode.com/svn/trunk/latest-build/hyk-proxy-client_201005301708.zip</link>
+	  <link type="server">http://hyk-proxy.googlecode.com/svn/trunk/latest-build/hyk-proxy-server_201005301708.zip</link>
+   </latest-unstable-release>
 </information>

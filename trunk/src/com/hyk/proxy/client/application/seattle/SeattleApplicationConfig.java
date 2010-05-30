@@ -10,16 +10,13 @@
 package com.hyk.proxy.client.application.seattle;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.client.application.gae.GoogleAppEngineApplicationConfig;
 import com.hyk.proxy.client.config.Config.SimpleSocketAddress;
 
 /**
@@ -34,7 +31,7 @@ public class SeattleApplicationConfig
 		try
 		{
 			serverAddrs = new LinkedList<SimpleSocketAddress>();
-			BufferedReader reader  = new BufferedReader(new InputStreamReader(SeattleApplicationConfig.class.getResourceAsStream("/app.seattle.conf")));
+			BufferedReader reader  = new BufferedReader(new InputStreamReader(SeattleApplicationConfig.class.getResourceAsStream("/app-seattle.conf")));
 			String line = reader.readLine();
 			while(line != null)
 			{

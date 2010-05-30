@@ -4,24 +4,23 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.hyk.compress.compressor.Compressor;
-import com.hyk.io.ByteDataBuffer;
+import com.hyk.io.buffer.ChannelDataBuffer;
 
 public class LZFCompressor implements Compressor
 {
 
-	public  static final String NAME = "lzf";
-	
 	@Override
-	public ByteDataBuffer compress(ByteDataBuffer data) throws IOException
+	public ChannelDataBuffer compress(ChannelDataBuffer data) throws IOException
 	{
-		ByteDataBuffer ret = ByteDataBuffer.allocate(data.readableBytes() / 3);
+		ChannelDataBuffer ret = ChannelDataBuffer.allocate(data.readableBytes() / 3);
+
 		return compress(data, ret);
 	}
 
 	@Override
-	public ByteDataBuffer decompress(ByteDataBuffer data) throws IOException
+	public ChannelDataBuffer decompress(ChannelDataBuffer data) throws IOException
 	{
-		ByteDataBuffer ret = ByteDataBuffer.allocate(data.readableBytes() * 3);
+		ChannelDataBuffer ret = ChannelDataBuffer.allocate(data.readableBytes() * 3);
 		LZFInputStream lzfis = new LZFInputStream(data.getInputStream());
 		int b;
 		while((b = lzfis.read()) != -1)
@@ -40,12 +39,11 @@ public class LZFCompressor implements Compressor
 	}
 
 	@Override
-	public ByteDataBuffer compress(ByteDataBuffer data, ByteDataBuffer out) throws IOException
+	public ChannelDataBuffer compress(ChannelDataBuffer data, ChannelDataBuffer out) throws IOException
 	{
-		ByteDataBuffer ret = out;
-		LZFOutputStream lzfos = new LZFOutputStream(ret.getOutputStream());
-		//List<ByteBuffer> bufs = data.buffers();
-		for(ByteBuffer buf : data.buffers())
+		LZFOutputStream lzfos = new LZFOutputStream(out.getOutputStream());
+		ByteBuffer[] bufs = ChannelDataBuffer.asByteBuffers(data);
+		for(ByteBuffer buf : bufs)
 		{
 			byte[] raw = buf.array();
 			int offset = buf.position();
@@ -54,6 +52,7 @@ public class LZFCompressor implements Compressor
 		}
 
 		lzfos.close();
-		return ret;
+		return out;
 	}
+
 }

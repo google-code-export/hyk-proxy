@@ -14,7 +14,7 @@ import javax.persistence.Id;
 import com.googlecode.objectify.annotation.Cached;
 import com.googlecode.objectify.annotation.NotSaved;
 import com.googlecode.objectify.annotation.Serialized;
-import com.hyk.io.ByteDataBuffer;
+import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.server.gae.util.ServerUtils;
 import com.hyk.rpc.core.remote.RemoteObjectReference;
 import com.hyk.serializer.Serializer;
@@ -44,7 +44,7 @@ public class RemoteObject
 	{
 		try
 		{
-			ByteDataBuffer data = ByteDataBuffer.wrap(rawData);
+			ChannelDataBuffer data = ChannelDataBuffer.wrap(rawData);
 			RemoteObjectReference ref =  serializer.deserialize(RemoteObjectReference.class, data);
 			Object impl = ref.getImpl();
 			if(impl instanceof Reloadable)
@@ -65,8 +65,8 @@ public class RemoteObject
 	{
 		try
 		{
-			ByteDataBuffer data = serializer.serialize(ref);
-			rawData = data.toByteArray();
+			ChannelDataBuffer data = serializer.serialize(ref);
+			rawData = ChannelDataBuffer.asByteArray(data);
 		}
 		catch(Exception e)
 		{

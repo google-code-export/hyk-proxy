@@ -496,7 +496,7 @@ public class GUILauncher extends javax.swing.JFrame
 		try
 		{
 			Desktop desktop = Desktop.getDesktop();
-			desktop.browse(new URI(Constants.OFFICIAL_SITE));
+			desktop.browse(new URI(site));
 		}
 		catch(Exception e)
 		{

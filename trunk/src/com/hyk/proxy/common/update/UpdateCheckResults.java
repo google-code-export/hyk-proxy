@@ -42,7 +42,7 @@ public class UpdateCheckResults
 		if(isCurrentUnstable)
 		{
 			ReleaseDetail latest = detail.latestUnstableRelease;
-			if(null == latest)
+			if(null == latest || null == latest.version)
 			{
 				latest = detail.stableRelease;
 			}

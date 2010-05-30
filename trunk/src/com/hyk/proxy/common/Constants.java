@@ -14,6 +14,8 @@ package com.hyk.proxy.common;
  */
 public class Constants
 {
+	public static final int APPENGINE_HTTP_BODY_LIMIT = 1024000;
+	
 	public static final String	HTTP_INVOKE_PATH		= "/invoke";
 	
 	public static final String MASTER_APPID = "hyk-proxy-master";

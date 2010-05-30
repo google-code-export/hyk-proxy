@@ -68,5 +68,10 @@ public class HttpServerAddress implements Address
 	{
 		return "http" + (isSecure?"s":"") + "://" + host  + ":" + port  + path;
 	}
+	
+	public String toString()
+	{
+		return toPrintableString();
+	}
 
 }
