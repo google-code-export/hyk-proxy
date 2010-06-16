@@ -7,7 +7,7 @@
  * @author qiying.wang [ May 21, 2010 | 10:14:39 AM ]
  *
  */
-package com.hyk.proxy.client.application.seattle.event;
+package spac.event.forward;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
@@ -24,8 +24,6 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
@@ -33,35 +31,43 @@ import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.client.config.Config.SimpleSocketAddress;
 import com.hyk.proxy.client.framework.event.HttpProxyEvent;
 import com.hyk.proxy.client.framework.event.HttpProxyEventService;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceStateListener;
 import com.hyk.proxy.client.framework.event.HttpProxyEventType;
-import com.hyk.proxy.client.util.ListSelector;
 
 /**
  *
  */
-class SeattleProxyEventService implements HttpProxyEventService
+public class ForwardProxyEventService implements HttpProxyEventService
 {
-	protected Logger							logger	= LoggerFactory.getLogger(getClass());
-	private ClientSocketChannelFactory			factory;
+	protected Logger						logger	= LoggerFactory.getLogger(getClass());
+	protected ClientSocketChannelFactory	factory;
 
-	private Channel								localChannel;
+	protected Channel						localChannel;
 
-	private Channel								remoteChannel;
+	protected Channel						remoteChannel;
 
-	private boolean								isHttps;
+	protected boolean						isHttps;
 
-	private ListSelector<SimpleSocketAddress>	selector;
-	
-	private HttpProxyEventServiceStateListener listener;
+	private HttpProxyEvent					originalProxyEvent;
 
-	public SeattleProxyEventService(ClientSocketChannelFactory factory, ListSelector<SimpleSocketAddress> selector)
+	private InetSocketAddress				remoteAddr;
+	private String remoteHost;
+	private int remotePort;
+
+	public void setRemoteAddr(String host, int port)
+	{
+		this.remoteHost = host;
+		this.remotePort = port;
+		this.remoteAddr = new InetSocketAddress(host, port);
+	}
+
+	protected HttpProxyEventServiceStateListener	listener;
+
+	public ForwardProxyEventService(ClientSocketChannelFactory factory)
 	{
 		this.factory = factory;
-		this.selector = selector;
 	}
 
 	@Override
@@ -78,7 +84,12 @@ class SeattleProxyEventService implements HttpProxyEventService
 		}
 	}
 
-	protected Channel getRemoteChannel() throws InterruptedException
+	protected InetSocketAddress getRemoteAddress(HttpRequest request)
+	{
+		return remoteAddr;
+	}
+
+	protected Channel getRemoteChannel(HttpRequest request) throws InterruptedException
 	{
 		if(null != remoteChannel && remoteChannel.isOpen())
 		{
@@ -86,16 +97,12 @@ class SeattleProxyEventService implements HttpProxyEventService
 		}
 		ChannelPipeline pipeline = pipeline();
 
-		pipeline.addLast("decrypter", new SimpleEncrypter.SimpleDecryptDecoder());
 		pipeline.addLast("httpResponseDecoder", new HttpResponseDecoder());
-		// pipeline.addLast("aggregator", new HttpChunkAggregator(10240000));
-		pipeline.addLast("encrypter", new SimpleEncrypter.SimpleEncryptEncoder());
 		pipeline.addLast("httpRequestEncoder", new HttpRequestEncoder());
 
 		pipeline.addLast("handler", new ForwardResponseHandler());
 		remoteChannel = factory.newChannel(pipeline);
-		SimpleSocketAddress addr = selector.select();
-		remoteChannel.connect(new InetSocketAddress(addr.host, addr.port)).await();
+		remoteChannel.connect(getRemoteAddress(request)).await();
 		// remoteChannels.put(key, value)
 		return remoteChannel;
 	}
@@ -119,10 +126,6 @@ class SeattleProxyEventService implements HttpProxyEventService
 				{
 					isHttps = true;
 				}
-				else
-				{
-					request.setHeader(HttpHeaders.Names.CONNECTION, "close");
-				}
 				try
 				{
 					if(logger.isDebugEnabled())
@@ -130,7 +133,7 @@ class SeattleProxyEventService implements HttpProxyEventService
 						logger.debug("Send proxy request");
 						logger.debug(request.toString());
 					}
-					getRemoteChannel();
+					getRemoteChannel(request);
 					remoteChannel.write(request);
 				}
 				catch(InterruptedException e)
@@ -159,11 +162,11 @@ class SeattleProxyEventService implements HttpProxyEventService
 		{
 			if(logger.isDebugEnabled())
 			{
-				logger.debug("Seattle server close this connection.");
+				logger.debug("Third proxy client close this connection.");
 			}
 			if(null != listener)
 			{
-				listener.onEventServiceClose(SeattleProxyEventService.this);
+				listener.onEventServiceClose(ForwardProxyEventService.this);
 			}
 		}
 
@@ -172,7 +175,7 @@ class SeattleProxyEventService implements HttpProxyEventService
 		{
 			if(logger.isDebugEnabled())
 			{
-				logger.debug("Seattle connection have an exception!.", e);
+				logger.debug("Third proxy client connection have an exception!.", e);
 			}
 		}
 
@@ -186,12 +189,17 @@ class SeattleProxyEventService implements HttpProxyEventService
 					logger.debug("Recv proxy response");
 					logger.debug(e.getMessage().toString());
 				}
+				HttpResponse res = (HttpResponse)e.getMessage();
+				if(res.getStatus().getCode() >= 400 && listener != null)
+				{
+					listener.onProxyEventFailed(ForwardProxyEventService.this, originalProxyEvent);
+					return;
+				}
 				if(isHttps)
 				{
 					// http request decoder
 					localChannel.getPipeline().remove("decoder");
 				}
-				HttpResponse res = (HttpResponse)e.getMessage();
 				ChannelFuture future = localChannel.write(res);
 				if(!res.isChunked() && !isHttps)
 				{
@@ -213,16 +221,6 @@ class SeattleProxyEventService implements HttpProxyEventService
 
 					});
 				}
-
-			}
-			else if(e.getMessage() instanceof HttpChunk)
-			{
-				HttpChunk chunk = (HttpChunk)e.getMessage();
-				ChannelFuture future = localChannel.write(chunk);
-				if(chunk.isLast())
-				{
-					future.addListener(ChannelFutureListener.CLOSE);
-				}
 			}
 			else
 			{
@@ -240,7 +238,6 @@ class SeattleProxyEventService implements HttpProxyEventService
 	@Override
 	public String getIdentifier()
 	{
-		// TODO Auto-generated method stub
-		return SeattleProxyEventServiceFactory.NAME;
+		return remoteHost + ":" + remotePort;
 	}
 }

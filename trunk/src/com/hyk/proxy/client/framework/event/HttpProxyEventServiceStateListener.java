@@ -15,4 +15,6 @@ package com.hyk.proxy.client.framework.event;
 public interface HttpProxyEventServiceStateListener
 {
 	public void onEventServiceClose(HttpProxyEventService service);
+	
+	public void onProxyEventFailed(HttpProxyEventService service, HttpProxyEvent event);
 }

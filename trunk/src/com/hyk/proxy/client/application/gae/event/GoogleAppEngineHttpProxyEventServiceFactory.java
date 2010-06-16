@@ -12,10 +12,8 @@ package com.hyk.proxy.client.application.gae.event;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -59,6 +57,8 @@ import com.hyk.rpc.core.util.RpcUtil;
  */
 public class GoogleAppEngineHttpProxyEventServiceFactory implements HttpProxyEventServiceFactory
 {
+	public static final String NAME = "GAE";
+	
 	protected Logger				logger	= LoggerFactory.getLogger(getClass());
 	private FetchServiceSelector	selector;
 	private SSLContext				sslContext;
@@ -66,7 +66,7 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements HttpProxyEve
 	// private UpdateCheck updateChecker;
 	private List<RPC>				rpcs	= new ArrayList<RPC>();
 
-	public GoogleAppEngineHttpProxyEventServiceFactory(Config config, ExecutorService workerExecutor, StatusMonitor monitor) throws Exception
+	public void init(Config config, ExecutorService workerExecutor, StatusMonitor monitor) throws Exception
 	{
 		this.sslContext = ClientUtils.initSSLContext();
 		this.workerExecutor = workerExecutor;
@@ -226,8 +226,8 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements HttpProxyEve
 					{
 						return;
 					}
-					String cause = String.format("Client's version:%s is not compatible with Server's version:%s for appid:%s.", Version.value,
-							serverVersion, appid);
+					String cause = String.format("Client's version:%s is not compatible with Server's version:%s .", Version.value,
+							serverVersion);
 					logger.warn(cause);
 				}
 				catch(Throwable e)
@@ -325,6 +325,12 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements HttpProxyEve
 		}
 		rpcs.clear();
 
+	}
+
+	@Override
+	public String getName()
+	{
+		return NAME;
 	}
 
 }

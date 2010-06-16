@@ -55,23 +55,24 @@ import com.hyk.rpc.core.RpcCallbackResult;
  */
 class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, RpcCallback<HttpResponseExchange>
 {
-	protected Logger					logger			= LoggerFactory.getLogger(getClass());
+	protected Logger							logger			= LoggerFactory.getLogger(getClass());
 
-	private FetchServiceSelector		selector;
-	private SSLContext					sslContext;
-	private boolean						ishttps;
-	private String						httpspath;
-	private Channel						channel;
-	private ChannelBuffer				lastReadLeftBuffer;
-	private LinkedList<ChannelBuffer>	chunkedBodys	= new LinkedList<ChannelBuffer>();
-	private HttpRequestExchange			originalRequest;
-	private HttpRequestExchange			forwardRequest;
+	private FetchServiceSelector				selector;
+	private SSLContext							sslContext;
+	private boolean								ishttps;
+	private String								httpspath;
+	private Channel								channel;
+	private ChannelBuffer						lastReadLeftBuffer;
+	private LinkedList<ChannelBuffer>			chunkedBodys	= new LinkedList<ChannelBuffer>();
+	private HttpProxyEvent						originalProxyEvent;
+	private HttpRequestExchange					originalRequest;
+	private HttpRequestExchange					forwardRequest;
 
-	private RangeHttpProxyChunkedInput	chunkedInput;
+	private RangeHttpProxyChunkedInput			chunkedInput;
 
-	private Executor					workerExecutor;
-	
-	private HttpProxyEventServiceStateListener listener;
+	private Executor							workerExecutor;
+
+	private HttpProxyEventServiceStateListener	listener;
 
 	GoogleAppEngineHttpProxyEventService(FetchServiceSelector selector, SSLContext sslContext, Executor workerExecutor)
 	{
@@ -80,6 +81,16 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		this.workerExecutor = workerExecutor;
 	}
 
+	protected boolean isProxyRequestReady()
+	{
+		int contentLength = forwardRequest.getContentLength();
+		if(contentLength > 0 && forwardRequest.getBody().length < contentLength)
+		{
+			return false;
+		}
+		return true;
+	}
+	
 	protected void waitForwardBodyComplete() throws InterruptedException
 	{
 		int contentLength = forwardRequest.getContentLength();
@@ -123,8 +134,9 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		}
 	}
 
-	protected HttpRequestExchange buildForwardRequest(HttpRequest recvReq) throws InterruptedException
+	protected HttpRequestExchange buildForwardRequest(HttpRequest recvReq)
 	{
+		chunkedBodys.clear();
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
 		StringBuffer urlbuffer = new StringBuffer();
 		if(ishttps)
@@ -157,7 +169,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		int fetchLimit = 200000;
 
 		// if(recvReq.getContentLength() > fetchLimit)
-		if(recvReq.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT) // GAE's limit 1M
+		if(recvReq.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT)
 		{
 			ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(0, fetchLimit - 1, recvReq.getContentLength());
 			gaeRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, contentRange);
@@ -187,12 +199,12 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 				{
 					this.channel = event.getChannel();
 					HttpRequest request = (HttpRequest)event.getSource();
+					this.originalProxyEvent = event;
 					if(request.getMethod().equals(HttpMethod.CONNECT))
 					{
 						ishttps = true;
 						httpspath = request.getHeader("Host");
 						HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-						event.getChannel().write(response);
 						// https connection
 						if(event.getChannel().getPipeline().get("ssl") == null)
 						{
@@ -201,6 +213,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 							engine.setUseClientMode(false);
 							event.getChannel().getPipeline().addBefore("decoder", "ssl", new SslHandler(engine));
 						}
+						event.getChannel().write(response);
 					}
 					else
 					{
@@ -230,15 +243,41 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 
 	}
 
-	protected void asyncFetch(HttpRequestExchange req) throws InterruptedException
+	private void executeAsyncFetch(final HttpRequestExchange req)
 	{
-		waitForwardBodyComplete();
 		AsyncFetchService fetchService = selector.selectAsync(req);
-		fetchService.fetch(req, this);
+		fetchService.fetch(req, GoogleAppEngineHttpProxyEventService.this);
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("Send proxy request");
 			logger.debug(req.toPrintableString());
+		}
+	}
+	
+	protected void asyncFetch(final HttpRequestExchange req)
+	{
+		if(!isProxyRequestReady())
+		{
+			workerExecutor.execute(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					try
+					{
+						waitForwardBodyComplete();
+						executeAsyncFetch(req);
+					}
+					catch(InterruptedException e)
+					{
+						logger.error("", e);
+					}	
+				}
+			});
+		}
+		else
+		{
+			executeAsyncFetch(req);
 		}
 	}
 
@@ -332,16 +371,16 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 
 				}
 
-				if(forwardResponse.getResponseCode() == 0)
+				if(forwardResponse.getResponseCode() == 0 || forwardResponse.getResponseCode() >= 400)
 				{
+					if(listener != null)
+					{
+						listener.onProxyEventFailed(this, originalProxyEvent);
+						return;
+					}
 					forwardResponse.setResponseCode(400);
 				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
-				// if(logger.isDebugEnabled())
-				// {
-				// logger.debug(" Received response for " + request.getMethod()
-				// + " " + request.getUri());
-				// }
 				ChannelFuture future = channel.write(response);
 				// future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
@@ -410,6 +449,14 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		}
 	}
 
+	private void closeChannel(Channel channel)
+	{
+		if(null != channel && channel.isOpen())
+		{
+			channel.close();
+		}
+	}
+	
 	@Override
 	public void close() throws Exception
 	{
@@ -418,46 +465,20 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 		{
 			chunkedInput.close();
 		}
-	}
-
-	@Override
-	public boolean isAbleToHandle(HttpProxyEvent event)
-	{
-		switch(event.getType())
-		{
-			case RECV_HTTP_REQUEST:
-			case RECV_HTTPS_REQUEST:
-			{
-				HttpRequest request = (HttpRequest)event.getSource();
-				if(request.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT)
-				{
-					return false;
-				}
-				HttpMethod method = request.getMethod();
-				if(!method.getName().equals(HttpMethod.GET) && !method.getName().equals(HttpMethod.POST)
-					&& !method.getName().equals(HttpMethod.PUT) && !method.getName().equals(HttpMethod.DELETE)
-					&& !method.getName().equals(HttpMethod.HEAD))
-				{
-					return false;
-				}
-				
-				if(!method.getName().equals(HttpMethod.PUT) && !method.getName().equals(HttpMethod.POST))
-				{
-					if(request.getContentLength() > 0)
-					{
-						return false;
-					}
-				}
-			}
-		}
-		return true;
+		closeChannel(channel);
 	}
 
 	@Override
 	public void addHttpProxyEventServiceStateListener(HttpProxyEventServiceStateListener listener)
 	{
 		this.listener = listener;
-		
+	}
+
+	@Override
+	public String getIdentifier()
+	{
+		// TODO Auto-generated method stub
+		return GoogleAppEngineHttpProxyEventServiceFactory.NAME;
 	}
 
 }

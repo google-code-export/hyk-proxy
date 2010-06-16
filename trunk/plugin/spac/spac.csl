@@ -1,0 +1,54 @@
+
+##Third proxy client
+$TOR="127.0.0.1:9050";
+$PUFF="127.0.0.1:1984";
+$MRZHANG="127.0.0.1:2010";
+$APJP="127.0.0.1:10000";
+
+##Reserved proxy implementation
+$GAE="GAE";
+$DIRECT="DIRECT";
+$SEATTLE="SeattleGENI";
+
+def firstSelectProxy(protocol, method, url, headers)
+{
+     if $protocol=="https"
+     { 
+        return $PUFF;
+     }
+     ##Google's limit for request body size 1m
+     $contentLength = int(getHeader($headers, "Content-Length"));
+     if $contentLength > 1024000
+     {
+         return $PUFF;
+     }
+     
+     ##Only "GET/POST/PUT/DELETE/HEAD" supported in GAE
+     if $method != "GET" && $method != "POST" 
+        && $method != "PUT" && $method != "DELETE"
+        && $method != "HEAD"
+     {
+        return $PUFF;
+     }
+     
+     ##Request with body not allowed in GAE if it's not POST/PUT
+     if $contentLength > 0
+     {
+        if $method != "POST" && $method != "PUT" 
+        {
+           return $PUFF;
+        }
+     }
+     
+     return $GAE;
+}
+
+def reselectProxyWhenFailed(proxy)
+{
+   if $proxy == $GAE
+   {
+       return $PUFF;
+   }
+   return null;
+   
+}

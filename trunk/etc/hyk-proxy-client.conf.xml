@@ -20,11 +20,11 @@
 	<!-- Advanced Options -->
 	<httpUpStreamEncrypter>se1</httpUpStreamEncrypter>
 	<!--The thread pool size of local server -->
-	<threadPoolSize>25</threadPoolSize>
+	<threadPoolSize>30</threadPoolSize>
 	<!-- Http connection pool between local server & remote server -->
 	<httpConnectionPoolSize>7</httpConnectionPoolSize>
 	<!-- local server would wait so many secs for every http request -->
-	<RPCTimeOut>120</RPCTimeOut>
+	<RPCTimeOut>90</RPCTimeOut>
 	<!--Avoid some edge case for full url path-->
 	<!--This option is not active when through a unanonymouse local proxy -->
 	<simpleURLEnable>false</simpleURLEnable>
@@ -46,9 +46,7 @@
 	<defaultLocalProxy>
 		<host>www.google.com.hk</host>
 	</defaultLocalProxy>
-
-    <!--  
-	<proxyEventServiceFactoryClass>com.hyk.proxy.client.application.mix.event.MixProxyEventServiceFactory
-	</proxyEventServiceFactoryClass>
-	-->
+    
+    <!-- Can choose in GAE/SeattleGENI -->
+	<proxyEventServiceFactory>GAE</proxyEventServiceFactory>
 </Configure>

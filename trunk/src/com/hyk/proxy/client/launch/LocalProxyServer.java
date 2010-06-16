@@ -9,13 +9,14 @@
  */
 package com.hyk.proxy.client.launch;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
+import com.hyk.proxy.client.application.seattle.event.SeattleProxyEventServiceFactory;
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.config.ConfigService;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceFactory;
@@ -23,6 +24,7 @@ import com.hyk.proxy.client.framework.httpserver.HttpLocalProxyServer;
 import com.hyk.proxy.client.framework.mx.ManageResource;
 import com.hyk.proxy.client.framework.mx.UDPCommandServer;
 import com.hyk.proxy.client.framework.status.StatusMonitor;
+import com.hyk.proxy.client.plugin.PluginManager;
 
 /**
  *
@@ -37,11 +39,24 @@ public class LocalProxyServer implements ManageResource
 	private UDPCommandServer				commandServer;
 	// private UpdateCheck updateChecker;
 	private HttpProxyEventServiceFactory	esf		= null;
+	
+	private static boolean isInited = false;
 
+	protected static synchronized void init() throws Exception
+	{
+		if(isInited) return;
+		PluginManager.getInstance().loadPlugins();
+		PluginManager.getInstance().activatePlugins();
+		HttpProxyEventServiceFactory.Registry.register(new GoogleAppEngineHttpProxyEventServiceFactory());
+		HttpProxyEventServiceFactory.Registry.register(new SeattleProxyEventServiceFactory());
+		isInited = true;
+	}
 	public void launch(StatusMonitor monitor)
 	{
+		
 		try
 		{
+			init();
 			if(null != commandServer)
 			{
 				commandServer.stop();
@@ -56,8 +71,8 @@ public class LocalProxyServer implements ManageResource
 			{
 				default:
 				{
-					esf = (HttpProxyEventServiceFactory)Class.forName(config.getProxyEventServiceFactoryClass().trim()).getConstructor(Config.class,
-							ExecutorService.class, StatusMonitor.class).newInstance(config, workerExecutor, monitor);
+					esf = HttpProxyEventServiceFactory.Registry.getHttpProxyEventServiceFactory(config.getProxyEventServiceFactory());
+					esf.init(config, workerExecutor, monitor);
 					break;
 				}
 			}
