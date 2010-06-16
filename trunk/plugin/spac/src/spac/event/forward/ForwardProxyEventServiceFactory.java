@@ -12,7 +12,7 @@ package spac.event.forward;
 import java.util.concurrent.ExecutorService;
 
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.framework.event.HttpProxyEventService;
@@ -30,7 +30,7 @@ public class ForwardProxyEventServiceFactory implements HttpProxyEventServiceFac
 
 	public void init(Config config, ExecutorService workerExecutor, StatusMonitor monitor)
 	{
-		factory = new NioClientSocketChannelFactory(workerExecutor, workerExecutor);
+		factory = new OioClientSocketChannelFactory(workerExecutor);
 	}
 
 	@Override
