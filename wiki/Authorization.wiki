@@ -1,5 +1,5 @@
+#summary 用户组权限的概念
 #labels Featured
-#用户组权限的概念
 =用户/组概念=
 
 从V0.8.0beta开始引入用户/组概念
