@@ -641,8 +641,8 @@ public class GUILauncher extends javax.swing.JFrame
 			else
 			{
 				getHttpServer().stop();
-				statusTextArea.setText("Stoped");
-				statusLable.setText("Stoped");
+				statusTextArea.setText("Stopped");
+				statusLable.setText("Stopped");
 				executeButton.setIcon(ImageUtil.START); // NOI18N
 				executeButton.setText("Start");
 			}

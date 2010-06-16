@@ -53,7 +53,7 @@ public class UpdatesInfoDialog extends javax.swing.JDialog {
         });
         for (final Link link : links) {
             javax.swing.JLabel label = new javax.swing.JLabel();
-            label.setText("<html>" + link.type + "<font color=\"Blue\"> <u>" + link.link + "</u></font></html>");
+            label.setText("<html>" + link.type + "<font color=\"Blue\"> <u>Click here</u></font></html>");
             label.getAccessibleContext().setAccessibleName(
     		"<html>This is html text that includes a <font color=\"Blue\"> <u>hyperlink</u></font></html>");
             label.addMouseListener(new java.awt.event.MouseAdapter() {

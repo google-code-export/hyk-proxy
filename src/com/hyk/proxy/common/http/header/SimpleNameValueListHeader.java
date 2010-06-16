@@ -53,10 +53,10 @@ public class SimpleNameValueListHeader implements HttpHeaderValue
 		return rawString;
 	}
 	
-	public static void main(String[] args)
-	{
-		SimpleNameValueListHeader v = new SimpleNameValueListHeader("no-cache, no-store, must-revalidate, max-age=24,pre-check=0, post-check=0");
-		System.out.println(v.getValue("max-age"));
-		System.out.println(v.containsName("no-cache"));
-	}
+//	public static void main(String[] args)
+//	{
+//		SimpleNameValueListHeader v = new SimpleNameValueListHeader("no-cache, no-store, must-revalidate, max-age=24,pre-check=0, post-check=0");
+//		System.out.println(v.getValue("max-age"));
+//		System.out.println(v.containsName("no-cache"));
+//	}
 }

@@ -1,5 +1,5 @@
-hyk-proxy 0.8.5  Read Me
-Release 2010/05/22
+hyk-proxy 0.8.6  Read Me
+Release 2010/06/16
 http://hyk-proxy.googlecode.com 
 
 This file is part of hyk-proxy.                                   
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.                      
                                                                   
 You should have received a copy of the GNU General Public License 
-along with hyk-proxy(client & server).  If not, see <http://www.gnu.org/licenses/>.
+along with hyk-proxy(client & server & plugin).  If not, see <http://www.gnu.org/licenses/>.
 
 Dependencies
 ------------

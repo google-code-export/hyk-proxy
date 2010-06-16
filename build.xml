@@ -16,6 +16,7 @@
 	<property name="etc" value="${root}/etc" />
 	<property name="shell" value="${root}/shell" />
 	<property name="release" value="release" />
+	<property name="version" value="0.8.6" />
 	<property name="versionfile" value="com/hyk/proxy/common/Version.java" />
 	<property name="project_name" value="hyk-proxy" />
 
@@ -115,6 +116,7 @@
 	<target name="releaseclient" depends="jarclient">
 		<property name="releaseclientdir" value="${releasedir}/${releaseclientname}"/>
 		<mkdir dir="${releaseclientdir}"/>
+		<mkdir dir="${releaseclientdir}/plugin"/>
 		<copy todir="${releaseclientdir}/lib">
 			<fileset dir="${lib}">
 				<exclude name="*servlet*"/>

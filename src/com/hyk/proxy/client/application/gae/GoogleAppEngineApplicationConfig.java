@@ -129,20 +129,20 @@ public class GoogleAppEngineApplicationConfig
 		return defaultUserAgent;
 	}
 	
-	public static void main(String [] args) throws Exception
-	{
-		JAXBContext context = JAXBContext.newInstance(GoogleAppEngineApplicationConfig.class);
-		Unmarshaller unmarshaller = context.createUnmarshaller();
-		GoogleAppEngineApplicationConfig config = (GoogleAppEngineApplicationConfig)unmarshaller.unmarshal(GoogleAppEngineApplicationConfig.class.getResource("/app-gae.xml"));
-		System.out.println(config.appIdBindings.size());
-		System.out.println(config.appIdBindings.get(0).appid);
-		System.out.println(config.appIdBindings.get(0).sites.size());
-		System.out.println(config.appIdBindings.get(0).sites.get(1));
-		System.out.println(config.httpProxyUserAgent.choice);
-		System.out.println(config.httpProxyUserAgent.agents.size());
-		System.out.println(config.httpProxyUserAgent.agents.get(0).name);
-		System.out.println(config.httpProxyUserAgent.agents.get(0).value);
-		String host="xyz@appspot.com";
-		System.out.println( host.substring(0, host.indexOf('@')));
-	}
+//	public static void main(String [] args) throws Exception
+//	{
+//		JAXBContext context = JAXBContext.newInstance(GoogleAppEngineApplicationConfig.class);
+//		Unmarshaller unmarshaller = context.createUnmarshaller();
+//		GoogleAppEngineApplicationConfig config = (GoogleAppEngineApplicationConfig)unmarshaller.unmarshal(GoogleAppEngineApplicationConfig.class.getResource("/app-gae.xml"));
+//		System.out.println(config.appIdBindings.size());
+//		System.out.println(config.appIdBindings.get(0).appid);
+//		System.out.println(config.appIdBindings.get(0).sites.size());
+//		System.out.println(config.appIdBindings.get(0).sites.get(1));
+//		System.out.println(config.httpProxyUserAgent.choice);
+//		System.out.println(config.httpProxyUserAgent.agents.size());
+//		System.out.println(config.httpProxyUserAgent.agents.get(0).name);
+//		System.out.println(config.httpProxyUserAgent.agents.get(0).value);
+//		String host="xyz@appspot.com";
+//		System.out.println( host.substring(0, host.indexOf('@')));
+//	}
 }

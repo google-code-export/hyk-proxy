@@ -10,6 +10,7 @@
 package com.hyk.proxy.client.config;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -169,7 +170,7 @@ public class Config
 	@XmlElement(name = "localserver")
 	private SimpleSocketAddress			localProxyServerAddress;
 
-	private List<HykProxyServerAuth>	hykProxyServerAuths;
+	private List<HykProxyServerAuth>	hykProxyServerAuths = new LinkedList<HykProxyServerAuth>();
 
 	@XmlElements(@XmlElement(name = "hyk-proxy-server"))
 	public void setHykProxyServerAuths(List<HykProxyServerAuth> hykProxyServerAuths)
@@ -272,17 +273,17 @@ public class Config
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
 
-	private String	proxyEventServiceFactoryClass	= GoogleAppEngineHttpProxyEventServiceFactory.class.getName();
+	private String	proxyEventServiceFactory	= GoogleAppEngineHttpProxyEventServiceFactory.NAME;
 
-	public String getProxyEventServiceFactoryClass()
+	public String getProxyEventServiceFactory()
 	{
-		return proxyEventServiceFactoryClass;
+		return proxyEventServiceFactory;
 	}
 
 	@XmlElement
-	public void setProxyEventServiceFactoryClass(String proxyEventServiceFactoryClass)
+	public void setProxyEventServiceFactory(String proxyEventServiceFactory)
 	{
-		this.proxyEventServiceFactoryClass = proxyEventServiceFactoryClass;
+		this.proxyEventServiceFactory = proxyEventServiceFactory;
 	}
 
 	private String	httpUpStreamEncrypter;
@@ -309,32 +310,35 @@ public class Config
 		{
 			defaultLocalProxy = null;
 		}
-		for(int i = 0; i < hykProxyServerAuths.size(); i++)
+		if(null != hykProxyServerAuths)
 		{
-			HykProxyServerAuth auth = hykProxyServerAuths.get(i);
-			if(auth.appid == null || auth.appid.trim().isEmpty())
+			for(int i = 0; i < hykProxyServerAuths.size(); i++)
 			{
-				hykProxyServerAuths.remove(i);
-				i--;
-				continue;
+				HykProxyServerAuth auth = hykProxyServerAuths.get(i);
+				if(auth.appid == null || auth.appid.trim().isEmpty())
+				{
+					hykProxyServerAuths.remove(i);
+					i--;
+					continue;
+				}
+				if(auth.user == null || auth.user.equals(""))
+				{
+					auth.user = Constants.ANONYMOUSE_NAME;
+				}
+				if(auth.passwd == null || auth.passwd.equals(""))
+				{
+					auth.passwd = Constants.ANONYMOUSE_NAME;
+				}
+				auth.appid = auth.appid.trim();
+				auth.user = auth.user.trim();
+				auth.passwd = auth.passwd.trim();
+//				if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
+//				{
+//					activateDefaultProxy();
+//				}
 			}
-			if(auth.user == null || auth.user.equals(""))
-			{
-				auth.user = Constants.ANONYMOUSE_NAME;
-			}
-			if(auth.passwd == null || auth.passwd.equals(""))
-			{
-				auth.passwd = Constants.ANONYMOUSE_NAME;
-			}
-			auth.appid = auth.appid.trim();
-			auth.user = auth.user.trim();
-			auth.passwd = auth.passwd.trim();
-//			if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
-//			{
-//				activateDefaultProxy();
-//			}
 		}
-
+		
 		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE))
 		{
 			for(int i = 0; i < xmppAccounts.size(); i++)
