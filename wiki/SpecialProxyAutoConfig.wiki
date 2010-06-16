@@ -85,13 +85,13 @@
      * proxy失败后重新选择（responseCode >=400）， 方法reselectProxyWhenFailed
        {{{
          ##有些情况下proxy实现会出错，提供第二次选择机会（注意需要判断proxy类型，否则有死循环可能）
-         def reselectProxyWhenFailed(proxy)
+         def reselectProxyWhenFailed(errorRes,proxy)
          {
-             if $proxy == $GAE
+             $rescode = getResponseCode($errorRes);
+             if $proxy == $GAE && $rescode != 503
              {
                 return $PUFF;
              }
              return null;
           }
        }}}
-
