@@ -184,7 +184,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 	}
 
 	@Override
-	public void handleEvent(HttpProxyEvent event)
+	public void handleEvent(final HttpProxyEvent event)
 	{
 		if(logger.isDebugEnabled())
 		{
@@ -205,15 +205,21 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 						ishttps = true;
 						httpspath = request.getHeader("Host");
 						HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-						// https connection
-						if(event.getChannel().getPipeline().get("ssl") == null)
+						event.getChannel().write(response).addListener(new ChannelFutureListener()
 						{
-							InetSocketAddress remote = (InetSocketAddress)event.getChannel().getRemoteAddress();
-							SSLEngine engine = sslContext.createSSLEngine(remote.getAddress().getHostAddress(), remote.getPort());
-							engine.setUseClientMode(false);
-							event.getChannel().getPipeline().addBefore("decoder", "ssl", new SslHandler(engine));
-						}
-						event.getChannel().write(response);
+							@Override
+							public void operationComplete(ChannelFuture future) throws Exception
+							{
+								// https connection
+								if(event.getChannel().getPipeline().get("ssl") == null)
+								{
+									InetSocketAddress remote = (InetSocketAddress)event.getChannel().getRemoteAddress();
+									SSLEngine engine = sslContext.createSSLEngine(remote.getAddress().getHostAddress(), remote.getPort());
+									engine.setUseClientMode(false);
+									event.getChannel().getPipeline().addBefore("decoder", "ssl", new SslHandler(engine));
+								}
+							}
+						});	
 					}
 					else
 					{
@@ -370,17 +376,19 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 					}
 
 				}
+				if(forwardResponse.getResponseCode() == 0)
+				{
+					forwardResponse.setResponseCode(400);
+				}
 				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
-				if(forwardResponse.getResponseCode() == 0 || forwardResponse.getResponseCode() >= 400)
+				if(forwardResponse.getResponseCode() >= 400)
 				{
 					if(listener != null)
 					{
 						listener.onProxyEventFailed(this, response, originalProxyEvent);
 						return;
 					}
-					forwardResponse.setResponseCode(400);
 				}
-				
 				ChannelFuture future = channel.write(response);
 				// future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))
