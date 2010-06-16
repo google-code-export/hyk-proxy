@@ -1,9 +1,14 @@
+#summary hyk-proxy特性列表.
 #labels Featured,Phase-QA
-#hyk-proxy特性列表.
 
 = 简介 =
 
 hyk-proxy按发布版本计划实现的特性列表
+
+= hyk-proxy 0.8.6特性（released） =
+ * Client支持插件
+ * SPAC插件 -- 完成更为强大的类似PAC功能
+ * 多AppId情况下，支持AppId和固定site的绑定
 
 = hyk-proxy 0.8.5特性（released） =
 
