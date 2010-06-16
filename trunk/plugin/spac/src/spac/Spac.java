@@ -35,6 +35,7 @@ public class Spac implements Plugin
 		csl.addFunction(Commands.INT);
 		csl.addFunction(Commands.GETHEADER);
 		csl.addFunction(Commands.PRINT);
+		csl.addFunction(Commands.GETRESCODE);
 		HttpProxyEventServiceFactory.Registry.register(new SpacProxyEventServiceFactory(csl));
 		HttpProxyEventServiceFactory.Registry.register(new DirectProxyEventServiceFactory());
 		HttpProxyEventServiceFactory.Registry.register(new ForwardProxyEventServiceFactory());

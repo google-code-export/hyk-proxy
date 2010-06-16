@@ -9,6 +9,8 @@
  */
 package com.hyk.proxy.client.framework.event;
 
+import org.jboss.netty.handler.codec.http.HttpResponse;
+
 /**
  *
  */
@@ -16,5 +18,5 @@ public interface HttpProxyEventServiceStateListener
 {
 	public void onEventServiceClose(HttpProxyEventService service);
 	
-	public void onProxyEventFailed(HttpProxyEventService service, HttpProxyEvent event);
+	public void onProxyEventFailed(HttpProxyEventService service,HttpResponse response, HttpProxyEvent event);
 }
