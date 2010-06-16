@@ -9,7 +9,8 @@
  */
 package spac.script;
 
-import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpMessage;
+import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.tykedog.csl.api.InvokeCommand;
 
 /**
@@ -49,9 +50,26 @@ public class Commands
 		@Override
 		public Object execute(Object[] arg0)
 		{
-			HttpRequest req = (HttpRequest)arg0[0];
+			HttpMessage msg = (HttpMessage)arg0[0];
 			String headername = (String)arg0[1];
-			return req.getHeader(headername);
+			return msg.getHeader(headername);
+		}
+	};
+	
+	public static final InvokeCommand GETRESCODE = new InvokeCommand()
+	{
+		
+		@Override
+		public String getName()
+		{
+			return "getResponseCode";
+		}
+		
+		@Override
+		public Object execute(Object[] arg0)
+		{
+			HttpResponse res = (HttpResponse)arg0[0];
+			return res.getStatus().getCode();
 		}
 	};
 	

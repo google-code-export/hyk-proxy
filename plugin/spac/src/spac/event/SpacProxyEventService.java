@@ -160,10 +160,15 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventSer
 	}
 
 	@Override
-	public void onProxyEventFailed(HttpProxyEventService service, HttpProxyEvent event)
+	public void onProxyEventFailed(HttpProxyEventService service, HttpResponse res, HttpProxyEvent event)
 	{
 		String identifier = service.getIdentifier();
-		String proxy = (String)ownFactory.csl.invoke("reselectProxyWhenFailed", new Object[]{identifier});
+		String proxy = (String)ownFactory.csl.invoke("reselectProxyWhenFailed", new Object[]{res, identifier});
+		if(null == proxy)
+		{
+			event.getChannel().write(res).addListener(ChannelFutureListener.CLOSE);
+			return;
+		}
 		selectProxy(proxy, event);
 	}
 

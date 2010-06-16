@@ -172,7 +172,7 @@ class SeattleProxyEventService implements HttpProxyEventService
 		{
 			if(logger.isDebugEnabled())
 			{
-				logger.debug("Seattle connection have an exception!.", e);
+				logger.debug("Seattle connection have an exception!.", e.getCause());
 			}
 		}
 

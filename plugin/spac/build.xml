@@ -11,7 +11,7 @@
 	<property name="srcroot" value="${root}/src" />
 	<property name="src3rd-compress" value="${root}/3rd/compress" />
 	<property name="testroot" value="${root}/test" />
-	<property name="version" value="0.1.1" />
+	<property name="version" value="0.1.2" />
 	<property name="release" value="release" />
 	<property name="project_name" value="spac" />
 

@@ -370,17 +370,17 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService, Rpc
 					}
 
 				}
-
+				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
 				if(forwardResponse.getResponseCode() == 0 || forwardResponse.getResponseCode() >= 400)
 				{
 					if(listener != null)
 					{
-						listener.onProxyEventFailed(this, originalProxyEvent);
+						listener.onProxyEventFailed(this, response, originalProxyEvent);
 						return;
 					}
 					forwardResponse.setResponseCode(400);
 				}
-				HttpResponse response = ClientUtils.buildHttpServletResponse(forwardResponse);
+				
 				ChannelFuture future = channel.write(response);
 				// future.await();
 				if(null != contentRange && contentRange.getLastBytePos() < (contentRange.getInstanceLength() - 1))

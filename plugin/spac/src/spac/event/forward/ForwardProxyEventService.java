@@ -152,6 +152,24 @@ public class ForwardProxyEventService implements HttpProxyEventService
 		}
 	}
 
+    protected void removeDecoderAndEncoder(ChannelFuture future)
+    {
+    	future.addListener(new ChannelFutureListener()
+		{
+
+			@Override
+			public void operationComplete(ChannelFuture arg0) throws Exception
+			{
+				localChannel.getPipeline().remove("decoder");
+				remoteChannel.getPipeline().remove("httpResponseDecoder");
+				remoteChannel.getPipeline().remove("httpRequestEncoder");
+				// http response encoder
+				localChannel.getPipeline().remove("encoder");
+			}
+
+		});
+    }
+	
 	@ChannelPipelineCoverage("one")
 	class ForwardResponseHandler extends SimpleChannelUpstreamHandler
 	{
@@ -192,34 +210,22 @@ public class ForwardProxyEventService implements HttpProxyEventService
 				HttpResponse res = (HttpResponse)e.getMessage();
 				if(res.getStatus().getCode() >= 400 && listener != null)
 				{
-					listener.onProxyEventFailed(ForwardProxyEventService.this, originalProxyEvent);
+					listener.onProxyEventFailed(ForwardProxyEventService.this, res, originalProxyEvent);
 					return;
 				}
-				if(isHttps)
-				{
-					// http request decoder
-					localChannel.getPipeline().remove("decoder");
-				}
+//				if(isHttps)
+//				{
+//					// http request decoder
+//					localChannel.getPipeline().remove("decoder");
+//				}
 				ChannelFuture future = localChannel.write(res);
-				if(!res.isChunked() && !isHttps)
-				{
-					future.addListener(ChannelFutureListener.CLOSE);
-				}
+//				if(!res.isChunked() && !isHttps)
+//				{
+//					future.addListener(ChannelFutureListener.CLOSE);
+//				}
 				if(isHttps)
 				{
-					future.addListener(new ChannelFutureListener()
-					{
-
-						@Override
-						public void operationComplete(ChannelFuture arg0) throws Exception
-						{
-							remoteChannel.getPipeline().remove("httpResponseDecoder");
-							remoteChannel.getPipeline().remove("httpRequestEncoder");
-							// http response encoder
-							localChannel.getPipeline().remove("encoder");
-						}
-
-					});
+					removeDecoderAndEncoder(future);
 				}
 			}
 			else
