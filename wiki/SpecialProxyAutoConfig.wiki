@@ -15,7 +15,8 @@
 = SPAC插件 =
   * hyk-proxy从V0.8.6开始支持插件，SPAC插件则是第一个插件实现.
   * 用户可以定义任意的第三方proxy client，不仅仅局限于hyk-proxy GAE本身;换句话说， hyk-proxy-client可以仅仅作为一个类PAC实现运行
-  * SPAC插件包含一个CSL脚本语言解释器，用户需要少量修改CSL脚本完成自定义PAC功能
+  * SPAC插件中包含一个CSL脚本语言解释器，用户需要少量修改CSL脚本完成自定义PAC功能
+  * SPAC插件请到[http://code.google.com/p/p4hpc/downloads/list hyk-proxy-client插件项目]下载
 
 = CSL脚本语言 = 
   * 此脚本语言非常简单，语法类似C/shell
