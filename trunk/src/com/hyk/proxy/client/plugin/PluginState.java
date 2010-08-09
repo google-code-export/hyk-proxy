@@ -14,5 +14,5 @@ package com.hyk.proxy.client.plugin;
  */
 public enum PluginState
 {
-	LOADED, ACTIVATED
+	UNRESOLVED,LOADED, ACTIVATED
 }

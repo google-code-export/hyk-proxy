@@ -16,7 +16,7 @@
 	<property name="etc" value="${root}/etc" />
 	<property name="shell" value="${root}/shell" />
 	<property name="release" value="release" />
-	<property name="version" value="0.8.6" />
+	<property name="version" value="0.9.0beta" />
 	<property name="versionfile" value="com/hyk/proxy/common/Version.java" />
 	<property name="project_name" value="hyk-proxy" />
 
@@ -110,7 +110,7 @@
 		<property name="releaseservername" value="${project_name}-server-${version}"/>
 		<property name="releaseprojectname" value="${project_name}-project-${version}"/>
 		<property name="release_dist_dir" value="${root}"/>
-		<property name="version" value="0.8.6" />
+		<property name="version" value="0.9.0beta" />
 	</target>
 
 	<target name="releaseclient" depends="jarclient">

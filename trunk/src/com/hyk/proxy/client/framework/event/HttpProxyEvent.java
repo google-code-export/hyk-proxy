@@ -44,6 +44,11 @@ public class HttpProxyEvent extends EventObject
 	{
 		this.attachment = attachment;
 	}
+	
+	public void setSource(Object source)
+	{
+		this.source = source;
+	}
 
 	public HttpProxyEvent(HttpProxyEventType type, Object source, Channel channel)
 	{

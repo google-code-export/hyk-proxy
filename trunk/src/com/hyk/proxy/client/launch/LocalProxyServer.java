@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
-import com.hyk.proxy.client.application.seattle.event.SeattleProxyEventServiceFactory;
+//import com.hyk.proxy.client.application.seattle.event.SeattleProxyEventServiceFactory;
 import com.hyk.proxy.client.config.Config;
 import com.hyk.proxy.client.config.ConfigService;
 import com.hyk.proxy.client.framework.event.HttpProxyEventServiceFactory;
@@ -48,7 +48,7 @@ public class LocalProxyServer implements ManageResource
 		PluginManager.getInstance().loadPlugins();
 		PluginManager.getInstance().activatePlugins();
 		HttpProxyEventServiceFactory.Registry.register(new GoogleAppEngineHttpProxyEventServiceFactory());
-		HttpProxyEventServiceFactory.Registry.register(new SeattleProxyEventServiceFactory());
+		//HttpProxyEventServiceFactory.Registry.register(new SeattleProxyEventServiceFactory());
 		isInited = true;
 	}
 	public void launch(StatusMonitor monitor)

@@ -51,7 +51,6 @@ public class HttpResponseExchange extends HttpMessageExhange
 	protected void print(StringBuffer buffer)
 	{
 		buffer.append(HttpResponseStatus.valueOf(responseCode)).append("\r\n");
-
 	}
 
 	public void setResponseCode(int responseCode)

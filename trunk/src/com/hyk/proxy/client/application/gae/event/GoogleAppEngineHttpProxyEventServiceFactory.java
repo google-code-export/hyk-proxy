@@ -324,7 +324,6 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements HttpProxyEve
 			rpc.close();
 		}
 		rpcs.clear();
-
 	}
 
 	@Override

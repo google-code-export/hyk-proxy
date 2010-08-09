@@ -119,6 +119,13 @@ public class SimpleSecurityService implements SecurityService
 		return value;
 	}
 	
+	public String encrypt(String str)
+	{
+		byte[] array = str.getBytes();
+		array = encrypt(array);
+		return new String(array);
+	}
+	
 //	public static void main(String[] args)
 //	{
 //		SimpleSecurityService service = new SimpleSecurityService();
