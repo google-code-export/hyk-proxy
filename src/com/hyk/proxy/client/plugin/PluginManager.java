@@ -11,7 +11,6 @@ package com.hyk.proxy.client.plugin;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +114,21 @@ public class PluginManager
 
 	private void activatePlugin(PluginLifeCycle plugin) throws Exception
 	{
+		if(plugin.state == PluginState.ACTIVATED)
+		{
+			return;
+		}
+		if(null != plugin.desc.depends)
+		{
+			for(String depend : plugin.desc.depends)
+			{
+				PluginLifeCycle other = plugins.get(depend);
+				if(null != other)
+				{
+					activatePlugin(other);
+				}
+			}
+		}
 		plugin.plugin.onActive();
 		plugin.state = PluginState.ACTIVATED;
 	}
@@ -124,21 +138,6 @@ public class PluginManager
 		Collection<PluginLifeCycle> c = plugins.values();
 		for(PluginLifeCycle plugin : c)
 		{
-			if(plugin.state.equals(PluginState.ACTIVATED))
-			{
-				continue;
-			}
-			if(null != plugin.desc.depends)
-			{
-				for(String depend : plugin.desc.depends)
-				{
-					PluginLifeCycle other = plugins.get(depend);
-					if(null != other)
-					{
-						activatePlugin(other);
-					}
-				}
-			}
 			activatePlugin(plugin);
 		}
 	}

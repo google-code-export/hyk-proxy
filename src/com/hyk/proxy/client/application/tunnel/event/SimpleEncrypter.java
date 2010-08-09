@@ -7,7 +7,7 @@
  * @author qiying.wang [ May 21, 2010 | 10:25:47 AM ]
  *
  */
-package com.hyk.proxy.client.application.seattle.event;
+package com.hyk.proxy.client.application.tunnel.event;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -28,7 +28,6 @@ public class SimpleEncrypter
 	@ChannelPipelineCoverage("one")
 	public static class SimpleEncryptEncoder extends OneToOneEncoder
 	{
-
 		@Override
 		protected Object encode(ChannelHandlerContext arg0, Channel arg1, Object msg) throws Exception
 		{
@@ -47,7 +46,6 @@ public class SimpleEncrypter
 	@ChannelPipelineCoverage("one")
 	public static class SimpleDecryptDecoder extends OneToOneDecoder
 	{
-
 		@Override
 		protected Object decode(ChannelHandlerContext arg0, Channel arg1, Object msg) throws Exception
 		{

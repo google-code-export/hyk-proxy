@@ -10,6 +10,7 @@
 package com.hyk.proxy.client.plugin;
 
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
@@ -22,8 +23,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class PluginDescription
 {
 	@XmlElement
-	String entryClass;
+	public String entryClass;
 	
 	@XmlElements(@XmlElement(name = "depend"))
-	List<String> depends;
+	public List<String> depends;
+	
+	
 }
