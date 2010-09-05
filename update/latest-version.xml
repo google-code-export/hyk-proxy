@@ -8,7 +8,8 @@
          <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.2.1.zip</url>
       </plugin>
       <plugin name="SPAC" version="0.3.0">
-         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.2.1.zip</url>
+         <desc>Special Proxy Auto Config</desc>
+         <url>http://hyk-proxy.googlecode.com/svn/trunk/test/hyk-proxy-spac-0.3.0.zip</url>
       </plugin>
    </plugins>
 </information>
