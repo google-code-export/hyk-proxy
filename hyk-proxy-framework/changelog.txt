@@ -1,0 +1,177 @@
+hyk-proxy Changelog
+===================
+Changes in version 0.9.0 (2010.9.xx)
+-------------------------------------------
+** Bug
+   * Fix: GAE main part can not run as a plugin
+   * Fix: GAE admin tool can not start
+
+** Improvement
+   * Refactor as a framework(no Google AppEgnine relevant content)
+   * Auto upgrade support(Remove old upgrade checking mechanism)
+   * Plugin system redesign/reimplement
+   * New CLI admin interface for framework/plugins
+   * GUI: Auto connect proxy server configurable
+   * GUI: Install/Uninstall plugins online
+   * GUI: installer for Win
+   * GUI: Auto startup with windows support
+   * Win: Native exe wrapper
+   
+** Task
+   * NA
+
+
+Changes in version 0.8.6 (2010.6.15)
+-------------------------------------------
+
+** Bug
+   * Pure IPV6 support
+   * English grammar error 
+   * Can not detect connection broken
+   * Can not change XMPP setting for GTALK/OVI
+   * Can not upload file even the size less than limit 1m
+   * Client hanged with many appids(6+)
+   * GUI:Can not clear local proxy 
+   * GUI:Wrong upgrade link 
+   
+** Improvement
+   * Add site&appid binding support
+   * Support plugin for client
+   * Client: Start-up time OPT  
+   * Upgrade RPC framework(consume less memory)
+   * Plugin: Special Proxy Auto Cconfig 
+
+** Task
+
+** Bug
+   * No exception handler for checking adddress is IPv4 or IPV6
+   * File path decode bug when GUI saving config
+   * Can not set max XMPP message more than 4k at server side
+   * GUI change default compressor to lzf
+   
+** Improvement
+   * Add traffic control support
+   * Add simple url support(for some edge cases)
+   * Replace current Base64 implementation 
+   * Support auto update checking
+   * Support encrypt on http connection
+   * Support AppId share plan
+   * Support Seattle platform
+   * Improve GUI's performance, look and feel
+   * Auto close dos window after launching GUI(win only)
+   * Integrate appcfgwrapper as the server part installer
+   * Self define User-Agent Header setting
+   * Delete some unused jars.
+
+** Task
+
+Changes in version 0.8.0rc1 (2010.4.20)
+-------------------------------------------
+
+** Bug
+   * Remote Object ID generate duplicate
+   
+** Improvement
+   * Use objectify instead JDO
+   * Support bandwidth stat 
+   * Add a cron job to keep JVM warm 
+   * Add an compress extension 'LZF' as default compressor
+
+** Task
+
+Changes in version 0.8.0bata (2010.4.11)
+-------------------------------------------
+
+** Bug
+   * Issue 12: Auto complete the URL if it's not complete at client side
+   
+** Improvement
+   * Add USER/GROUP control/setting support and an admin tool
+   * Add a GUI launcher
+   * Add IPV6 support
+   * Use async remote invocation instead of sync remote invocation at client side
+   * Add compress ignore setting
+   * Add max XMPP message size setting at server side
+   * Add default local proxy setting
+   * Use more effective memory strategy in remote invocation
+   * Upgrade AppEngine SDK to 1.3.2
+
+** Task
+
+Changes in version 0.3.0 (2010.3.16)
+-------------------------------------------
+
+** Bug
+   * When uploading file size > fetchlimitsize, try range uploading
+     -> change to when file size > 1024000
+   
+** Improvement
+   * Issue 6:add local proxy support
+
+** Task
+
+Changes in version 0.3.0beta2 (2010.3.2)
+-------------------------------------------
+
+** Bug
+   * Issue 4:system is blocked when doanloading big file
+   * Issue 5:youtube problem 
+   * Some other concurrent bugs
+   * Size error of uploading big file 
+   
+** Improvement
+   * Add cache support
+
+** Task
+   * 
+
+Changes in version 0.3.0beta (2010.2.24)
+-------------------------------------------
+
+** Bug
+   * Change log configuration to rollable.
+   * Support resuming broken downloads(test with wget)
+   
+** Improvement
+   * Upgrade AppEngine SDK to 1.3.1
+   * Upgrade RPC framework
+   * Add support for NOKIA's XMPP account 'ovi.com'
+
+** Task
+   * 
+
+Changes in version 0.2.2 (2010.2.7)
+-------------------------------------------
+
+** Bug
+   * A bug fix for set-cookie
+   
+** Improvement
+   * Support uploading big file(over 1m) to doc.google.com
+   * Optimize big file(over 1m) downloading
+   * Upgrade RPC framework which support compressing setting
+
+** Task
+   * 
+
+Changes in version 0.2.1 (2010.2.2)
+-------------------------------------------
+
+** Bug
+   * A bug fix for xmpp error message parse
+   
+** Improvement
+   * Support big file(over 1m) downloading  Issue 2
+   * Set-Cookies split some login problem
+   * A performance improvement(memory)
+   * Change default RPC timeout value from 30s to 60s
+   * Return 408 response when a fetch invocation timeout
+   
+** Task
+   * Support file upload in next release
+   
+version 0.2.0 (2010.1.31)
+-------------
+Initial version
+
+

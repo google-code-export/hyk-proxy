@@ -1,0 +1,30 @@
+<launch4jConfig>
+	<headerType>console</headerType>
+	<dontWrapJar>true</dontWrapJar>
+	<outfile>../start.exe</outfile>
+	<errTitle>hyk-proxy launcher</errTitle>
+	<chdir>.</chdir>
+	<cmdLine>tui</cmdLine>
+	<singleInstance>
+		<mutexName>hyk-proxy</mutexName>
+		<windowTitle>hyk-proxy</windowTitle>
+	</singleInstance>
+	<customProcName>true</customProcName>
+	<stayAlive>false</stayAlive>
+	<!--  
+	<manifest>hyk-proxy.manifest</manifest>
+	-->
+	<!--<icon>SimpleApp.ico</icon> -->
+	<jre>
+		<minVersion>1.6.0</minVersion>
+		<maxHeapSize>128</maxHeapSize>
+		<opt>-DHYK_PROXY_HOME="%EXEDIR%/.."</opt>
+	</jre>
+	<classPath>
+		<mainClass>com.hyk.proxy.framework.launch.Launcher</mainClass>
+		<cp>../etc;../lib/hyk-proxy-launch.jar</cp>
+	</classPath>
+
+	<!-- <splash> <file>splash.bmp</file> <waitForWindow>true</waitForWindow> 
+		<timeout>60</timeout> <timeoutErr>true</timeoutErr> </splash> -->
+</launch4jConfig>

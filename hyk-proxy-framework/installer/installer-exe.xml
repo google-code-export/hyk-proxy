@@ -1,0 +1,13 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <jar>../install.jar</jar>
+  <outfile>../hyk-proxy-install_0.9.0.exe</outfile>
+  <errTitle>hyk-proxy installer</errTitle>
+  <chdir>.</chdir>
+  <customProcName>false</customProcName>
+  <icon>resources/installer.ico</icon>
+  <jre>
+    <minVersion>1.6.0</minVersion>
+  </jre>
+  <downloadUrl>http://java.com/download</downloadUrl>
+</launch4jConfig>

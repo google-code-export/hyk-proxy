@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shortcuts>
+ <skipIfNotSupported/> 
+ <defaultCurrentUser/>
+ <programGroup defaultName="hyk-proxy" location="application" />
+ 
+ <shortcut name="Start hyk-proxy(Console)" 
+           target="$INSTALL_PATH\bin\start.exe" 
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           iconFile="$INSTALL_PATH\docs\hyk-proxy.ico"
+           initialState="noShow"
+	   programGroup="yes"
+	   startMenu="no"
+	   desktop="yes"
+           startup="no" />
+ <shortcut name="Start hyk-proxy(GUI)" 
+           target="$INSTALL_PATH\bin\startgui.exe" 
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           iconFile="$INSTALL_PATH\docs\hyk-proxy.ico"
+           initialState="noShow"
+	   programGroup="yes"
+	   startMenu="no"
+	   desktop="yes"
+           startup="no" >
+           </shortcut>
+  <shortcut name="AutoStartup hyk-proxy(GUI)" 
+           target="$INSTALL_PATH\bin\startgui.exe" 
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           iconFile="$INSTALL_PATH\docs\hyk-proxy.ico"
+           initialState="noShow"
+	   programGroup="no"
+	   startMenu="no"
+	   desktop="no"
+           startup="yes" >
+           <createForPack name="AutoStartup"/>
+           </shortcut>
+ <shortcut name="Admin hyk-proxy(Console)" 
+           target="$INSTALL_PATH\bin\admin.exe" 
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           iconFile="$INSTALL_PATH\docs\hyk-proxy.ico"
+           initialState="noShow"
+	   programGroup="yes"
+	   startMenu="no"
+	   desktop="yes"
+           startup="no" />
+ <shortcut name="Uninstall hyk-proxy"
+           target="$INSTALL_PATH\uninstaller\uninstaller.jar"
+           commandLine=""
+           workingDirectory="$INSTALL_PATH"
+           iconFile="$INSTALL_PATH\docs\uninstall.ico"
+           initialState="noShow"
+           startMenu="no"
+           programGroup="yes"
+           startup="no" />
+</shortcuts>
