@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+
+<project name="hyk-proxy-framework" default="release">
+	<property name="root" value="." />
+
+	<property name="srcroot" value="${root}/src" />
+	<property name="releasedir" value="${root}/release" />
+	<property name="classes" value="${root}/build" />
+	<property name="launchjar" value="hyk-proxy-launch.jar" />
+	<property name="jar" value="hyk-proxy-framework.jar" />
+	<property name="distroot" value="${root}/lib" />
+	<property name="docdir" value="${root}/doc" />
+	<property name="lib" value="${root}/lib" />
+	<property name="etc" value="${root}/etc" />
+	<property name="docs" value="${root}/docs" />
+	<property name="shell" value="${root}/shell" />
+	<property name="release" value="release" />
+	<property name="version" value="0.9.0" />
+	<property name="versionfile" value="com/hyk/proxy/framework/common/Version.java" />
+	<property name="project_name" value="hyk-proxy" />
+	<property name="releasename" value="${project_name}-${version}"/>
+
+	<target name="prepare">
+		<mkdir dir="${classes}" />
+		<mkdir dir="${distroot}" />
+		<copy todir="${srcroot}/com/hyk/proxy/framework/shell/gui">
+			<fileset dir="${root}/../hyk-proxy-gui/src/com/hyk/proxy/framework/shell/gui" includes="**/*.java"/>
+		</copy>
+		<echo message="package com.hyk.proxy.framework.common;
+			 public class Version
+			 {
+			   public static final String value = &quot;${version}&quot;;
+			 }" file="${srcroot}/${versionfile}" />
+	</target>
+
+
+	<target name="compile" depends="prepare">
+		<javac debug="on" destdir="${classes}">
+			<src path="${srcroot}" />
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		<copy todir="${classes}">
+			<fileset dir="${srcroot}">
+				<include name="**/*.png"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jarlaunch" depends="compile">
+		<jar destfile="${distroot}/${launchjar}" basedir="${classes}">
+			<manifest>
+				<attribute name="Version" value="${version}"/>
+				<attribute name="Class-Path" value="${jar}"/>
+			</manifest>
+			<include name="**/launch/*.class"/>
+		</jar>
+	</target>
+
+	<target name="jar" depends="jarlaunch">
+		<jar destfile="${distroot}/${jar}" basedir="${classes}">
+			<manifest>
+				<attribute name="Version" value="${version}"/>
+				<attribute name="Class-Path" value="../etc  
+					hyk-util.jar netty-3.1.5.GA.jar
+					log4j-1.2.14.jar slf4j-log4j12-1.5.10.jar 
+					slf4j-api-1.5.10.jar hyk-rpc.jar"/>
+			</manifest>
+		</jar>
+		<delete dir="${classes}"/>
+	</target>
+
+	<target name="release" depends="jar">
+		<property name="binreleasedir" value="${releasedir}/${releasename}"/>
+		<mkdir dir="${binreleasedir}"/>
+		<mkdir dir="${binreleasedir}/plugins"/>
+		<copy todir="${binreleasedir}/lib">
+			<fileset dir="${lib}"/>
+		</copy>
+		<copy todir="${binreleasedir}/etc">
+			<fileset dir="${etc}"/>
+		</copy>
+		<copy todir="${binreleasedir}/docs">
+			<fileset dir="${docs}"/>
+		</copy>
+		<copy todir="${binreleasedir}/bin">
+			<fileset dir="${shell}" />
+		</copy>
+		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.0.zip"/>
+		<copy todir="${binreleasedir}/dist" file="${distroot}/${jar}" />
+		<copy todir="${binreleasedir}" file="${root}/readme.txt" />
+		<copy todir="${binreleasedir}" file="${root}/changelog.txt" />
+		<copy todir="${binreleasedir}" file="${root}/licence.txt" />
+		<zip destfile="${releasename}.zip" basedir="${releasedir}"/>
+		<ant target="doLaunchEXE" />
+		<move file="start.exe" todir="${binreleasedir}/bin"/>
+		<move file="startgui.exe" todir="${binreleasedir}/bin"/>
+		<move file="admin.exe" todir="${binreleasedir}/bin"/>
+		<ant target="installer" />
+		<delete dir="${releasedir}" />
+	</target>
+
+	<target name="installer" >
+		<taskdef name="izpack" classpath="${root}/installer/lib/izpack/standalone-compiler.jar" classname="com.izforge.izpack.ant.IzPackTask" />
+		<izpack input="${basedir}/installer/install.xml" output="${basedir}/install.jar" installerType="standard" basedir="${releasedir}/${releasename}" />
+		<ant target="installerexe" />
+	</target>
+	<target name="installerexe">
+		<!--
+		<condition property="noExe">
+			<os arch="x86_64" />
+		</condition>
+		<condition property="noExe">
+			<os arch="amd64" />
+		</condition>
+		-->
+		<condition property="noExe">
+			<not>
+				<or>
+					<os name="Linux" />
+					<os family="windows" />
+				</or>
+			</not>
+		</condition>
+
+		<ant target="doInstallerEXE" />
+	</target>
+	<target name="doLaunchEXE" unless="noExe">
+		<!-- now the installer exe -->
+		<taskdef name="launch4j"
+		                 classname="net.sf.launch4j.ant.Launch4jTask"
+		                 classpath="${root}/installer/lib/launch4j/launch4j.jar:${root}/installer/lib/launch4j/lib/xstream.jar" />
+		<launch4j configFile="./installer/guilaunch-exe.xml" />
+		<taskdef name="launch4j"
+				                 classname="net.sf.launch4j.ant.Launch4jTask"
+				                 classpath="${root}/installer/lib/launch4j/launch4j.jar:${root}/installer/lib/launch4j/lib/xstream.jar" />
+		<launch4j configFile="./installer/tuilaunch-exe.xml" />
+		<taskdef name="launch4j"
+						                 classname="net.sf.launch4j.ant.Launch4jTask"
+						                 classpath="${root}/installer/lib/launch4j/launch4j.jar:${root}/installer/lib/launch4j/lib/xstream.jar" />
+		<launch4j configFile="./installer/adminlaunch-exe.xml" />
+	</target>
+	<target name="doInstallerEXE" unless="noExe">
+		<!-- now the installer exe -->
+		<taskdef name="launch4j"
+	                 classname="net.sf.launch4j.ant.Launch4jTask"
+	                 classpath="${root}/installer/lib/launch4j/launch4j.jar:${root}/installer/lib/launch4j/lib/xstream.jar" />
+		<launch4j configFile="./installer/installer-exe.xml" />
+
+	</target>
+</project>

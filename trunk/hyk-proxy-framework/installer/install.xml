@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<installation version="1.0">
+	<info>
+		<appname>hyk-proxy</appname>
+		<appversion>0.9.0</appversion>
+		<authors>
+			<author name="yinqiwen" email="yinqiwen@gmail.com" />
+		</authors>
+		<url>http://hyk-proxy.googlecode.com/</url>
+		<javaversion>1.6</javaversion>
+		<pack200 />
+		<run-privileged condition="izpack.windowsinstall.vista|izpack.windowsinstall.7" />
+	</info>
+
+	<guiprefs width="590" height="356" resizable="yes">
+		<laf name="liquid">
+			<os family="unix" />
+		</laf>
+		<!-- full names, not iso3 codes -->
+		<modifier key="langDisplayType" value="native" />
+	</guiprefs>
+
+	<locale>
+		<langpack iso3="chn" />
+		<langpack iso3="eng" />
+	</locale>
+
+	<!-- -->
+	<variables>
+		<variable name="DesktopShortcutCheckboxEnabled" value="true" />
+	</variables>
+
+	<native type="izpack" name="ShellLink.dll" />
+	<native type="izpack" name="ShellLink_x64.dll" />
+	<resources>
+		<res id="Installer.image" src="../../installer/resources/installer.png" />
+		<res id="InfoPanel.info" src="licence.txt" />
+		<res id="XInfoPanel.info" src="licence.txt" />
+		<res id="shortcutSpec.xml" src="../../installer/shortcutSpec.xml" />
+	</resources>
+	<panels>
+		<panel classname="HelloPanel" />
+		<panel classname="InfoPanel" />
+		<panel classname="TargetPanel" />
+		<panel classname="PacksPanel" />
+		<panel classname="InstallPanel" />
+		<panel classname="ShortcutPanel">
+			<os family="windows" />
+
+		</panel>
+		<!-- <panel classname="ProcessPanel"><os family="windows" /></panel> -->
+		<!-- unix|mac doesn't work, displays for windows too -->
+		<!-- 
+		<panel classname="XInfoPanel">
+			<os family="unix" />
+		</panel>
+		<panel classname="XInfoPanel">
+			<os family="mac" />
+		</panel>
+		 -->
+		<panel classname="SimpleFinishPanel" />
+	</panels>
+
+	<packs>
+		<pack name="Base" required="yes">
+			<description>Base installation files</description>
+			<fileset dir="." includes="**/*" targetdir="$INSTALL_PATH" />
+		</pack>
+		<pack name="AutoStartup" required="no" preselected="no">
+			<description>Auto Startup(GUI) With Windows</description>
+			<fileset dir="bin" includes="abc" targetdir="$INSTALL_PATH" />
+		</pack>
+	</packs>
+</installation>
