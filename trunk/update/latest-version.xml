@@ -1,0 +1,14 @@
+<information>
+   <framework version="0.9.0">
+      <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.2.1.zip</url>
+   </framework>
+   <plugins>
+      <plugin name="GAE" version="0.9.0">
+         <desc></desc>
+         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.2.1.zip</url>
+      </plugin>
+      <plugin name="SPAC" version="0.3.0">
+         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-client-0.2.1.zip</url>
+      </plugin>
+   </plugins>
+</information>
