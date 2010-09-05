@@ -2,15 +2,16 @@
 	<framework>
 		<upgrade from="0.9.0">
 			<fileset>
-				<file></file>
+				<file>hyk-proxy-0.9.0/lib/hyk-proxy-framework.jar</file>
+				<file>hyk-proxy-0.9.0/lib/hyk-rpc.jar</file>
 			</fileset>
 		</upgrade>
 	</framework>
 	<plugins>
-		<plugin name="">
-			<upgrade from="">
+		<plugin name="SPAC">
+			<upgrade from="0.3.0">
 				<fileset>
-					<file></file>
+					<file>spac/lib/tykedog.jar</file>
 				</fileset>
 			</upgrade>
 		</plugin>
