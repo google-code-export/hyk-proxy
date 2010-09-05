@@ -1,6 +1,6 @@
 <information>
    <framework version="0.9.1">
-         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-0.9.0.zip</url>
+         <url>http://hyk-proxy.googlecode.com/svn/trunk/test/hyk-proxy-0.9.0.zip</url>
    </framework>
    <plugins>
       <plugin name="GAE" version="0.9.0">
