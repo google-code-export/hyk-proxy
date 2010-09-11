@@ -9,16 +9,17 @@
  */
 package com.hyk.proxy.server.gae.rpc.remote;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import javax.persistence.Id;
 
 import com.googlecode.objectify.annotation.Cached;
-import com.googlecode.objectify.annotation.NotSaved;
 import com.googlecode.objectify.annotation.Serialized;
-import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.server.gae.util.ServerUtils;
 import com.hyk.rpc.core.remote.RemoteObjectReference;
-import com.hyk.serializer.Serializer;
-import com.hyk.serializer.StandardSerializer;
 
 /**
  *
@@ -32,8 +33,8 @@ public class RemoteObject
 	@Serialized
 	byte[] rawData;
 	
-	@NotSaved
-	static Serializer serializer = new StandardSerializer();
+	//@NotSaved
+	//static Serializer serializer = new StandardSerializer();
 	
 	public byte[] getRawData()
 	{
@@ -44,8 +45,9 @@ public class RemoteObject
 	{
 		try
 		{
-			ChannelDataBuffer data = ChannelDataBuffer.wrap(rawData);
-			RemoteObjectReference ref =  serializer.deserialize(RemoteObjectReference.class, data);
+			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(rawData));
+			//ChannelDataBuffer data = ChannelDataBuffer.wrap(rawData);
+			RemoteObjectReference ref =  (RemoteObjectReference) ois.readObject();
 			Object impl = ref.getImpl();
 			if(impl instanceof Reloadable)
 			{
@@ -65,8 +67,12 @@ public class RemoteObject
 	{
 		try
 		{
-			ChannelDataBuffer data = serializer.serialize(ref);
-			rawData = ChannelDataBuffer.asByteArray(data);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			oos.writeObject(ref);
+			oos.close();
+			//ChannelDataBuffer data = serializer.serialize(ref);
+			rawData = bos.toByteArray();
 		}
 		catch(Exception e)
 		{
