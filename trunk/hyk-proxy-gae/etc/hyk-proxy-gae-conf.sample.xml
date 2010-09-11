@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configure>
+	<!-- Can config more than 1 hyk-proxy-server -->
+	<hyk-proxy-server appid="" />
+	<!--  <hyk-proxy-server appid=""  user="" passwd=""/> -->
+
+	<!-- 1: HTTP Direct 2:XMPP Enable  -->
+	<connectionMode>1</connectionMode>
+
+	<!-- Can config more than 1 account -->
+	<XMPPAccount user="" passwd="" />
+	<!--
+		<XMPPAccount user="" passwd="" serverHost="" serverPort=""
+		oldSSLEnable="" />
+	-->
+
+    <!-- Warning:Don't modify the configurations below if you don't know the meaning of them -->
+	<!-- Advanced Options -->
+	<httpUpStreamEncrypter>se1</httpUpStreamEncrypter>
+	<!-- Http connection pool between local server & remote server -->
+	<httpConnectionPoolSize>7</httpConnectionPoolSize>
+	<!-- local server would wait so many secs for every http request -->
+	<RPCTimeOut>60</RPCTimeOut>
+	<!--Avoid some edge case for full url path-->
+	<!--This option is not active when through a unanonymouse local proxy -->
+	<simpleURLEnable>true</simpleURLEnable>
+	<!--Can choose from lzf/zip/gz/none -->
+	<compressor>lzf</compressor>
+	<fetchLimitSize>250000</fetchLimitSize>
+	<!-- for big file(>=1m) & video -->
+	<maxFetcherNumber>3</maxFetcherNumber>
+	
+    <!-- If you want proxy for this hyk-proxy, config this item -->
+	<localProxy>
+		<host></host>
+		<!--
+			<port>80</port> <user>xxx</user> <passwd>yyy</passwd>
+		-->
+	</localProxy>
+
+    <!--If your appengine application is blocked, hyk-proxy-client would try the local proxy first -->
+	<defaultLocalProxy>
+		<host>www.google.com.hk</host>
+	</defaultLocalProxy>
+	
+	<AppIdBindings>
+        <!-- 
+        <Binding appid="hyk-proxy-demo">
+            <site>twitter</site>
+            <site>youtube</site>
+        </Binding>
+         -->
+    </AppIdBindings>
+
+   <HttpProxyUserAgent choice="FireFox36">
+       <UserAgent name="Chrome41">
+          Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/532.5 (KHTML, like Gecko) Chrome/4.1.249.1045 Safari/532.5
+       </UserAgent>
+       <UserAgent name="FireFox36">
+          Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.3) Gecko/20100403 Firefox/3.6.3
+       </UserAgent>
+   </HttpProxyUserAgent>
+</Configure>

@@ -37,10 +37,19 @@ public class ListSelector<T>
 	
 	public synchronized T select()
 	{
+		if(list.isEmpty())
+		{
+			return null;
+		}
 		if(cursor >= list.size())
 		{
 			cursor = 0;
 		}
 		return list.get(cursor++);
+	}
+	
+	public synchronized void remove(T obj)
+	{
+		list.remove(obj);
 	}
 }

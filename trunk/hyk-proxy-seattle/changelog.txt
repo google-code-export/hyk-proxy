@@ -1,0 +1,19 @@
+hyk-proxy-seattle Changelog
+===================
+
+Changes in version 0.9.0 (2010.9.x)
+-------------------------------------------
+Initial version as a plugin(for hyk-proxy 0.9.0)
+
+** Bug
+   * NA
+   
+** Improvement
+   * Run as plugin
+   * Auto remove unreachable server 
+    
+** Task
+   * NA
+
+
+

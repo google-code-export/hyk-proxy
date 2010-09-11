@@ -123,6 +123,10 @@ public abstract class AbstractTunnelProxyEventService implements
 				remoteChannel.getPipeline().remove("httpResponseDecoder");
 				remoteChannel.getPipeline().remove("httpRequestEncoder");
 				localChannel.getPipeline().remove("encoder");
+				if (logger.isDebugEnabled())
+				{
+					logger.debug("Remove codec for https.");
+				}
 			}
 
 		});

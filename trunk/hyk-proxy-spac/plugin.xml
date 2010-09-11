@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin name="SPAC" version="0.3.0">
+   <depend/>
+   <entryClass>com.hyk.proxy.plugin.spac.SpacPlugin</entryClass>   
+   <description>
+      SPAC = Special Proxy Auto Config.
+   </description>
+</plugin>

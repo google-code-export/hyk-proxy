@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin name="PHPTunnel" version="0.1.0">
+   <depend/>
+   <entryClass>com.hyk.proxy.plugin.phptunnel.PhpTunnelPlugin</entryClass>   
+   <description>
+      This plugin is powered by SeattleGENI.
+   </description>
+</plugin>

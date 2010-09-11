@@ -1,20 +1,20 @@
 hyk-proxy Changelog
 ===================
-Changes in version 0.9.0 (2010.9.xx)
+Changes in version 0.9.0 (2010.9.11)
 -------------------------------------------
 ** Bug
    * Fix: GAE main part can not run as a plugin
    * Fix: GAE admin tool can not start
 
 ** Improvement
-   * Refactor as a framework(no Google AppEgnine relevant content)
+   * Refactor as a framework(no Google AppEgnine relevant content include)
    * Auto upgrade support(Remove old upgrade checking mechanism)
    * Plugin system redesign/reimplement
    * New CLI admin interface for framework/plugins
    * GUI: Auto connect proxy server configurable
    * GUI: Install/Uninstall plugins online
    * GUI: installer for Win
-   * GUI: Auto startup with windows support
+   * Installer: Auto startup with windows support
    * Win: Native exe wrapper
    
 ** Task
