@@ -1,0 +1,28 @@
+hyk-proxy-gae Changelog
+===================
+
+Changes in version 0.9.0 (2010.9.11)
+-------------------------------------------
+Initial version as a plugin(for hyk-proxy 0.9.0)
+
+** Bug
+   * GUI: Restart did not clear old RPC skeleton
+   * Console: Process exit when launch failed without any notification
+   
+** Improvement
+   * Client:Run as plugin
+   * Client:Merge 2 config files into 1
+   * Client:Configuration 'simpleURLEnable' default value change to 'true'
+   * Client/Server:Share/Unshare appid require an email address now
+   * Client:GUI: Support launching deploy task
+   * Server:MasterServer: Verify appids every day  
+
+    
+
+** Task
+   * NA
+
+
+
+
+

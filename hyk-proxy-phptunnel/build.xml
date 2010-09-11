@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<project name="hyk-proxy-phptunnel" default="release">
+	<property name="root" value="." />
+		<property name="srcroot" value="${root}/src" />
+		<property name="releasedir" value="${root}/release" />
+		<property name="classes" value="${root}/build" />
+		<property name="jar" value="hyk-proxy-phptunnel.jar" />
+		<property name="distroot" value="${root}/lib" />
+		<property name="docdir" value="${root}/doc" />
+		<property name="lib" value="${root}/lib" />
+		<property name="deploy" value="${root}/deploy" />
+		<property name="etc" value="${root}/etc" />
+		<property name="temp" value="${root}/temp" />
+		<property name="shell" value="${root}/shell" />
+		<property name="release" value="release" />
+		<property name="version" value="0.1.0" />
+	    <property name="release_dir_name" value="phptunnel" />
+		<property name="project_name" value="hyk-proxy-phptunnel" />
+
+		<tstamp />
+		<target name="prepare">
+			<mkdir dir="${classes}"/>
+			<copy todir="${lib}" file="${root}/../hyk-proxy-framework/lib/hyk-proxy-framework.jar" />
+			<copy todir="${lib}" file="${root}/../hyk-proxy-framework/lib/hyk-util.jar" />
+		</target>
+
+		<target name="compile" depends="prepare">
+			<javac debug="on" destdir="${classes}">
+				<src path="${srcroot}" />
+				<classpath>
+					<fileset dir="${lib}">
+						<include name="*.jar" />
+					</fileset>
+				</classpath>
+			</javac>
+		</target>
+
+		<target name="jar" depends="compile">
+			<jar destfile="${distroot}/${jar}" basedir="${classes}">
+				<manifest>
+					<attribute name="Version" value="${version}" />
+				</manifest>
+			</jar>
+			<delete dir="${classes}" />
+		</target>
+
+		<target name="release" depends="jar">
+			<property name="releaseprojectdir" value="${releasedir}/${release_dir_name}" />
+			<mkdir dir="${releaseprojectdir}" />
+			<copy todir="${releaseprojectdir}/lib">
+				<fileset dir="${lib}">
+					<include name="${jar}" />
+					<include name="commons-jxpath-1.1.jar" />
+					<include name="commons-logging-api.jar" />
+					<include name="commons-logging.jar" />
+					<include name="sbbi-upnplib-1.0.4.jar" />
+				</fileset>
+			</copy>
+			<copy todir="${releaseprojectdir}/etc">
+				<fileset dir="${etc}" />
+			</copy>
+			<copy todir="${releaseprojectdir}/deploy">
+				<fileset dir="${deploy}" />
+			</copy>
+			<copy todir="${releaseprojectdir}" file="${root}/plugin.xml" />
+			<copy todir="${releaseprojectdir}" file="${root}/readme.txt" />
+			<copy todir="${releaseprojectdir}" file="${root}/changelog.txt" />
+			<copy todir="${releaseprojectdir}" file="${root}/licence.txt" />
+			<zip destfile="${root}/${project_name}-${version}.zip" basedir="${releasedir}" />
+			<delete dir="${releasedir}" />
+		</target>
+</project>

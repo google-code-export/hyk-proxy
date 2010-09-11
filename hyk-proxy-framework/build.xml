@@ -72,7 +72,7 @@
 		</jar>
 		<delete dir="${classes}"/>
 	</target>
-
+	
 	<target name="release" depends="jar">
 		<property name="binreleasedir" value="${releasedir}/${releasename}"/>
 		<mkdir dir="${binreleasedir}"/>
@@ -101,6 +101,8 @@
 		<move file="admin.exe" todir="${binreleasedir}/bin"/>
 		<ant target="installer" />
 		<delete dir="${releasedir}" />
+		
+		
 	</target>
 
 	<target name="installer" >

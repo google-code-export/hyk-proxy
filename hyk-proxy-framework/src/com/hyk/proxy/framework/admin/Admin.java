@@ -49,6 +49,7 @@ public class Admin
 			{
 				table.put(i, plugin);
 				System.out.println("[" + i + "] " + plugin.desc.name + " V" + plugin.desc.version);
+				i++;
 			}
 			System.out.println("[0] Exit");
 			System.out.print("Please enter 0-" +i +":");

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+  <cron>
+    <url>/bandwidth-stat</url>
+    <description>Ping this app every 1 min to stat bandwidth</description>
+    <schedule>every 1 minutes</schedule>
+  </cron>
+  
+  <cron>
+    <url>/clear-stat-records</url>
+    <description>Clear stat records every 1 day</description>
+    <schedule>every day 07:05</schedule>
+  </cron>
+</cronentries>

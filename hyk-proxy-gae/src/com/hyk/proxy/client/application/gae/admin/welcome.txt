@@ -1,0 +1,12 @@
+Welcome to  hyk-proxy V%s admin
+   hyk-proxy admin is a text-based application that allow to execute
+   commands on hyk-proxy web server side directly.
+   Please type command and press "Enter" to execute it on the hyk-proxy web server.
+
+%s
+
+   *************************************************************************************
+   ** hyk-proxy V%s admin is a admin tool for hyk-proxy                               **
+   ** Anything about hyk-proxy V%s admin can be found here:                           **
+   ** http://hyk-proxy.googlecode.com/                                                **
+   *************************************************************************************
