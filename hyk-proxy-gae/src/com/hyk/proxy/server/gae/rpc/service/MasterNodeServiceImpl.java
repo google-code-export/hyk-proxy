@@ -93,7 +93,7 @@ public class MasterNodeServiceImpl implements MasterNodeService, Serializable
 		ServerUtils.storeObject(share);
 		if(null != gmail)
 		{
-			EMailUtil.sendMail(gmail, "Thank you for sharing your appid!");
+			EMailUtil.sendMail(gmail, "Thanks for sharing AppID:" + appid + "!", "Thank you for sharing your appid!");
 		}
 		return "Share AppId Success!";
 	}

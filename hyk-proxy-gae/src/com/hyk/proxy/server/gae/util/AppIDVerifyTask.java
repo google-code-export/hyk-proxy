@@ -46,7 +46,7 @@ public class AppIDVerifyTask
     		StringBuffer buffer = new StringBuffer();
     		buffer.append("We noticed that ").append(address).append(" is not a valid hyk-proxy-gae server address.").append("\n");
     		buffer.append("So we removed it from the main database. ");
-    		EMailUtil.sendMail(item.getGmail(), buffer.toString());
+    		EMailUtil.sendMail(item.getGmail(),"Your Shared AppID:" + item.getAppid() + " is removed from master server.", buffer.toString());
     	}
 	}
 	
@@ -96,14 +96,10 @@ public class AppIDVerifyTask
 	            	removeShareItem(item);
 	            }
             }
-            catch (InterruptedException e)
-            {
-	            // TODO Auto-generated catch block
-	            e.printStackTrace();
-            }
             catch (Exception e)
             {
-            	removeShareItem(item);
+            	logger.error("Failed to fetch.", e);
+            	//removeShareItem(item);
             }
             finally
             {

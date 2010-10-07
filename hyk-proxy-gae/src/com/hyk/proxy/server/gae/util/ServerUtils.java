@@ -37,6 +37,7 @@ import com.hyk.proxy.common.gae.stat.BandwidthStatisticsResult;
 import com.hyk.proxy.common.http.message.HttpRequestExchange;
 import com.hyk.proxy.common.http.message.HttpResponseExchange;
 import com.hyk.proxy.server.gae.appid.AppIdShareItem;
+import com.hyk.proxy.server.gae.appid.AppIdTaskStatus;
 import com.hyk.proxy.server.gae.config.DatastoreConfig;
 import com.hyk.proxy.server.gae.rpc.remote.RemoteObject;
 import com.hyk.proxy.server.gae.rpc.remote.RemoteObjectId;
@@ -61,6 +62,7 @@ public class ServerUtils
 		ObjectifyService.register(BandwidthStatisticsResult.class);
 		ObjectifyService.register(DatastoreConfig.class);
 		ObjectifyService.register(AppIdShareItem.class);
+		ObjectifyService.register(AppIdTaskStatus.class);
 	}
 
 	public static DatastoreConfig getDatastoreConfig()

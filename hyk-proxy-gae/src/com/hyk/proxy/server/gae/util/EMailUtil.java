@@ -29,7 +29,7 @@ public class EMailUtil
 {
 	protected static Logger				logger		= LoggerFactory.getLogger(EMailUtil.class);
 	private static final String ADMIN  = "yinqiwen@gmail.com";
-	public static void sendMail(String toAddress, String content)
+	public static void sendMail(String toAddress, String subject, String content)
 	{
 		try
 		{
@@ -42,7 +42,7 @@ public class EMailUtil
 
 			buffer.append("Thanks again. admin@" + XmlConfig.getInstance().getAppId() + ".appspot.com");
 			String msgBody = buffer.toString();
-
+			msg.setSubject(subject);
 			msg.setFrom(new InternetAddress("admin@" + XmlConfig.getInstance().getAppId() + ".appspotmail.com"));
 			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(toAddress, "Mr/Ms. User"));
 			msg.addRecipient(Message.RecipientType.BCC, new InternetAddress(ADMIN, "Mr. Admin"));
