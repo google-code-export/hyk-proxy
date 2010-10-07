@@ -35,7 +35,7 @@
 	   startMenu="no"
 	   desktop="no"
            startup="yes" >
-           <createForPack name="AutoStartupGUI"/>
+           <createForPack name="GUIAutoStartup"/>
   </shortcut>
   <shortcut name="AutoStartup hyk-proxy(Console)" 
            target="$INSTALL_PATH\bin\start.exe" 
@@ -47,7 +47,7 @@
 	   startMenu="no"
 	   desktop="no"
            startup="yes" >
-           <createForPack name="AutoStartupConsole"/>
+           <createForPack name="ConsoleAutoStartup"/>
   </shortcut>
  <shortcut name="Admin hyk-proxy(Admin)" 
            target="$INSTALL_PATH\bin\admin.exe" 

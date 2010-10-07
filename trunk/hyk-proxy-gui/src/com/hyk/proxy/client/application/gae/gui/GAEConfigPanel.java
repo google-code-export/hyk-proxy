@@ -588,15 +588,18 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             appIdTableModel.addRow(new Object[]{appid.appid});
             this.appids.put(appid.appid, appid);
         }
-
+        List<XmppAccount> accounts = config.getXmppAccounts();
+        for (XmppAccount account : accounts) {
+            xmppTableModel.addRow(new Object[]{account.jid});
+        }
+        for (XmppAccount account : accounts) {
+            xmppTableModel.addRow(new Object[]{account.jid});
+            xmppAccounts.put(account.jid, account);
+        }
         if (config.getClient2ServerConnectionMode().equals(ConnectionMode.XMPP2GAE)) {
             isXMPPEnable.setSelected(true);
             while (xmppTableModel.getRowCount() > 0) {
                 xmppTableModel.removeRow(0);
-            }
-            List<XmppAccount> accounts = config.getXmppAccounts();
-            for (XmppAccount account : accounts) {
-                xmppTableModel.addRow(new Object[]{account.jid});
             }
         } else {
             disableXmpp();
