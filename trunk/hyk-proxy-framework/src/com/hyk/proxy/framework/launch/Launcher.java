@@ -9,7 +9,11 @@
  */
 package com.hyk.proxy.framework.launch;
 
+import java.io.IOException;
+
 import com.hyk.proxy.framework.admin.Admin;
+import com.hyk.proxy.framework.common.Constants;
+import com.hyk.proxy.framework.management.UDPManagementServer;
 import com.hyk.proxy.framework.shell.gui.MainFrame;
 import com.hyk.proxy.framework.shell.tui.StartProxyFramework;
 
@@ -38,6 +42,18 @@ public class Launcher
 			else if(args[0].equals("admin"))
 			{
 				Admin.main(null);
+			}
+			else if(args[0].equals("stopfr"))
+			{
+				try
+				{
+					UDPManagementServer.sendUDPCommand(
+							Constants.FRAMEWORK_NAME, Constants.STOP_CMD);
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
 			}
 		}
 
