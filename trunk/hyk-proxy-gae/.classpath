@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/objectify-2.1.jar"/>
 	<classpathentry kind="lib" path="deploy/AppCfgWrapper/AppCfgWrapper.jar"/>
+	<classpathentry kind="lib" path="lib/hyk-proxy-framework.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

@@ -32,6 +32,7 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.client.util.GoogleAvailableService;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.Version;
 import com.hyk.proxy.common.secure.NoneSecurityService;
@@ -427,6 +428,15 @@ public class Config
 		if(null == localProxy)
 		{
 			localProxy = defaultLocalProxy;
+			if(localProxy.host.contains("google"))
+			{
+				ProxyInfo pi = new ProxyInfo();
+				pi.host = GoogleAvailableService.getInstance().getFastestAvailableService();
+				if(null != pi.host)
+				{
+					localProxy = pi;
+				}
+			}
 		}
 	}
 	

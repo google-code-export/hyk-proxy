@@ -68,6 +68,8 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 	private HttpProxyEvent originalProxyEvent;
 	private HttpRequestExchange originalRequest;
 	private HttpRequestExchange forwardRequest;
+	
+	private HttpVersion proxyHttpVer;
 
 	private RangeHttpProxyChunkedInput chunkedInput;
 
@@ -207,13 +209,14 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 				{
 					this.channel = event.getChannel();
 					HttpRequest request = (HttpRequest) event.getSource();
+					proxyHttpVer = request.getProtocolVersion();
 					this.originalProxyEvent = event;
 					if (request.getMethod().equals(HttpMethod.CONNECT))
 					{
 						ishttps = true;
 						httpspath = request.getHeader("Host");
 						HttpResponse response = new DefaultHttpResponse(
-						        HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+								proxyHttpVer, HttpResponseStatus.OK);
 						event.getChannel().write(response)
 						        .addListener(new ChannelFutureListener()
 						        {
@@ -389,7 +392,13 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					        contentRangeValue);
 					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
 					        String.valueOf(contentRange.getInstanceLength()));
-					forwardResponse.setResponseCode(200);
+					
+					//for HTTP1.0
+					if(proxyHttpVer.getMinorVersion() == 0)
+					{
+						forwardResponse.setResponseCode(200);
+					}
+					
 					if (!originalRequest
 					        .containsHeader(HttpHeaders.Names.RANGE))
 					{

@@ -19,6 +19,7 @@ import com.hyk.proxy.client.application.gae.admin.Admin;
 import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
 import com.hyk.proxy.client.application.gae.gui.GAEConfigPanel;
 import com.hyk.proxy.client.util.GAEImageUtil;
+import com.hyk.proxy.client.util.GoogleAvailableService;
 import com.hyk.proxy.common.ExtensionsLauncher;
 import com.hyk.proxy.framework.common.Constants;
 import com.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
@@ -50,6 +51,7 @@ public class GAEPlugin implements GUIPlugin
 	@Override
 	public void onActive(PluginContext context) throws Exception
 	{
+		GoogleAvailableService.getInstance();
 		ExtensionsLauncher.init();
 		HttpProxyEventServiceFactory.Registry.register(new GoogleAppEngineHttpProxyEventServiceFactory());
 

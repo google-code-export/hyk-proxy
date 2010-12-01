@@ -146,8 +146,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 			}
 		}
 		ChannelBuffer ret = ChannelBuffers.wrappedBuffer(response.getBody());
-		//ChannelBuffer ret =  ChannelBuffers.copiedBuffer(response.getBody().buffer());
-		//response.getBody().free();
 		return ret;
 	}
 	
@@ -212,7 +210,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 					}
 					HttpResponseExchange res = null;
 					int retry = retryTimes;
-					while((null == res) && retry > 0)
+					while((null == res || res.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE) == null) && retry > 0)
 					{
 						try 
 						{
@@ -228,7 +226,7 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 						retry--;
 					}
 					
-					if(null == res)
+					if(null == res || res.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE) == null)
 					{
 						closeChunkInput();
 						return;
@@ -269,7 +267,6 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 			{
 				logger.error("Failed for this fetch thread!", e1);
 				closeChunkInput();
-				
 			}	
 		}
 		
