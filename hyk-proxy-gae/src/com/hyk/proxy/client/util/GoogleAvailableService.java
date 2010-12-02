@@ -11,9 +11,9 @@ import java.net.Socket;
  */
 public class GoogleAvailableService
 {
-	private String[] targetServiceAddress = { "www.google.com.hk",
+	private String[] targetServiceAddress = { "mail.google.com",
 			"code.google.com", "www.google.com.hk", "www.google.cn",
-			"www.google.com.tw", "www.google.co.jp" };
+			"www.google.com.tw", "www.google.co.jp","docs.google.com" };
 
 	private String fastestService = null;
 

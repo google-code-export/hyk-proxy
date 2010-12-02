@@ -11,6 +11,7 @@ package com.hyk.proxy.framework.common;
 
 import java.util.concurrent.ExecutorService;
 
+import com.hyk.proxy.framework.management.UDPManagementServer;
 import com.hyk.proxy.framework.trace.Trace;
 
 /**
@@ -20,6 +21,17 @@ public class Misc
 {
 	private static ExecutorService  globalThreadPool;
 	private static Trace trace;
+	private static UDPManagementServer managementServer;
+
+	public static UDPManagementServer getManagementServer()
+	{
+		return managementServer;
+	}
+
+	public static void setManagementServer(UDPManagementServer managementServer)
+	{
+		Misc.managementServer = managementServer;
+	}
 
 	public static Trace getTrace()
     {

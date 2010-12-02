@@ -118,6 +118,7 @@ public class Framework implements ManageResource
 			        Misc.getGlobalThreadPool(), esf);
 			commandServer = new UDPManagementServer(
 			        config.getLocalProxyServerAddress());
+			Misc.setManagementServer(commandServer);
 			commandServer.addManageResource(this);
 			commandServer.addManageResource(pm);
 			Misc.getGlobalThreadPool().execute(commandServer);
