@@ -19,6 +19,7 @@ import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.framework.common.Misc;
 import com.hyk.proxy.framework.event.HttpProxyEvent;
 import com.hyk.proxy.framework.event.tunnel.AbstractTunnelProxyEventService;
 import com.hyk.proxy.framework.util.ListSelector;
@@ -60,6 +61,7 @@ class SeattleProxyEventService extends AbstractTunnelProxyEventService
 			if (null != addr)
 			{
 				logger.error("Remote Seattle Server-" + addr + " is not reachable now.");
+				Misc.getTrace().error("Remote Seattle Server-" + addr + " is not reachable now.");
 				selector.remove(addr);
 			}
 			addr = selector.select();

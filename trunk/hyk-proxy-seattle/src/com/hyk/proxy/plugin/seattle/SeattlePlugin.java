@@ -10,11 +10,13 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.framework.common.Misc;
 import com.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
 import com.hyk.proxy.framework.plugin.PluginAdmin;
 import com.hyk.proxy.framework.plugin.PluginContext;
 import com.hyk.proxy.framework.plugin.TUIPlugin;
 import com.hyk.proxy.plugin.seattle.event.SeattleProxyEventServiceFactory;
+import com.hyk.proxy.plugin.seattle.management.SeattleManagementHandler;
 
 /**
  * @author wqy
@@ -37,6 +39,14 @@ public class SeattlePlugin implements TUIPlugin
 		this.context = context;
 		HttpProxyEventServiceFactory.Registry
 		        .register(new SeattleProxyEventServiceFactory());
+		try
+		{
+			Misc.getManagementServer().addManageResource(new SeattleManagementHandler());
+		}
+		catch (Throwable e)
+		{
+			logger.error("Failed to register management handler", e);
+		}
 
 	}
 
