@@ -425,7 +425,7 @@ public class Config
 
 	public void activateDefaultProxy()
 	{
-		if(null == localProxy)
+		if(null == localProxy || localProxy.host.contains("google"))
 		{
 			localProxy = defaultLocalProxy;
 			if(localProxy.host.contains("google"))
@@ -438,6 +438,7 @@ public class Config
 				}
 			}
 		}
+		
 	}
 	
 	@XmlElementWrapper(name="AppIdBindings")

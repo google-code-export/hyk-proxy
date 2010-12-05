@@ -39,7 +39,6 @@ public class AppIDVerifyTask
 	private static void removeShareItem(AppIdShareItem item)
 	{
 		logger.error("Try to remove share item with appid:" + item.getAppid());
-		//ServerUtils.ofy.delete(AppIdShareItem.class, item.getAppid());
     	if(null != item.getGmail())
     	{
     		String address = item.getAppid() + ".appspot.com";
@@ -48,6 +47,7 @@ public class AppIDVerifyTask
     		buffer.append("So we removed it from the main database. ");
     		EMailUtil.sendMail(item.getGmail(),"Your Shared AppID:" + item.getAppid() + " is removed from master server.", buffer.toString());
     	}
+    	ServerUtils.ofy.delete(AppIdShareItem.class, item.getAppid());
 	}
 	
 	public static void verifyAppIDs()
