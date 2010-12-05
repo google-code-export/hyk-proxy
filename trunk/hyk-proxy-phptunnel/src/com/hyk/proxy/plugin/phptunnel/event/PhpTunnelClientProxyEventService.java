@@ -370,7 +370,7 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 				//String req = recvReq.getMethod().toString() +" " + recvReq.getUri() +" HTTP/1.0\r\n\r\n";
 				if(logger.isDebugEnabled())
 				{
-					logger.debug("sending request" + new String(content.toByteBuffer().array()));
+					logger.debug("sending request\n" + headerBuf.toString());
 				}
 				//content = ChannelBuffers.wrappedBuffer(req.getBytes());
 				// encrpt.e

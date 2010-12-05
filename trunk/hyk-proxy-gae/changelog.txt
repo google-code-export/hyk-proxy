@@ -1,6 +1,17 @@
 hyk-proxy-gae Changelog
 ===================
 
+Changes in version 0.9.1 (2010.12.xx)
+-------------------------------------------
+** Bug
+   * GUI: XMPP config have some bugs
+   
+** Improvement
+   * Client:Run as plugin
+
+** Task
+   * NA
+
 Changes in version 0.9.0 (2010.9.11)
 -------------------------------------------
 Initial version as a plugin(for hyk-proxy 0.9.0)
@@ -16,8 +27,6 @@ Initial version as a plugin(for hyk-proxy 0.9.0)
    * Client/Server:Share/Unshare appid require an email address now
    * Client:GUI: Support launching deploy task
    * Server:MasterServer: Verify appids every day  
-
-    
 
 ** Task
    * NA

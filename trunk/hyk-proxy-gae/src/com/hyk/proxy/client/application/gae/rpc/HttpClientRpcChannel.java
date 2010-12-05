@@ -48,6 +48,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jivesoftware.smack.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.client.application.gae.config.Config;
@@ -64,6 +66,8 @@ import com.hyk.rpc.core.transport.impl.AbstractDefaultRpcChannel;
  */
 public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 {
+	protected Logger logger = LoggerFactory.getLogger(getClass());
+	
 	private List<RpcChannelData> recvList = new LinkedList<RpcChannelData>();
 
 	private static Map<Channel, HttpServerAddress> addressTable = new ConcurrentHashMap<Channel, HttpServerAddress>();
@@ -91,11 +95,13 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			if (null == socketChannel || !socketChannel.isConnected())
 			{
 				socketChannel = connectProxyServer(remoteAddress);
-				if (null == socketChannel)
+				int retry = 2;
+				while (null == socketChannel && retry > 0)
 				{
 					// try again
 					config.activateDefaultProxy();
 					socketChannel = connectProxyServer(remoteAddress);
+					retry--;
 				}
 			}
 			return socketChannel;
@@ -104,8 +110,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		public boolean isNotWaitingReply()
 		{
-			if(null == socketChannel || !socketChannel.isConnected()
-					|| !waitingReplyChannelSet.containsKey(socketChannel))
+			if (null == socketChannel || !socketChannel.isConnected()
+			        || !waitingReplyChannelSet.containsKey(socketChannel))
 			{
 				waitingReplyChannelSet.remove(socketChannel);
 				return true;
@@ -136,10 +142,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		}
 
 		public synchronized HttpClientSocketChannel select(
-				HttpServerAddress remoteAddress)
+		        HttpServerAddress remoteAddress)
 		{
 			HttpClientSocketChannel[] channels = clientChannels
-					.get(remoteAddress.getHost());
+			        .get(remoteAddress.getHost());
 			if (null == channels)
 			{
 				channels = new HttpClientSocketChannel[maxHttpConnectionSizePerAppid];
@@ -147,7 +153,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			}
 			HttpClientSocketChannel channel = null;
 			int loopCount = 0;
-			while(null == channel && loopCount<= maxHttpConnectionSizePerAppid)
+			while (null == channel
+			        && loopCount <= maxHttpConnectionSizePerAppid)
 			{
 				if (cursor >= channels.length)
 				{
@@ -159,19 +166,19 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					channel = new HttpClientSocketChannel(remoteAddress);
 					channels[cursor] = channel;
 				}
-				else if(!channel.isNotWaitingReply())
+				else if (!channel.isNotWaitingReply())
 				{
 					channel = null;
 				}
 				cursor++;
 				loopCount++;
 			}
-			if(null == channel)
+			if (null == channel)
 			{
 				channel = new HttpClientSocketChannel(remoteAddress);
 			}
 			waitingReplyChannelSet.put(channel.getSocketChannel(),
-					channel.getSocketChannel());
+			        channel.getSocketChannel());
 			return channel;
 		}
 
@@ -194,7 +201,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	}
 
 	private static void initClientSocketChannelFactory(Executor threadPool,
-			Config config)
+	        Config config)
 	{
 		if (null == factory)
 		{
@@ -208,7 +215,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				if (!config.getHykProxyServerAuths().isEmpty())
 				{
 					targetAddr = config.getHykProxyServerAuths().get(0).appid
-							+ ".appspot.com";
+					        + ".appspot.com";
 				}
 			}
 			if (null == targetAddr || ClientUtils.isIPV6Address(targetAddr))
@@ -218,7 +225,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			else
 			{
 				factory = new NioClientSocketChannelFactory(threadPool,
-						threadPool);
+				        threadPool);
 			}
 		}
 	}
@@ -236,11 +243,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		// ArrayList<HttpClientSocketChannel>();
 		int maxHttpConnectionSize = config.getHttpConnectionPoolSize();
 		clientChannelSelector = new HttpClientSocketChannelSelector(
-				maxHttpConnectionSize);
+		        maxHttpConnectionSize);
 	}
 
 	private synchronized SocketChannel connectProxyServer(
-			HttpServerAddress remoteAddress)
+	        HttpServerAddress remoteAddress)
 	{
 		ChannelPipeline pipeline = pipeline();
 		pipeline.addLast("decoder", new HttpResponseDecoder());
@@ -264,11 +271,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("Connect remote proxy server " + connectHost + ":"
-					+ connectPort);
+			        + connectPort);
 		}
 		ChannelFuture future = channel.connect(
-				new InetSocketAddress(connectHost, connectPort))
-				.awaitUninterruptibly();
+		        new InetSocketAddress(connectHost, connectPort))
+		        .awaitUninterruptibly();
 		if (!future.isSuccess())
 		{
 			logger.error("Failed to connect proxy server.", future.getCause());
@@ -304,7 +311,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				}
 				catch (InterruptedException e)
 				{
-					e.printStackTrace();
+					logger.error("", e);
 					return null;
 				}
 			}
@@ -321,22 +328,22 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		}
 		HttpServerAddress remoteAddress = (HttpServerAddress) data.address;
 		HttpClientSocketChannel clientChannel = clientChannelSelector
-				.select(remoteAddress);
+		        .select(remoteAddress);
 		String url = data.address.toPrintableString();
 		// This option is only active when there is no local proxy or just an
 		// anonymouse local proxy
 		if (config.isSimpleURLEnable())
 		{
 			if (null == config.getHykProxyClientLocalProxy()
-					|| null == config.getHykProxyClientLocalProxy().user)
+			        || null == config.getHykProxyClientLocalProxy().user)
 			{
 				url = remoteAddress.getPath();
 			}
 		}
 		HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
-				HttpMethod.POST, url);
+		        HttpMethod.POST, url);
 		request.setHeader("Host",
-				remoteAddress.getHost() + ":" + remoteAddress.getPort());
+		        remoteAddress.getHost() + ":" + remoteAddress.getPort());
 		request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
 		// request.setHeader(HttpHeaders.Names.CONNECTION, "close");
 		if (null != config.getHykProxyClientLocalProxy())
@@ -347,33 +354,33 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				String userpass = info.user + ":" + info.passwd;
 				String encode = Base64.encodeBytes(userpass.getBytes());
 				request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION,
-						"Basic " + encode);
+				        "Basic " + encode);
 			}
 		}
 		request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING,
-				HttpHeaders.Values.BINARY);
+		        HttpHeaders.Values.BINARY);
 		request.setHeader(HttpHeaders.Names.USER_AGENT, Config.getInstance()
-				.getSimulateUserAgent());
+		        .getSimulateUserAgent());
 		// request.setHeader(HttpHeaders.Names.USER_AGENT, ");
 		request.setHeader(HttpHeaders.Names.CONTENT_TYPE,
-				"application/octet-stream");
+		        "application/octet-stream");
 
 		RegistSecurityService reg = SecurityServiceFactory
-				.getRegistSecurityService(config.getHttpUpStreamEncrypter());
+		        .getRegistSecurityService(config.getHttpUpStreamEncrypter());
 		ByteBuffer idbuf = ByteBuffer.allocate(4);
 		idbuf.putInt(reg.id).flip();
 		ByteBuffer[] bufs = reg.service.encrypt(ChannelDataBuffer
-				.asByteBuffers(data.content));
+		        .asByteBuffers(data.content));
 		ByteBuffer[] newbufs = new ByteBuffer[bufs.length + 1];
 		newbufs[0] = idbuf;
 		System.arraycopy(bufs, 0, newbufs, 1, bufs.length);
 		ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(newbufs);
 		request.setHeader("Content-Length",
-				String.valueOf(buffer.readableBytes()));
+		        String.valueOf(buffer.readableBytes()));
 		request.setContent(buffer);
 
 		ChannelFuture result = clientChannel.getSocketChannel().write(request)
-				.awaitUninterruptibly();
+		        .awaitUninterruptibly();
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("Send data to remote server " + remoteAddress);
@@ -383,7 +390,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			clientChannel.close();
 			clientChannel.getSocketChannel().write(request)
-					.awaitUninterruptibly();
+			        .awaitUninterruptibly();
 		}
 	}
 
@@ -402,7 +409,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-				throws Exception
+		        throws Exception
 		{
 			waitingReplyChannelSet.remove(e.getChannel());
 			if (e.getCause() instanceof ConnectException)
@@ -418,7 +425,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		@Override
 		public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
-				throws Exception
+		        throws Exception
 		{
 			addressTable.remove(e.getChannel());
 			waitingReplyChannelSet.remove(e.getChannel());
@@ -433,19 +440,19 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			waitingReplyChannelSet.remove(channel);
 			int secid = content.readInt();
 			RegistSecurityService reg = SecurityServiceFactory
-					.getRegistSecurityService(secid);
+			        .getRegistSecurityService(secid);
 			ByteBuffer data = content.toByteBuffer();
 
 			if (null == reg)
 			{
 				logger.error("Can not decrypt data"
-						+ new String(content.toByteBuffer().array()));
+				        + new String(content.toByteBuffer().array()));
 				return;
 			}
 			data = reg.service.decrypt(data);
 			RpcChannelData recv = new RpcChannelData(ChannelDataBuffer.wrap(
-					data.array(), data.position(), data.remaining()),
-					addressTable.get(channel));
+			        data.array(), data.position(), data.remaining()),
+			        addressTable.get(channel));
 			synchronized (recvList)
 			{
 				recvList.add(recv);
@@ -456,7 +463,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
-				throws Exception
+		        throws Exception
 		{
 			if (!readingChunks)
 			{
@@ -466,12 +473,12 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				if (logger.isDebugEnabled())
 				{
 					logger.debug("Recv message:" + response + " with len:"
-							+ bodyLen + " from "
-							+ addressTable.get(e.getChannel()));
+					        + bodyLen + " from "
+					        + addressTable.get(e.getChannel()));
 				}
 
 				if (response.getStatus().getCode() == 200
-						&& response.isChunked())
+				        && response.isChunked())
 				{
 					readingChunks = true;
 					content = ChannelBuffers.buffer(bodyLen);
@@ -479,7 +486,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				else
 				{
 					if (response.getStatus().equals(HttpResponseStatus.OK)
-							&& bodyLen > 0)
+					        && bodyLen > 0)
 					{
 						content = response.getContent();
 						notifyRpcReader(e.getChannel());
@@ -489,7 +496,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 						if (logger.isDebugEnabled())
 						{
 							logger.debug("Recv message with no body or error rsponse"
-									+ response);
+							        + response);
 						}
 					}
 				}

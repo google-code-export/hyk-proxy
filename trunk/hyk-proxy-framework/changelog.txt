@@ -1,5 +1,17 @@
 hyk-proxy Changelog
 ===================
+Changes in version 0.9.1 (2010.12.xx)
+-------------------------------------------
+** Bug
+   * Fix: stop.sh/stop.bat are not working
+   * Fix: GAE admin tool can not start
+
+** Improvement
+   * Change icons
+   
+** Task
+   * NA
+
 Changes in version 0.9.0 (2010.9.11)
 -------------------------------------------
 ** Bug
