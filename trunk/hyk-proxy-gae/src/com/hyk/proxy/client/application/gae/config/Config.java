@@ -53,7 +53,7 @@ public class Config
 			JAXBContext context = JAXBContext.newInstance(Config.class);
 			Unmarshaller unmarshaller = context.createUnmarshaller();
 			instance = (Config) unmarshaller.unmarshal(Config.class
-			        .getResource("/" + Constants.CLIENT_CONF_NAME));
+					.getResource("/" + Constants.CLIENT_CONF_NAME));
 			instance.init();
 		}
 		catch (Exception e)
@@ -61,10 +61,11 @@ public class Config
 			logger.error("Failed to load default config file!", e);
 		}
 	}
+
 	public static enum ConnectionMode
 	{
 		HTTP2GAE(1), XMPP2GAE(2);
-		int	value;
+		int value;
 
 		ConnectionMode(int v)
 		{
@@ -81,69 +82,96 @@ public class Config
 	public static class SimpleSocketAddress
 	{
 		@XmlAttribute
-		public String	host;
+		public String host;
 		@XmlAttribute
-		public int		port;
+		public int port;
 	}
 
 	public static class HykProxyServerAuth
 	{
 		@XmlAttribute
-		public String	appid;
+		public String appid;
 		@XmlAttribute
-		public String	user;
+		public String user;
 		@XmlAttribute
-		public String	passwd;
+		public String passwd;
+	}
+
+	public static enum ProxyType
+	{
+		INVALID, HTTP, HTTPS;
+
+		public static ProxyType fromStr(String str)
+		{
+			if (str.equalsIgnoreCase("http"))
+			{
+				return HTTP;
+			}
+			if (str.equalsIgnoreCase("https"))
+			{
+				return HTTPS;
+			}
+			return INVALID;
+		}
+
 	}
 
 	public static class ProxyInfo
 	{
 		@XmlElement
-		public String	host;
+		public String host;
 		@XmlElement
-		public int		port	= 80;
+		public int port = 80;
 		@XmlElement
-		public String	user;
+		public String user;
 		@XmlElement
-		public String	passwd;
+		public String passwd;
+
+		public ProxyType type = ProxyType.HTTPS;
+
+		@XmlAttribute
+		public void setProxyType(String type)
+		{
+			this.type = ProxyType.fromStr(type);
+		}
 	}
 
 	public static class XmppAccount
 	{
-		private static final String	GTALK_SERVER		= "talk.google.com";
-		private static final String	GTALK_SERVER_NAME	= "gmail.com";
-		private static final int	GTALK_SERVER_PORT	= 5222;
+		private static final String GTALK_SERVER = "talk.google.com";
+		private static final String GTALK_SERVER_NAME = "gmail.com";
+		private static final int GTALK_SERVER_PORT = 443;
 
-		private static final String	OVI_SERVER			= "chat.ovi.com";
-		private static final String	OVI_SERVER_NAME		= "ovi.com";
-		private static final int	OVI_SERVER_PORT		= 5223;
+		private static final String OVI_SERVER = "chat.ovi.com";
+		private static final String OVI_SERVER_NAME = "ovi.com";
+		private static final int OVI_SERVER_PORT = 5223;
 
-		protected static final int	DEFAULT_PORT		= 5222;
+		protected static final int DEFAULT_PORT = 5222;
 
 		public XmppAccount init()
 		{
 			String server = StringUtils.parseServer(jid).trim();
 			// String name = null;
-			if(server.equals(GTALK_SERVER_NAME))
+			if (server.equals(GTALK_SERVER_NAME))
 			{
-				if(null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.isEmpty())
 				{
 					this.serverHost = GTALK_SERVER;
 				}
-				if(0 == this.serverPort)
+				if (0 == this.serverPort)
 				{
 					this.serverPort = GTALK_SERVER_PORT;
 				}
-				
+
 				this.name = jid;
 			}
-			else if(server.equals(OVI_SERVER_NAME))
+			else if (server.equals(OVI_SERVER_NAME))
 			{
-				if(null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.isEmpty())
 				{
 					this.serverHost = OVI_SERVER;
 				}
-				if(0 == this.serverPort)
+				if (0 == this.serverPort)
 				{
 					this.serverPort = OVI_SERVER_PORT;
 				}
@@ -152,54 +180,58 @@ public class Config
 			}
 			else
 			{
-				if(null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.isEmpty())
 				{
 					this.serverHost = server;
 				}
-				if(0 == this.serverPort)
+				if (0 == this.serverPort)
 				{
 					this.serverPort = DEFAULT_PORT;
 				}
 				this.name = StringUtils.parseName(jid);
 			}
 			String serviceName = server;
-			connectionConfig = new ConnectionConfiguration(this.serverHost, serverPort, serviceName);
-			if(isOldSSLEnable)
+			connectionConfig = new ConnectionConfiguration(this.serverHost,
+					serverPort, serviceName);
+			if (isOldSSLEnable)
 			{
-				connectionConfig.setSecurityMode(ConnectionConfiguration.SecurityMode.enabled);
-				connectionConfig.setSocketFactory(SSLSocketFactory.getDefault());
+				connectionConfig
+						.setSecurityMode(ConnectionConfiguration.SecurityMode.enabled);
+				connectionConfig
+						.setSocketFactory(SSLSocketFactory.getDefault());
 			}
 
 			return this;
 		}
 
 		@XmlAttribute(name = "user")
-		public String					jid;
+		public String jid;
 		@XmlAttribute
-		public String					passwd;
+		public String passwd;
 		@XmlAttribute
-		public int						serverPort;
+		public int serverPort;
 		@XmlAttribute
-		public String					serverHost;
+		public String serverHost;
 		@XmlAttribute(name = "oldSSLEnable")
-		public boolean					isOldSSLEnable;
+		public boolean isOldSSLEnable;
 
 		@XmlTransient
-		public ConnectionConfiguration	connectionConfig;
+		public ConnectionConfiguration connectionConfig;
 		@XmlTransient
-		public String					name;
+		public String name;
 
 	}
 
-	private List<HykProxyServerAuth>	hykProxyServerAuths = new LinkedList<HykProxyServerAuth>();
+	private List<HykProxyServerAuth> hykProxyServerAuths = new LinkedList<HykProxyServerAuth>();
 
 	@XmlElements(@XmlElement(name = "hyk-proxy-server"))
-	public void setHykProxyServerAuths(List<HykProxyServerAuth> hykProxyServerAuths)
+	public void setHykProxyServerAuths(
+			List<HykProxyServerAuth> hykProxyServerAuths)
 	{
 		this.hykProxyServerAuths = hykProxyServerAuths;
 	}
 
-	private List<XmppAccount>	xmppAccounts;
+	private List<XmppAccount> xmppAccounts;
 
 	@XmlElements(@XmlElement(name = "XMPPAccount"))
 	public void setXmppAccounts(List<XmppAccount> xmppAccounts)
@@ -207,8 +239,7 @@ public class Config
 		this.xmppAccounts = xmppAccounts;
 	}
 
-
-	private int	httpConnectionPoolSize;
+	private int httpConnectionPoolSize;
 
 	@XmlElement
 	public void setHttpConnectionPoolSize(int httpConnectionPoolSize)
@@ -216,7 +247,7 @@ public class Config
 		this.httpConnectionPoolSize = httpConnectionPoolSize;
 	}
 
-	private int	rpcTimeOut;
+	private int rpcTimeOut;
 
 	@XmlElement(name = "RPCTimeOut")
 	public void setRpcTimeOut(int rpcTimeOut)
@@ -224,7 +255,7 @@ public class Config
 		this.rpcTimeOut = rpcTimeOut;
 	}
 
-	private boolean	simpleURLEnable;
+	private boolean simpleURLEnable;
 
 	@XmlElement
 	public void setSimpleURLEnable(boolean simpleURLEnable)
@@ -232,7 +263,7 @@ public class Config
 		this.simpleURLEnable = simpleURLEnable;
 	}
 
-	private String	compressor;
+	private String compressor;
 
 	@XmlElement
 	public void setCompressor(String compressor)
@@ -240,7 +271,7 @@ public class Config
 		this.compressor = compressor;
 	}
 
-	private int	fetchLimitSize;
+	private int fetchLimitSize;
 
 	@XmlElement
 	public void setFetchLimitSize(int fetchLimitSize)
@@ -248,7 +279,7 @@ public class Config
 		this.fetchLimitSize = fetchLimitSize;
 	}
 
-	private int	maxFetcherNumber;
+	private int maxFetcherNumber;
 
 	@XmlElement
 	public void setMaxFetcherNumber(int maxFetcherNumber)
@@ -257,7 +288,7 @@ public class Config
 	}
 
 	// @XmlElement
-	private ProxyInfo	localProxy;
+	private ProxyInfo localProxy;
 
 	@XmlElement(name = "localProxy")
 	public void setHykProxyClientLocalProxy(ProxyInfo localProxy)
@@ -272,9 +303,9 @@ public class Config
 	}
 
 	@XmlElement
-	private ProxyInfo		defaultLocalProxy;
+	private ProxyInfo defaultLocalProxy;
 
-	private ConnectionMode	client2ServerConnectionMode;
+	private ConnectionMode client2ServerConnectionMode;
 
 	@XmlTransient
 	public ConnectionMode getClient2ServerConnectionMode()
@@ -282,12 +313,13 @@ public class Config
 		return client2ServerConnectionMode;
 	}
 
-	public void setClient2ServerConnectionMode(ConnectionMode client2ServerConnectionMode)
+	public void setClient2ServerConnectionMode(
+			ConnectionMode client2ServerConnectionMode)
 	{
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
 
-	private String	httpUpStreamEncrypter;
+	private String httpUpStreamEncrypter;
 
 	public String getHttpUpStreamEncrypter()
 	{
@@ -302,50 +334,54 @@ public class Config
 
 	public void init() throws Exception
 	{
-		if(localProxy != null && (null == localProxy.host || localProxy.host.isEmpty()))
+		if (localProxy != null
+				&& (null == localProxy.host || localProxy.host.isEmpty()))
 		{
 			localProxy = null;
 		}
 
-		if(defaultLocalProxy != null && (null == defaultLocalProxy.host || defaultLocalProxy.host.isEmpty()))
+		if (defaultLocalProxy != null
+				&& (null == defaultLocalProxy.host || defaultLocalProxy.host
+						.isEmpty()))
 		{
 			defaultLocalProxy = null;
 		}
-		if(null != hykProxyServerAuths)
+		if (null != hykProxyServerAuths)
 		{
-			for(int i = 0; i < hykProxyServerAuths.size(); i++)
+			for (int i = 0; i < hykProxyServerAuths.size(); i++)
 			{
 				HykProxyServerAuth auth = hykProxyServerAuths.get(i);
-				if(auth.appid == null || auth.appid.trim().isEmpty())
+				if (auth.appid == null || auth.appid.trim().isEmpty())
 				{
 					hykProxyServerAuths.remove(i);
 					i--;
 					continue;
 				}
-				if(auth.user == null || auth.user.equals(""))
+				if (auth.user == null || auth.user.equals(""))
 				{
 					auth.user = Constants.ANONYMOUSE_NAME;
 				}
-				if(auth.passwd == null || auth.passwd.equals(""))
+				if (auth.passwd == null || auth.passwd.equals(""))
 				{
 					auth.passwd = Constants.ANONYMOUSE_NAME;
 				}
 				auth.appid = auth.appid.trim();
 				auth.user = auth.user.trim();
 				auth.passwd = auth.passwd.trim();
-//				if(null == localProxy && !ClientUtils.isHTTPServerReachable(auth.appid))
-//				{
-//					activateDefaultProxy();
-//				}
+				// if(null == localProxy &&
+				// !ClientUtils.isHTTPServerReachable(auth.appid))
+				// {
+				// activateDefaultProxy();
+				// }
 			}
 		}
-		
-		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE))
+
+		if (client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE))
 		{
-			for(int i = 0; i < xmppAccounts.size(); i++)
+			for (int i = 0; i < xmppAccounts.size(); i++)
 			{
 				XmppAccount account = xmppAccounts.get(i);
-				if(account.jid == null || account.jid.isEmpty())
+				if (account.jid == null || account.jid.isEmpty())
 				{
 					xmppAccounts.remove(i);
 					i--;
@@ -356,17 +392,20 @@ public class Config
 				}
 			}
 		}
-		if(client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE) && (null == xmppAccounts || xmppAccounts.isEmpty()))
+		if (client2ServerConnectionMode.equals(ConnectionMode.XMPP2GAE)
+				&& (null == xmppAccounts || xmppAccounts.isEmpty()))
 		{
-			throw new Exception("Since the connection mode is " + ConnectionMode.XMPP2GAE + ", at least one XMPP account needed.");
+			throw new Exception("Since the connection mode is "
+					+ ConnectionMode.XMPP2GAE
+					+ ", at least one XMPP account needed.");
 		}
 
-		if(null == httpUpStreamEncrypter)
+		if (null == httpUpStreamEncrypter)
 		{
 			httpUpStreamEncrypter = NoneSecurityService.NAME;
 		}
-		
-		if(localProxy == null || localProxy.host.contains("google"))
+
+		if (localProxy == null || localProxy.host.contains("google"))
 		{
 			simpleURLEnable = true;
 		}
@@ -425,29 +464,30 @@ public class Config
 
 	public void activateDefaultProxy()
 	{
-		if(null == localProxy || localProxy.host.contains("google"))
+		if (null == localProxy || localProxy.host.contains("google"))
 		{
 			localProxy = defaultLocalProxy;
-			if(localProxy.host.contains("google"))
+			if (localProxy.host.contains("google"))
 			{
 				ProxyInfo pi = new ProxyInfo();
-				pi.host = GoogleAvailableService.getInstance().getFastestAvailableService();
-				if(null != pi.host)
+				pi.host = GoogleAvailableService.getInstance()
+						.getFastestAvailableService();
+				if (null != pi.host)
 				{
 					localProxy = pi;
 				}
 			}
 		}
-		
+
 	}
-	
-	@XmlElementWrapper(name="AppIdBindings")
+
+	@XmlElementWrapper(name = "AppIdBindings")
 	@XmlElements(@XmlElement(name = "Binding"))
 	private List<AppIdBinding> appIdBindings;
-	
-	@XmlElement(name="HttpProxyUserAgent")
+
+	@XmlElement(name = "HttpProxyUserAgent")
 	private HttpProxyUserAgent httpProxyUserAgent;
-	
+
 	static class AppIdBinding
 	{
 		@XmlAttribute
@@ -455,7 +495,7 @@ public class Config
 		@XmlElements(@XmlElement(name = "site"))
 		List<String> sites;
 	}
-	
+
 	static class HttpProxyUserAgent
 	{
 		@XmlAttribute
@@ -463,7 +503,7 @@ public class Config
 		@XmlElements(@XmlElement(name = "UserAgent"))
 		List<UserAgent> agents;
 	}
-	
+
 	static class UserAgent
 	{
 		@XmlAttribute
@@ -471,35 +511,35 @@ public class Config
 		@XmlValue
 		String value;
 	}
-	
+
 	public String getBindingAppId(String host)
 	{
-		if(null != appIdBindings)
+		if (null != appIdBindings)
 		{
-			for(AppIdBinding binding:appIdBindings)
+			for (AppIdBinding binding : appIdBindings)
 			{
-				for(String site:binding.sites)
+				for (String site : binding.sites)
 				{
-					if(host.contains(site))
+					if (host.contains(site))
 					{
 						return binding.appid.trim();
 					}
 				}
 			}
-		}	
+		}
 		return null;
 	}
-	
+
 	public String getSimulateUserAgent()
 	{
-		String defaultUserAgent = Constants.PROJECT_NAME + " V" + Version.value;  
-		if(null != httpProxyUserAgent)
+		String defaultUserAgent = Constants.PROJECT_NAME + " V" + Version.value;
+		if (null != httpProxyUserAgent)
 		{
 			String choice = httpProxyUserAgent.choice;
 			List<UserAgent> list = httpProxyUserAgent.agents;
-			for(UserAgent ua:list)
+			for (UserAgent ua : list)
 			{
-				if(ua.name.equals(choice))
+				if (ua.name.equals(choice))
 				{
 					return ua.value.trim();
 				}
@@ -508,11 +548,11 @@ public class Config
 		return defaultUserAgent;
 	}
 
-	public static Config getInstance() 
+	public static Config getInstance()
 	{
 		return instance;
 	}
-	
+
 	public void saveConfig() throws Exception
 	{
 		try
@@ -521,7 +561,8 @@ public class Config
 			JAXBContext context = JAXBContext.newInstance(Config.class);
 			Marshaller marshaller = context.createMarshaller();
 			marshaller.setProperty("jaxb.formatted.output", Boolean.TRUE);
-			URL url = Config.class.getResource("/" + Constants.CLIENT_CONF_NAME);
+			URL url = Config.class
+					.getResource("/" + Constants.CLIENT_CONF_NAME);
 			String conf = URLDecoder.decode(url.getFile(), "UTF-8");
 			FileOutputStream fos = new FileOutputStream(conf);
 			// fos.write("<!-- This is generated by hyk-proxy-client GUI, it's not the orignal conf file -->\r\n".getBytes());

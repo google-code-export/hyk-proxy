@@ -8,6 +8,9 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.client.application.gae.config.Config;
+import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
+
 /**
  * @author qiyingwang
  * 
@@ -32,7 +35,10 @@ public class GoogleAvailableService
 
 	private GoogleAvailableService()
 	{
-		new Thread(new AvailableServiceChecker()).start();
+		if(Config.getInstance().getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
+		{
+			//new Thread(new AvailableServiceChecker()).start();
+		}
 	}
 
 	public String getFastestAvailableService()
