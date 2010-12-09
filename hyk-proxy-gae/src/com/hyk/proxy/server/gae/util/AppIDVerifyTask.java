@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,10 +90,10 @@ public class AppIDVerifyTask
 			AppIdShareItem item = ServerUtils.ofy.find(AppIdShareItem.class, appid);
 			try
             {
-	            HTTPResponse res = futureResults.get(appid).get();
+				HTTPResponse res = futureResults.get(appid).get();
 	            String str = new String(res.getContent());
 	           
-	            if(!str.contains("hyk-proxy"))
+	            if(res.getResponseCode() == 200 && !str.contains("hyk-proxy"))
 	            {
 	            	removeShareItem(item);
 	            }
