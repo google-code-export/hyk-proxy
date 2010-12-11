@@ -7,6 +7,7 @@
 				<file>hyk-proxy-0.9.1/docs/hyk-proxy.ico</file>
 				<file>hyk-proxy-0.9.1/bin/stop.bat</file>
 				<file>hyk-proxy-0.9.1/bin/stop.sh</file>
+				<file>hyk-proxy-0.9.1/changelog.txt</file>
 			</fileset>
 		</upgrade>
 	</framework>
@@ -17,6 +18,15 @@
 				<file>gae/plugin.xml</file>
 				<file>gae/changelog.txt</file>
 				<file>gae/lib/hyk-proxy-gae-client.jar</file>
+			    </fileset>
+			</upgrade>
+		</plugin>
+		<plugin name="SeattleGENI">
+			<upgrade from="0.9.0">
+			    <fileset>
+				<file>seattle/plugin.xml</file>
+				<file>seattle/changelog.txt</file>
+				<file>seattle/lib/hyk-proxy-seattle.jar</file>
 			    </fileset>
 			</upgrade>
 		</plugin>
