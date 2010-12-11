@@ -68,7 +68,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 	private HttpProxyEvent originalProxyEvent;
 	private HttpRequestExchange originalRequest;
 	private HttpRequestExchange forwardRequest;
-	
+
 	private HttpVersion proxyHttpVer;
 
 	private RangeHttpProxyChunkedInput chunkedInput;
@@ -216,7 +216,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 						ishttps = true;
 						httpspath = request.getHeader("Host");
 						HttpResponse response = new DefaultHttpResponse(
-								proxyHttpVer, HttpResponseStatus.OK);
+						        proxyHttpVer, HttpResponseStatus.OK);
 						event.getChannel().write(response)
 						        .addListener(new ChannelFutureListener()
 						        {
@@ -346,7 +346,8 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 				logger.debug(ClientUtils.httpMessage2String(forwardResponse));
 			}
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
-			if (forwardResponse.isResponseTooLarge())
+			if (forwardResponse.isResponseTooLarge()
+			        || forwardResponse.getResponseCode() == 400)
 			{
 				if (logger.isDebugEnabled())
 				{
@@ -392,13 +393,9 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					        contentRangeValue);
 					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
 					        String.valueOf(contentRange.getInstanceLength()));
-					
-					//for HTTP1.0
-					if(proxyHttpVer.getMinorVersion() == 0)
-					{
-						forwardResponse.setResponseCode(200);
-					}
-					
+
+					forwardResponse.setResponseCode(200);
+
 					if (!originalRequest
 					        .containsHeader(HttpHeaders.Names.RANGE))
 					{
@@ -430,6 +427,18 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 						forwardResponse.setHeader(
 						        HttpHeaders.Names.CONTENT_RANGE,
 						        returnContentRange);
+						forwardResponse
+						        .setHeader(
+						                HttpHeaders.Names.CONTENT_LENGTH,
+						                (returnContentRange.getLastBytePos()
+						                        - returnContentRange
+						                                .getFirstBytePos() + 1)
+						                        + "");
+						if (logger.isDebugEnabled())
+						{
+							logger.debug("Range get response content-range header is "
+							        + returnContentRange);
+						}
 					}
 
 				}
@@ -460,7 +469,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					        contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
-				//future.addListener(ChannelFutureListener.CLOSE);
+				// future.addListener(ChannelFutureListener.CLOSE);
 			}
 			else
 			{

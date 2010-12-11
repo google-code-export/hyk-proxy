@@ -39,14 +39,14 @@ public class SeattlePlugin implements TUIPlugin
 		this.context = context;
 		HttpProxyEventServiceFactory.Registry
 		        .register(new SeattleProxyEventServiceFactory());
-		try
-		{
-			Misc.getManagementServer().addManageResource(new SeattleManagementHandler());
-		}
-		catch (Throwable e)
-		{
-			logger.error("Failed to register management handler", e);
-		}
+//		try
+//		{
+//			Misc.getManagementServer().addManageResource(new SeattleManagementHandler());
+//		}
+//		catch (Throwable e)
+//		{
+//			logger.error("Failed to register management handler", e);
+//		}
 
 	}
 
@@ -82,6 +82,6 @@ public class SeattlePlugin implements TUIPlugin
 	@Override
     public PluginAdmin getAdmin()
     {
-	    return null;
+	    return new SeattleManagementHandler();
     }
 }

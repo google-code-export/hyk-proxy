@@ -31,6 +31,7 @@ public class Constants
 	public static final String FRAMEWORK_NAME = "framework";
 	public static final String PLUGIN_MANAGER_NAME = "pm";
 	
+	//public static final String CFG_CENTER_ROOT_URL = "https://github.com/yinqiwen/hpcc/raw/master/hyk-proxy/";
 	
 	public static final String FILE_SP = System.getProperty("file.separator");
 }

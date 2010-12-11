@@ -28,11 +28,15 @@ import org.slf4j.LoggerFactory;
 import com.hyk.proxy.client.application.gae.config.Config;
 import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
 import com.hyk.proxy.client.application.gae.config.Config.HykProxyServerAuth;
+import com.hyk.proxy.client.application.gae.config.Config.ProxyInfo;
+import com.hyk.proxy.client.application.gae.config.Config.ProxyType;
 import com.hyk.proxy.client.application.gae.config.Config.XmppAccount;
 import com.hyk.proxy.client.util.ClientUtils;
+import com.hyk.proxy.client.util.GoogleAvailableService;
 import com.hyk.proxy.framework.common.Misc;
 import com.hyk.proxy.framework.event.HttpProxyEventService;
 import com.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
+import com.hyk.proxy.framework.prefs.Preferences;
 import com.hyk.proxy.framework.util.ListSelector;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.Version;
@@ -65,12 +69,31 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	// private UpdateCheck updateChecker;
 	private List<RPC> rpcs = new ArrayList<RPC>();
 
+	
+
 	public void init() throws Exception
 	{
 		this.sslContext = ClientUtils.initSSLContext();
 		this.workerExecutor = Misc.getGlobalThreadPool();
+		Misc.getGlobalThreadPool().submit(new Runnable()
+		{
+			@Override
+            public void run()
+            {
+				ClientUtils.checkRemoteServer();
+            }
+		});
+		int value = ClientUtils.selectDefaultGoogleProxy();
 		List<FetchService> fetchServices = retriveFetchServices(Config
 		        .getInstance());
+		if (fetchServices.isEmpty() && value != ClientUtils.OVER_HTTPS)
+		{
+			// try https as proxy
+			if(ClientUtils.setDefaultGoogleHttpsProxy())
+			{
+				fetchServices = retriveFetchServices(Config.getInstance());
+			}	
+		}
 		if (fetchServices.isEmpty())
 		{
 			throw new IllegalArgumentException(
@@ -129,6 +152,7 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 		// Init RPC channels
 		switch (config.getClient2ServerConnectionMode())
 		{
+			case HTTPS2GAE:
 			case HTTP2GAE:
 			{
 				rpcs.add(ClientUtils.createHttpRPC(workerExecutor));
@@ -190,6 +214,7 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 			Address remoteAddress = null;
 			switch (mode)
 			{
+				case HTTPS2GAE:
 				case HTTP2GAE:
 				{
 					remoteAddress = ClientUtils

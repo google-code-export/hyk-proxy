@@ -1,13 +1,18 @@
 hyk-proxy-gae Changelog
 ===================
 
-Changes in version 0.9.1 (2010.12.xx)
+Changes in version 0.9.1 (2010.12.11)
 -------------------------------------------
 ** Bug
    * GUI: XMPP config have some bugs
+   * RPC:HTTP RPC channel can not handler http response without content-length header
+   * Local Proxy:Better Range header support
    
 ** Improvement
-   * Client:Run as plugin
+   * Client:Auto choose best google service for local proxy
+   * Server:Upgrade GAE SDK to 1.4.0
+   * Add HTTPS2GAE support
+   * Better performance
 
 ** Task
    * NA

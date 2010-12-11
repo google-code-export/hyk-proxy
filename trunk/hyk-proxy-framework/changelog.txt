@@ -1,6 +1,6 @@
 hyk-proxy Changelog
 ===================
-Changes in version 0.9.1 (2010.12.xx)
+Changes in version 0.9.1 (2010.12.11)
 -------------------------------------------
 ** Bug
    * Fix: stop.sh/stop.bat are not working

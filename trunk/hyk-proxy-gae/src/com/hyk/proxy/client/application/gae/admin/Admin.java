@@ -9,14 +9,11 @@
  */
 package com.hyk.proxy.client.application.gae.admin;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import org.jivesoftware.smack.XMPPException;
 
 import com.hyk.proxy.client.application.gae.admin.handler.AddGroup;
 import com.hyk.proxy.client.application.gae.admin.handler.AddUser;
@@ -32,15 +29,14 @@ import com.hyk.proxy.client.application.gae.admin.handler.ListGroups;
 import com.hyk.proxy.client.application.gae.admin.handler.ListUsers;
 import com.hyk.proxy.client.application.gae.admin.handler.Stat;
 import com.hyk.proxy.client.application.gae.admin.handler.Traffic;
-import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.client.application.gae.config.Config;
-import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode; //import com.hyk.proxy.client.util.ClientUtils;
+import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
+import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.ExtensionsLauncher;
 import com.hyk.proxy.common.Version;
 import com.hyk.proxy.common.gae.auth.User;
 import com.hyk.proxy.common.http.message.HttpServerAddress;
-
 import com.hyk.proxy.common.rpc.service.AccountService;
 import com.hyk.proxy.common.rpc.service.RemoteServiceManager;
 import com.hyk.proxy.common.xmpp.XmppAddress;
@@ -128,6 +124,7 @@ public class Admin implements PluginAdmin
 		{
 			ExtensionsLauncher.init();
 			Config config = Config.getInstance();
+			ClientUtils.selectDefaultGoogleProxy();
 			output("appid:");
 			String appid = ClientUtils.readFromStdin(true);
 			output("login:");
@@ -138,13 +135,14 @@ public class Admin implements PluginAdmin
 			Executor executor = Executors.newCachedThreadPool();
 
 			if (config.getClient2ServerConnectionMode().equals(
-			        ConnectionMode.HTTP2GAE))
+			        ConnectionMode.HTTP2GAE)
+			        || config.getClient2ServerConnectionMode().equals(
+			                ConnectionMode.HTTPS2GAE))
 			{
 				RPC rpc = ClientUtils.createHttpRPC(executor);
 				remoteServiceManager = rpc.getRemoteService(
 				        RemoteServiceManager.class, RemoteServiceManager.NAME,
-				        new HttpServerAddress(appid + ".appspot.com",
-				                Constants.HTTP_INVOKE_PATH));
+				        ClientUtils.createHttpServerAddress(appid));
 				// remoteServiceManager =
 				// rpc.getRemoteService(RemoteServiceManager.class,
 				// RemoteServiceManager.NAME, new HttpServerAddress("localhost",
