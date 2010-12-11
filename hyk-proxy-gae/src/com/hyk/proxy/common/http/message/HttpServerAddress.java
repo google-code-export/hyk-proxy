@@ -36,12 +36,12 @@ public class HttpServerAddress implements Address
 
     public HttpServerAddress(String host, String path)
 	{
-		this(host, path, 80, false);
+		this(host, path, false);
 	}
     
-    public HttpServerAddress(String host, int port, String path)
+    public HttpServerAddress(String host, String path, boolean isSecure)
 	{
-		this(host, path, port, false);
+		this(host, path, isSecure?443:80, isSecure);
 	}
 	
 	public String getHost()

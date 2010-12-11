@@ -4,7 +4,7 @@
 	<hyk-proxy-server appid="" />
 	<!--  <hyk-proxy-server appid=""  user="" passwd=""/> -->
 
-	<!-- 1: HTTP Direct 2:XMPP Enable  -->
+	<!-- 1: HTTP Direct 2:XMPP Enable 3:HTTPS Direct -->
 	<connectionMode>1</connectionMode>
 
 	<!-- Can config more than 1 account -->
@@ -37,11 +37,6 @@
 			<port>80</port> <user>xxx</user> <passwd>yyy</passwd>
 		-->
 	</localProxy>
-
-    <!--If your appengine application is blocked, hyk-proxy-client would try the local proxy first -->
-	<defaultLocalProxy>
-		<host>www.google.com.hk</host>
-	</defaultLocalProxy>
 	
 	<AppIdBindings>
         <!-- 

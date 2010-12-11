@@ -8,9 +8,6 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.client.application.gae.config.Config;
-import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
-
 /**
  * @author qiyingwang
  * 
@@ -19,12 +16,15 @@ public class GoogleAvailableService
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
-	private String[] targetServiceAddress = { "mail.google.com",
-	        "code.google.com", "www.google.com.hk", "www.google.cn",
-	        "www.google.com.tw", "www.google.co.jp", "docs.google.com",
-	        "translate.google.com", "picasa.google.com" };
+	private String[] defaultHttpsServiceAddress = { "www.google.com.hk",
+	        "mail.google.com", "code.google.com", "www.google.com.tw",
+	        "www.google.co.jp", "docs.google.com", "translate.google.com",
+	        "picasa.google.com" };
 
-	private String fastestService = null;
+	private String[] defaultHttpServiceAddress = { "www.google.cn",
+	        "translate.google.cn", "code.google.com", "www.google.com.tw",
+	        "www.google.co.jp", "docs.google.com", "translate.google.com",
+	        "picasa.google.com", "mail.google.com" };
 
 	private static GoogleAvailableService instance = new GoogleAvailableService();
 
@@ -35,65 +35,41 @@ public class GoogleAvailableService
 
 	private GoogleAvailableService()
 	{
-		if(Config.getInstance().getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
-		{
-			//new Thread(new AvailableServiceChecker()).start();
-		}
 	}
 
-	public String getFastestAvailableService()
+	public String getAvailableHttpsService()
 	{
-		return fastestService;
-	}
-
-	class AvailableServiceChecker implements Runnable
-	{
-		@Override
-		public void run()
+		for (String service : defaultHttpsServiceAddress)
 		{
-			while (true)
+			try
 			{
-				long fastest = 0;
-				for (String addr : targetServiceAddress)
-				{
-					long start = System.currentTimeMillis();
-					try
-					{
-						Socket s = new Socket(addr, 80);
-						s.close();
-					}
-					catch (Throwable e)
-					{
-						continue;
-					}
-					long end = System.currentTimeMillis();
-					if (logger.isDebugEnabled())
-					{
-						logger.debug("Service:" + addr + " has connect time:"
-						        + (end - start) + "ms.");
-					}
-					if (fastest == 0)
-					{
-						fastest = end - start;
-					}
-					else
-					{
-						if ((end - start) < fastest)
-						{
-							fastest = end - start;
-							fastestService = addr;
-						}
-					}
-				}
-				try
-				{
-					Thread.sleep(3000000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
+				Socket s = new Socket(service, 80);
+				s.close();
+				return service;
+			}
+			catch (Exception e)
+			{
+				// TODO: handle exception
 			}
 		}
+		return null;
+	}
+
+	public String getAvailableHttpService()
+	{
+		for (String service : defaultHttpServiceAddress)
+		{
+			try
+			{
+				Socket s = new Socket(service, 80);
+				s.close();
+				return service;
+			}
+			catch (Exception e)
+			{
+				// TODO: handle exception
+			}
+		}
+		return null;
 	}
 }

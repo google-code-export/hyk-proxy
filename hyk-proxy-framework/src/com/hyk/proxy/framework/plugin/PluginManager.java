@@ -161,7 +161,12 @@ public class PluginManager implements ManageResource
 			if (FileUtil.canWrite(AppData.getPluginsHome()))
 			{
 				beforeInstall = Arrays.asList(AppData.getPluginsHome().list());
-				FileUtil.unzip(zipFile, AppData.getPluginsHome(), false);
+				boolean replace = false;
+				if(zipFile.getName().contains("hyk-proxy-gae"))
+				{
+					replace = true;
+				}
+				FileUtil.unzip(zipFile, AppData.getPluginsHome(), replace);
 				afterInstall = AppData.getPluginsHome().list();
 			}
 			else
@@ -340,16 +345,31 @@ public class PluginManager implements ManageResource
 				        + Constants.FILE_SP + fname);
 				if (file.isDirectory())
 				{
-					resolvePlugin(fname, true, trace);
+					try
+					{
+						resolvePlugin(fname, true, trace);
+					}
+					catch (Exception e)
+					{
+						logger.error("Failed to resolve plugin in dir :" + fname, e);
+					}
+
 				}
 				else if (fname.endsWith(".zip"))
 				{
 					String dir = extractPluginZipFile(file);
 					if (null != dir)
 					{
-						resolvePlugin(dir,
-						        FileUtil.canWrite(AppData.getPluginsHome()),
-						        trace);
+						try
+                        {
+							resolvePlugin(dir,
+							        FileUtil.canWrite(AppData.getPluginsHome()),
+							        trace);
+                        }
+                        catch (Exception e)
+                        {
+                        	logger.error("Failed to resolve plugin for zip file:" + fname, e);
+                        }	
 					}
 				}
 			}
