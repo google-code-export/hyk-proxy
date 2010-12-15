@@ -41,9 +41,9 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 
 	SpacProxyEventServiceFactory ownFactory;
 	
-	private Map<String, HttpProxyEventService> historys = new ConcurrentHashMap<String, HttpProxyEventService>();
 	private HttpProxyEventServiceFactory delegateFactory;
 	private HttpProxyEventService delegate;
+	
 	
 	private HttpProxyEventCallback callback;
 	
@@ -66,10 +66,10 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 //			delegate = null;
 //		}
 		delegateFactory = HttpProxyEventServiceFactory.Registry.getHttpProxyEventServiceFactory(proxy);
-		if(historys.containsKey(proxy))
-		{
-			delegate = historys.get(proxy);
-		}
+//		if(historys.containsKey(proxy))
+//		{
+//			delegate = historys.get(proxy);
+//		}
 		if(null == delegateFactory)
 		{
 			if(proxy.indexOf(":") != -1)
@@ -88,10 +88,19 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 		}
 		else
 		{
-			if(null == delegate)
+			if(null != delegate)
 			{
-				delegate = delegateFactory.createHttpProxyEventService();
-			}	
+				try
+                {
+	                delegate.close();
+                }
+                catch (Exception e)
+                {
+	                // TODO Auto-generated catch block
+	                e.printStackTrace();
+                }
+			}
+			delegate = delegateFactory.createHttpProxyEventService();
 		}
 		if(logger.isDebugEnabled())
 		{
@@ -161,10 +170,6 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 		if(null != delegate)
 		{
 			delegate.close();
-		}
-		for(HttpProxyEventService his:historys.values())
-		{
-			his.close();
 		}
 	}
 

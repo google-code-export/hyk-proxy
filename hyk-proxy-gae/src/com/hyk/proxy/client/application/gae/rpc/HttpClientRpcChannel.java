@@ -21,6 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -83,7 +88,22 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 	private HttpClientSocketChannelSelector clientChannelSelector;
 
+	private Map<Channel, LockAndCondition> syncLockTable = new ConcurrentHashMap<Channel, LockAndCondition>();
+
 	private Config config;
+
+	class LockAndCondition
+	{
+		public LockAndCondition(Lock lock, Condition cond)
+		{
+			this.lock = lock;
+			this.cond = cond;
+		}
+
+		Lock lock;
+		Condition cond;
+		int responseCode = 0;
+	}
 
 	class HttpClientSocketChannel
 	{
@@ -119,11 +139,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			if (null == socketChannel || !socketChannel.isConnected()
 			        || !waitingReplyChannelSet.containsKey(socketChannel))
 			{
-				if(null != socketChannel)
+				if (null != socketChannel)
 				{
 					waitingReplyChannelSet.remove(socketChannel);
 					return true;
-				}	
+				}
 			}
 			return false;
 		}
@@ -280,6 +300,10 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			{
 				sslProxyEnable = true;
 			}
+			if (null != Config.getInstance().getGoogleNextHopServer())
+			{
+				sslProxyEnable = true;
+			}
 		}
 		else
 		{
@@ -337,6 +361,64 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				logger.error(null, ex);
 				channel.close();
 				return null;
+			}
+		}
+		ProxyInfo info = config.getHykProxyClientLocalProxy();
+		if (null != Config.getInstance().getGoogleNextHopServer() && null != info && !info.host.contains("google."))
+		{
+			HttpRequest request = new DefaultHttpRequest(
+			        HttpVersion.HTTP_1_1, HttpMethod.CONNECT, Config
+			                .getInstance().getGoogleNextHopServer()+ ":443");
+			request.setHeader(HttpHeaders.Names.HOST, Config
+	                .getInstance().getGoogleNextHopServer() + ":443");
+			if (null != info.user)
+			{
+				String userpass = info.user + ":" + info.passwd;
+				String encode = Base64.encodeBytes(userpass.getBytes());
+				request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION,
+				        "Basic " + encode);
+			}
+			try
+			{
+				ReentrantLock lock = new ReentrantLock();
+				Condition cond = lock.newCondition();
+				LockAndCondition lc = new LockAndCondition(lock, cond);
+				syncLockTable
+				        .put(channel, lc);
+				channel.write(request);
+				try
+				{
+					lock.lock();
+					if (cond.await(30, TimeUnit.SECONDS))
+					{
+						if(lc.responseCode == 200)
+						{
+							sslProxyEnable = true;
+						}
+						else
+						{
+							logger.error("Failed to send CONNECT to local proxy. Recv response code:" + lc.responseCode);
+							return null;
+						}	
+					}
+					else
+					{
+						logger.error("Timeout to send CONNECT to local proxy.");
+						return null;
+					}
+				}
+				finally
+				{
+					lock.unlock();
+				}
+			}
+			catch (Exception e)
+			{
+				logger.error("Error occured!", e);
+			}
+			finally
+			{
+				syncLockTable.remove(channel);
 			}
 		}
 		addressTable.put(channel, remoteAddress);
@@ -470,7 +552,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		        throws Exception
 		{
 			waitingReplyChannelSet.remove(e.getChannel());
-			
+
 			addressTable.remove(e.getChannel());
 			e.getChannel().close();
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
@@ -521,6 +603,21 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			if (!readingChunks)
 			{
 				HttpResponse response = (HttpResponse) e.getMessage();
+				if(syncLockTable.containsKey(e.getChannel()))
+				{
+					LockAndCondition lc = syncLockTable.get(e.getChannel());
+					try
+					{
+						lc.lock.lock();
+						lc.responseCode = response.getStatus().getCode();
+						lc.cond.signal();
+					}
+					finally
+					{
+						lc.lock.unlock();
+					}	
+					return;
+				}
 
 				int bodyLen = (int) response.getContentLength();
 				if (logger.isDebugEnabled())
@@ -534,14 +631,6 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				        && response.isChunked())
 				{
 					readingChunks = true;
-					// if (bodyLen > 0)
-					// {
-					// content = ChannelBuffers.buffer(bodyLen);
-					// }
-					// else
-					// {
-					// content = ChannelBuffers.buffer(4096);
-					// }
 				}
 				else
 				{

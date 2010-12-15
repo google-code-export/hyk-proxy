@@ -38,6 +38,8 @@
 		-->
 	</localProxy>
 	
+	<googleNextHopServer>mail.google.com</googleNextHopServer>
+	
 	<AppIdBindings>
         <!-- 
         <Binding appid="hyk-proxy-demo">
