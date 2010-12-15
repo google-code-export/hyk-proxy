@@ -264,7 +264,7 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 						return;
 					}
 					String cause = String
-					        .format("Client's version:%s is not compatible with Server's version:%s .",
+					        .format("Client's version:%s may be not compatible with Server's version:%s .",
 					                Version.value, serverVersion);
 					logger.warn(cause);
 				}

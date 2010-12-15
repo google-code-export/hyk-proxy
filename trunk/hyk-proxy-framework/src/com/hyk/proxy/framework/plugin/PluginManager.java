@@ -162,10 +162,10 @@ public class PluginManager implements ManageResource
 			{
 				beforeInstall = Arrays.asList(AppData.getPluginsHome().list());
 				boolean replace = false;
-				if(zipFile.getName().contains("hyk-proxy-gae"))
-				{
-					replace = true;
-				}
+//				if(zipFile.getName().contains("hyk-proxy-gae"))
+//				{
+//					replace = true;
+//				}
 				FileUtil.unzip(zipFile, AppData.getPluginsHome(), replace);
 				afterInstall = AppData.getPluginsHome().list();
 			}

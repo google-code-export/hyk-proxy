@@ -209,7 +209,7 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 						}
 						catch (Exception e)
 						{
-							logger.error("Failed!", e);
+							logger.error("Failed to communicate with:" + url.toString(), e);
 						}
 						finally
 						{

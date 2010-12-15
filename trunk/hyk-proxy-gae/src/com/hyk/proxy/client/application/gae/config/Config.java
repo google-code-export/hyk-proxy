@@ -136,7 +136,7 @@ public class Config
 	{
 		private static final String GTALK_SERVER = "talk.google.com";
 		private static final String GTALK_SERVER_NAME = "gmail.com";
-		private static final int GTALK_SERVER_PORT = 443;
+		private static final int GTALK_SERVER_PORT = 5222;
 
 		private static final String OVI_SERVER = "chat.ovi.com";
 		private static final String OVI_SERVER_NAME = "ovi.com";
@@ -298,8 +298,8 @@ public class Config
 		return localProxy;
 	}
 
-//	@XmlElement
-//	private ProxyInfo defaultLocalProxy;
+	// @XmlElement
+	// private ProxyInfo defaultLocalProxy;
 
 	private ConnectionMode client2ServerConnectionMode;
 
@@ -336,12 +336,12 @@ public class Config
 			localProxy = null;
 		}
 
-//		if (defaultLocalProxy != null
-//		        && (null == defaultLocalProxy.host || defaultLocalProxy.host
-//		                .isEmpty()))
-//		{
-//			defaultLocalProxy = null;
-//		}
+		// if (defaultLocalProxy != null
+		// && (null == defaultLocalProxy.host || defaultLocalProxy.host
+		// .isEmpty()))
+		// {
+		// defaultLocalProxy = null;
+		// }
 		if (null != hykProxyServerAuths)
 		{
 			for (int i = 0; i < hykProxyServerAuths.size(); i++)
@@ -463,8 +463,9 @@ public class Config
 		if (null == localProxy)
 		{
 			ProxyInfo info = new ProxyInfo();
-			info.host = GoogleAvailableService.getInstance().getAvailableHttpService();
-			if(null != info.host)
+			info.host = GoogleAvailableService.getInstance()
+			        .getAvailableHttpService();
+			if (null != info.host)
 			{
 				localProxy = info;
 				return true;
@@ -538,6 +539,19 @@ public class Config
 			}
 		}
 		return defaultUserAgent;
+	}
+
+	private String googleNextHopServer;
+
+	public String getGoogleNextHopServer()
+	{
+		return googleNextHopServer;
+	}
+
+	@XmlElement
+	public void setGoogleNextHopServer(String server)
+	{
+		googleNextHopServer = server;
 	}
 
 	public static Config getInstance()
