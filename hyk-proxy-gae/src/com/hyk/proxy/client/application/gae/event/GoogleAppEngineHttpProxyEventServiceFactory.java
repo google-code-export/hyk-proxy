@@ -69,8 +69,6 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	// private UpdateCheck updateChecker;
 	private List<RPC> rpcs = new ArrayList<RPC>();
 
-	
-
 	public void init() throws Exception
 	{
 		this.sslContext = ClientUtils.initSSLContext();
@@ -227,9 +225,18 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 					break;
 				}
 			}
+			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
+			if(!mode.equals(ConnectionMode.XMPP2GAE))
+			{
+				rpc.getSessionManager().setSessionTimeout(2000);
+			}
 			final RemoteServiceManager remoteServiceManager = rpc
 			        .getRemoteService(RemoteServiceManager.class,
 			                RemoteServiceManager.NAME, remoteAddress);
+			if(!mode.equals(ConnectionMode.XMPP2GAE))
+			{
+				rpc.getSessionManager().setSessionTimeout(oldtimeout);
+			}
 			AsyncRemoteServiceManager asyncRemoteServiceManager = RpcUtil
 			        .asyncWrapper(remoteServiceManager,
 			                AsyncRemoteServiceManager.class);

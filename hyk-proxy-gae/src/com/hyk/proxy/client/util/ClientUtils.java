@@ -66,6 +66,7 @@ import com.hyk.proxy.common.xmpp.XmppAddress;
 import com.hyk.proxy.framework.prefs.Preferences;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
+import com.hyk.rpc.core.Rpctimeout;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.constant.RpcConstants;
 
@@ -212,12 +213,26 @@ public class ClientUtils
 		        ConnectionMode.HTTP2GAE))
 		{
 			rpc = ClientUtils.createHttpRPC(Executors.newCachedThreadPool());
-			master = rpc
-			        .getRemoteService(
-			                MasterNodeService.class,
-			                MasterNodeService.NAME,
-			                ClientUtils
-			                        .createHttpServerAddress(Constants.MASTER_APPID));
+			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
+			//wait 2s to retrieve remote object reference
+			rpc.getSessionManager().setSessionTimeout(2000);
+			try
+			{
+				master = rpc
+		        .getRemoteService(
+		                MasterNodeService.class,
+		                MasterNodeService.NAME,
+		                ClientUtils
+		                        .createHttpServerAddress(Constants.MASTER_APPID));
+			}
+			catch (Rpctimeout e)
+			{
+				// TODO: handle exception
+			}
+			finally
+			{
+				rpc.getSessionManager().setSessionTimeout(oldtimeout);
+			}	
 		}
 		else
 		{
