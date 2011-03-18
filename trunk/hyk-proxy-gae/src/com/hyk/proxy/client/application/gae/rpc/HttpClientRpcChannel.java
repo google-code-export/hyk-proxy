@@ -352,7 +352,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				try
 				{
 					lock.lock();
-					if (cond.await(30, TimeUnit.SECONDS))
+					if (cond.await(5, TimeUnit.SECONDS))
 					{
 						if (lc.responseCode == 200)
 						{
