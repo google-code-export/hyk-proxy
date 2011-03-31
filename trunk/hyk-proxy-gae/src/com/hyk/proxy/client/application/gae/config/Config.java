@@ -130,6 +130,9 @@ public class Config
 		@XmlTransient
 		public ProxyType type = ProxyType.HTTP;
 
+		@XmlElement
+		public String nextHopGoogleServer;
+
 	}
 
 	public static class XmppAccount
@@ -330,10 +333,25 @@ public class Config
 
 	public void init() throws Exception
 	{
-		if (localProxy != null
-		        && (null == localProxy.host || localProxy.host.isEmpty()))
+		if (localProxy != null)
 		{
-			localProxy = null;
+			if (null != localProxy.host)
+			{
+				localProxy.host = localProxy.host.trim();
+			}
+			if (null != localProxy.nextHopGoogleServer)
+			{
+				localProxy.nextHopGoogleServer = localProxy.nextHopGoogleServer
+				        .trim();
+				if(localProxy.nextHopGoogleServer.isEmpty())
+				{
+					localProxy.nextHopGoogleServer = null;
+				}
+			}
+			if (localProxy.host.isEmpty())
+			{
+				localProxy = null;
+			}
 		}
 
 		// if (defaultLocalProxy != null
@@ -458,13 +476,35 @@ public class Config
 		return xmppAccounts;
 	}
 
-	public boolean selectDefaultProxy()
+	public void clearProxy()
+	{
+		localProxy = null;
+	}
+	public boolean selectDefaultHttpProxy()
 	{
 		if (null == localProxy)
 		{
 			ProxyInfo info = new ProxyInfo();
 			info.host = GoogleAvailableService.getInstance()
 			        .getAvailableHttpService();
+			if (null != info.host)
+			{
+				localProxy = info;
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean selectDefaultHttpsProxy()
+	{
+		if (null == localProxy)
+		{
+			ProxyInfo info = new ProxyInfo();
+			info.host = GoogleAvailableService.getInstance()
+			        .getAvailableHttpsService();
+			info.port = 443;
+			info.type = ProxyType.HTTPS;
 			if (null != info.host)
 			{
 				localProxy = info;
@@ -539,19 +579,6 @@ public class Config
 			}
 		}
 		return defaultUserAgent;
-	}
-
-	private String googleNextHopServer;
-
-	public String getGoogleNextHopServer()
-	{
-		return googleNextHopServer;
-	}
-
-	@XmlElement
-	public void setGoogleNextHopServer(String server)
-	{
-		googleNextHopServer = server;
 	}
 
 	public static Config getInstance()

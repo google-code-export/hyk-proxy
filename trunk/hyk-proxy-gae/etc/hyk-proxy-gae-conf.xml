@@ -36,9 +36,10 @@
 		<!--
 			<port>80</port> <user>xxx</user> <passwd>yyy</passwd>
 		-->
+		<nextHopGoogleServer></nextHopGoogleServer>
 	</localProxy>
 	
-	<googleNextHopServer>mail.google.com</googleNextHopServer>
+	
 	
 	<AppIdBindings>
         <!-- 
