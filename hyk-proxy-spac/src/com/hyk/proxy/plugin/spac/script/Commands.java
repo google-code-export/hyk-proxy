@@ -9,6 +9,8 @@
  */
 package com.hyk.proxy.plugin.spac.script;
 
+import java.io.IOException;
+
 import org.jboss.netty.handler.codec.http.HttpMessage;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.tykedog.csl.api.InvokeCommand;
@@ -78,7 +80,30 @@ public class Commands
 		@Override
 		public String getName()
 		{
-			return "print";
+			return "system";
+		}
+		
+		@Override
+		public Object execute(Object[] arg0)
+		{
+			try
+            {
+	            Runtime.getRuntime().exec(arg0[0].toString());
+            }
+            catch (IOException e)
+            {
+	            e.printStackTrace();
+            }
+			return null;
+		}
+	};
+	
+	public static final InvokeCommand SYSTEM = new InvokeCommand()
+	{
+		@Override
+		public String getName()
+		{
+			return "system";
 		}
 		
 		@Override

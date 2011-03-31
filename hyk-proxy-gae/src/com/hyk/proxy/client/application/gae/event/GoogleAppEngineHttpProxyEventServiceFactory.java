@@ -73,25 +73,39 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	{
 		this.sslContext = ClientUtils.initSSLContext();
 		this.workerExecutor = Misc.getGlobalThreadPool();
+		
 		Misc.getGlobalThreadPool().submit(new Runnable()
 		{
 			@Override
-            public void run()
-            {
+			public void run()
+			{
 				ClientUtils.checkRemoteServer();
-            }
+			}
 		});
-		int value = ClientUtils.selectDefaultGoogleProxy();
+		int ret  = ClientUtils.selectDefaultGoogleProxy();
 		List<FetchService> fetchServices = retriveFetchServices(Config
 		        .getInstance());
-		if (fetchServices.isEmpty() && value != ClientUtils.OVER_HTTPS)
+		if (fetchServices.isEmpty())
 		{
-			// try https as proxy
-			if(ClientUtils.setDefaultGoogleHttpsProxy())
+			if(Config.getInstance().selectDefaultHttpProxy())
 			{
-				fetchServices = retriveFetchServices(Config.getInstance());
-			}	
+				if(ret != ClientUtils.DIRECT)
+				{
+					Config.getInstance().clearProxy();
+				}
+				fetchServices = retriveFetchServices(Config
+				        .getInstance());
+				if (fetchServices.isEmpty())
+				{
+					if(Config.getInstance().selectDefaultHttpsProxy())
+					{
+						fetchServices = retriveFetchServices(Config
+						        .getInstance());
+					}
+				}
+			}
 		}
+
 		if (fetchServices.isEmpty())
 		{
 			throw new IllegalArgumentException(
@@ -139,6 +153,10 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	protected List<FetchService> retriveFetchServices(final Config config)
 	        throws IOException, RpcException, XMPPException
 	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("Start retrive remote fetch services.");
+		}
 		List<HykProxyServerAuth> auths = config.getHykProxyServerAuths();
 		if (null == auths || auths.isEmpty())
 		{
@@ -226,14 +244,14 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 				}
 			}
 			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
-			if(!mode.equals(ConnectionMode.XMPP2GAE))
+			if (!mode.equals(ConnectionMode.XMPP2GAE))
 			{
-				rpc.getSessionManager().setSessionTimeout(2000);
+				rpc.getSessionManager().setSessionTimeout(5000);
 			}
 			final RemoteServiceManager remoteServiceManager = rpc
 			        .getRemoteService(RemoteServiceManager.class,
 			                RemoteServiceManager.NAME, remoteAddress);
-			if(!mode.equals(ConnectionMode.XMPP2GAE))
+			if (!mode.equals(ConnectionMode.XMPP2GAE))
 			{
 				rpc.getSessionManager().setSessionTimeout(oldtimeout);
 			}

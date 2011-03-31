@@ -251,6 +251,12 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					}
 					else
 					{
+						if(null == selector)
+						{
+							HttpResponse res = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.SERVICE_UNAVAILABLE);
+							event.getChannel().write(res);
+							return;
+						}
 						forwardRequest = buildForwardRequest(request);
 						originalRequest = forwardRequest.clone();
 						asyncFetch(forwardRequest);

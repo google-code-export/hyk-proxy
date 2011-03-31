@@ -53,6 +53,7 @@ public class SpacPlugin implements TUIPlugin
 		csl.addFunction(Commands.GETHEADER);
 		csl.addFunction(Commands.PRINT);
 		csl.addFunction(Commands.GETRESCODE);
+		csl.addFunction(Commands.SYSTEM);
 		HttpProxyEventServiceFactory.Registry.register(new SpacProxyEventServiceFactory(csl));
 		HttpProxyEventServiceFactory.Registry.register(new DirectProxyEventServiceFactory());
 		HttpProxyEventServiceFactory.Registry.register(new ForwardProxyEventServiceFactory());

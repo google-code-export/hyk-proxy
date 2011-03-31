@@ -11,6 +11,7 @@ package com.hyk.proxy.client.util;
 
 import java.io.Console;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -303,30 +304,50 @@ public class ClientUtils
 
 	public static boolean isHttpServerReachable(String appid, boolean viaGoogle)
 	{
+		HttpURLConnection conn = null;
 		try
 		{
-			String server = "http://" + appid + ".appspot.com";
+			String host = appid + ".appspot.com";
+			String server = "http://" + host;
 			URL url = new URL(server);
 			Proxy proxy = null;
-			URLConnection conn = null;
+
 			if (viaGoogle)
 			{
 				proxy = new Proxy(Type.HTTP, new InetSocketAddress(
 				        GoogleAvailableService.getInstance()
 				                .getAvailableHttpService(), 80));
-				conn = url.openConnection(proxy);
+				conn = (HttpURLConnection)(url.openConnection(proxy));
+			}
+			else if(GoogleAvailableService.getInstance().getMappingHost(host) != host)
+			{
+				proxy = new Proxy(Type.HTTP, new InetSocketAddress(
+						GoogleAvailableService.getInstance().getMappingHost(host), 80));
+				conn = (HttpURLConnection)(url.openConnection(proxy));
 			}
 			else
 			{
-				conn = url.openConnection();
+				conn = (HttpURLConnection)(url.openConnection());
 			}
-			byte[] buf = new byte[1024];
-			int len = conn.getInputStream().read(buf);
-			return len > 0;
+			return conn.getResponseCode() == 200;
 		}
 		catch (Exception e)
 		{
 			return false;
+		}
+		finally
+		{
+			if(null != conn)
+			{
+				try
+                {
+					conn.disconnect();
+                }
+                catch (Exception e2)
+                {
+	                // TODO: handle exception
+                }
+			}
 		}
 	}
 
@@ -399,7 +420,7 @@ public class ClientUtils
 	{
 		String value = Preferences
 		        .getPreferenceValue(DEFAULT_GOOGLE_PROXY_TYPE);
-		int intValue = OVER_HTTP;
+		int intValue = OVER_HTTPS;
 		if (null != value)
 		{
 			intValue = Integer.parseInt(value);
@@ -436,17 +457,7 @@ public class ClientUtils
 		{
 			return false;
 		}
-		ProxyInfo info = new ProxyInfo();
-		info.host = GoogleAvailableService.getInstance()
-		        .getAvailableHttpsService();
-		if (null != info.host)
-		{
-			info.port = 443;
-			info.type = ProxyType.HTTPS;
-			Config.getInstance().setHykProxyClientLocalProxy(info);
-			return true;
-		}
-		return false;
+		return Config.getInstance().selectDefaultHttpsProxy();
 	}
 
 	public static boolean setDefaultGoogleHttpProxy()
@@ -457,15 +468,7 @@ public class ClientUtils
 		{
 			return false;
 		}
-		ProxyInfo info = new ProxyInfo();
-		info.host = GoogleAvailableService.getInstance()
-		        .getAvailableHttpService();
-		if (null != info.host)
-		{
-			Config.getInstance().setHykProxyClientLocalProxy(info);
-			return true;
-		}
-		return false;
+		return Config.getInstance().selectDefaultHttpProxy();
 	}
 	
 	public static void checkRemoteServer()
@@ -475,6 +478,10 @@ public class ClientUtils
 		                .equals(ConnectionMode.HTTP2GAE))
 		{
 			return;
+		}
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Start check remote server reachable.");
 		}
 		List<HykProxyServerAuth> auths = Config.getInstance()
 		        .getHykProxyServerAuths();
@@ -499,8 +506,13 @@ public class ClientUtils
 				{
 					Preferences.setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE,
 					        OVER_HTTPS + "");
+					logger.error("Can NOT reach remote appengine server:" + auth.appid);
 				}
 				return;
+			}
+			else
+			{
+				break;
 			}
 		}
 		Preferences.setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE, DIRECT + "");

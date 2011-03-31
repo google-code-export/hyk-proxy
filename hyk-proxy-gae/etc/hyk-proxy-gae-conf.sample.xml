@@ -38,6 +38,9 @@
 		-->
 	</localProxy>
 	
+	<!-- next Google hop proxy servers for local proxy-->
+	<googleNextHopServer></googleNextHopServer>
+	
 	<AppIdBindings>
         <!-- 
         <Binding appid="hyk-proxy-demo">
