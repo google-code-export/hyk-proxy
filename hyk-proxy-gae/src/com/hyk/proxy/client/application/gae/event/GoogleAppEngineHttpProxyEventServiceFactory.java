@@ -246,7 +246,7 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
 			if (!mode.equals(ConnectionMode.XMPP2GAE))
 			{
-				rpc.getSessionManager().setSessionTimeout(5000);
+				rpc.getSessionManager().setSessionTimeout(20000);
 			}
 			final RemoteServiceManager remoteServiceManager = rpc
 			        .getRemoteService(RemoteServiceManager.class,

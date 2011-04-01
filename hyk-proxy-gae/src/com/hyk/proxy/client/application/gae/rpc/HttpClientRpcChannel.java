@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.proxy.client.application.gae.config.Config;
+import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
 import com.hyk.proxy.client.application.gae.config.Config.ProxyInfo;
 import com.hyk.proxy.client.application.gae.config.Config.ProxyType;
 import com.hyk.proxy.client.util.ClientUtils;
@@ -303,8 +304,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		{
 			connectHost = config.getHykProxyClientLocalProxy().host;
 			connectPort = config.getHykProxyClientLocalProxy().port;
-			if (config.getHykProxyClientLocalProxy().type
-			        .equals(ProxyType.HTTPS))
+			if (ProxyType.HTTPS
+			        .equals(config.getHykProxyClientLocalProxy().type))
 			{
 				sslProxyEnable = true;
 			}
@@ -325,7 +326,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("Connect remote proxy server " + connectHost + ":"
-			        + connectPort);
+			        + connectPort + " and sslProxyEnable:" + sslProxyEnable);
 		}
 		ChannelFuture future = channel.connect(
 		        new InetSocketAddress(connectHost, connectPort))
@@ -464,11 +465,17 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	@Override
 	protected void send(RpcChannelData data) throws IOException
 	{
+		HttpServerAddress remoteAddress = (HttpServerAddress) data.address;
+		if (config.getClient2ServerConnectionMode().equals(
+		        ConnectionMode.HTTPS2GAE))
+		{
+			remoteAddress.trnasform2Https();
+		}
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("send  data to:" + data.address.toPrintableString());
 		}
-		HttpServerAddress remoteAddress = (HttpServerAddress) data.address;
+
 		HttpClientSocketChannel clientChannel = clientChannelSelector
 		        .select(remoteAddress);
 		String url = data.address.toPrintableString();
