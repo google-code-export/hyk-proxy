@@ -17,6 +17,7 @@ import com.hyk.proxy.client.application.gae.config.Config;
 import com.hyk.proxy.client.application.gae.config.Config.ConnectionMode;
 import com.hyk.proxy.client.application.gae.config.Config.HykProxyServerAuth;
 import com.hyk.proxy.client.application.gae.config.Config.ProxyInfo;
+import com.hyk.proxy.client.application.gae.config.Config.ProxyType;
 import com.hyk.proxy.client.application.gae.config.Config.XmppAccount;
 import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.client.util.GAEImageUtil;
@@ -87,6 +88,8 @@ public class GAEConfigPanel extends javax.swing.JPanel {
         localHttpProxyPassText = new javax.swing.JPasswordField();
         jLabel4 = new javax.swing.JLabel();
         localHttpProxyPortText = new javax.swing.JTextField();
+        jLabel14 = new javax.swing.JLabel();
+        proxyTypeComboBox = new javax.swing.JComboBox();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         xmppAccountTable = new javax.swing.JTable();
@@ -232,6 +235,11 @@ public class GAEConfigPanel extends javax.swing.JPanel {
 
         localHttpProxyPortText.setText("80");
 
+        jLabel14.setText("Type:");
+
+        proxyTypeComboBox.setMaximumRowCount(2);
+        proxyTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "HTTP", "HTTPS" }));
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -240,29 +248,35 @@ public class GAEConfigPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(isHttpProxyEnable)
-                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
-                            .addComponent(jLabel2)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(localHttpProxyUserText))
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
-                            .addComponent(jLabel1)
-                            .addGap(18, 18, 18)
-                            .addComponent(localHttpProxyHostText, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(localHttpProxyUserText)
+                            .addComponent(localHttpProxyHostText, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(localHttpProxyPassText, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE)
-                    .addComponent(localHttpProxyPortText, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addComponent(jLabel14))
+                .addGap(1, 1, 1)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(proxyTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(localHttpProxyPassText, javax.swing.GroupLayout.DEFAULT_SIZE, 102, Short.MAX_VALUE)
+                        .addComponent(localHttpProxyPortText, javax.swing.GroupLayout.DEFAULT_SIZE, 102, Short.MAX_VALUE))))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addComponent(isHttpProxyEnable)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(isHttpProxyEnable)
+                    .addComponent(jLabel14)
+                    .addComponent(proxyTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -334,7 +348,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        connectionModeCombox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Http", "XMPP", "Https" }));
+        connectionModeCombox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "HTTP", "XMPP", "HTTPS" }));
         connectionModeCombox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 connectionModeComboxActionPerformed(evt);
@@ -349,15 +363,15 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(14, 14, 14)
                         .addComponent(jLabel8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(connectionModeCombox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .addComponent(connectionModeCombox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel5, 0, 399, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -472,7 +486,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
                     .addComponent(jLabel13))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(isHttpSimpleUrlEnable)
-                .addContainerGap(80, Short.MAX_VALUE))
+                .addContainerGap(82, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Advance", jPanel3);
@@ -583,7 +597,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(48, Short.MAX_VALUE)))
+                    .addContainerGap(46, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -599,8 +613,8 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             this.appids.put(appid.appid, appid);
         }
         while (xmppTableModel.getRowCount() > 0) {
-                xmppTableModel.removeRow(0);
-            }
+            xmppTableModel.removeRow(0);
+        }
         List<XmppAccount> accounts = config.getXmppAccounts();
         for (XmppAccount account : accounts) {
             xmppTableModel.addRow(new Object[]{account.jid});
@@ -608,17 +622,14 @@ public class GAEConfigPanel extends javax.swing.JPanel {
         }
         if (config.getClient2ServerConnectionMode().equals(ConnectionMode.XMPP2GAE)) {
             connectionModeCombox.setSelectedItem("XMPP");
-            
+
         } else {
             disableXmpp();
-             if (config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE))
-             {
-                  connectionModeCombox.setSelectedItem("Http");
-             }
- else
-             {
-                connectionModeCombox.setSelectedItem("Https");
- }
+            if (config.getClient2ServerConnectionMode().equals(ConnectionMode.HTTP2GAE)) {
+                connectionModeCombox.setSelectedItem("HTTP");
+            } else {
+                connectionModeCombox.setSelectedItem("HTTPS");
+            }
         }
 
         if (null != config.getHykProxyClientLocalProxy()) {
@@ -628,6 +639,12 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             localHttpProxyPortText.setText(info.port + "");
             localHttpProxyUserText.setText(info.user);
             localHttpProxyPassText.setText(info.passwd);
+            if (ProxyType.HTTPS.equals(info.type)) {
+                proxyTypeComboBox.setSelectedItem("HTTPS");
+            } else {
+                proxyTypeComboBox.setSelectedItem("HTTP");
+            }
+
         } else {
             isHttpProxyEnable.setSelected(false);
             disableHttpProxy();
@@ -653,7 +670,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
 
         if (connectionModeCombox.getSelectedItem().equals("XMPP")) {
             config.setClient2ServerConnectionMode(ConnectionMode.XMPP2GAE);
-        } else if (connectionModeCombox.getSelectedItem().equals("Http")) {
+        } else if (connectionModeCombox.getSelectedItem().equals("HTTP")) {
             config.setClient2ServerConnectionMode(ConnectionMode.HTTP2GAE);
         } else {
             config.setClient2ServerConnectionMode(ConnectionMode.HTTPS2GAE);
@@ -665,6 +682,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             localProxy.port = Integer.parseInt(localHttpProxyPortText.getText().trim());
             localProxy.user = localHttpProxyUserText.getText().trim();
             localProxy.passwd = new String(localHttpProxyPassText.getPassword()).trim();
+            localProxy.type = proxyTypeComboBox.getSelectedItem().equals("HTTPS") ? ProxyType.HTTPS : ProxyType.HTTP;
             config.setHykProxyClientLocalProxy(localProxy);
         } else {
             config.setHykProxyClientLocalProxy(null);
@@ -992,6 +1010,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1020,6 +1039,7 @@ public class GAEConfigPanel extends javax.swing.JPanel {
     private javax.swing.JButton modifyXmppButton;
     private javax.swing.JButton newAppIdButton;
     private javax.swing.JButton newXmppButton;
+    private javax.swing.JComboBox proxyTypeComboBox;
     private javax.swing.JButton removeXmppButton;
     private javax.swing.JTextField rpcTimeoutText;
     private javax.swing.JButton shareAppIdButton;

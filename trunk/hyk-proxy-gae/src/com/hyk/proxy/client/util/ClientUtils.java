@@ -216,7 +216,7 @@ public class ClientUtils
 			rpc = ClientUtils.createHttpRPC(Executors.newCachedThreadPool());
 			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
 			//wait 2s to retrieve remote object reference
-			rpc.getSessionManager().setSessionTimeout(2000);
+			rpc.getSessionManager().setSessionTimeout(20000);
 			try
 			{
 				master = rpc

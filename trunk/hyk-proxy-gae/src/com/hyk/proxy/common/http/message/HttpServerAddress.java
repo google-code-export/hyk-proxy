@@ -59,6 +59,15 @@ public class HttpServerAddress implements Address
 		return path;
 	}
 	
+	public void trnasform2Https()
+	{
+		if(!isSecure)
+		{
+			isSecure = true;
+			port = 443;
+		}
+	}
+	
 	public boolean isSecure()
 	{
 		return isSecure;

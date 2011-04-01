@@ -99,7 +99,12 @@ public class Config
 
 	public static enum ProxyType
 	{
-		INVALID, HTTP, HTTPS;
+		HTTP("http"), HTTPS("https");
+		String value;
+		ProxyType(String v)
+		{
+			value = v;
+		}
 
 		public static ProxyType fromStr(String str)
 		{
@@ -111,9 +116,8 @@ public class Config
 			{
 				return HTTPS;
 			}
-			return INVALID;
+			return HTTP;
 		}
-
 	}
 
 	public static class ProxyInfo
@@ -127,7 +131,7 @@ public class Config
 		@XmlElement
 		public String passwd;
 
-		@XmlTransient
+		@XmlElement
 		public ProxyType type = ProxyType.HTTP;
 
 		@XmlElement
