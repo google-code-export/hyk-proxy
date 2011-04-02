@@ -89,7 +89,7 @@
 		<copy todir="${binreleasedir}/bin">
 			<fileset dir="${shell}" />
 		</copy>
-		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.1.zip"/>
+		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.2.zip"/>
 		<copy todir="${binreleasedir}" file="${root}/readme.txt" />
 		<copy todir="${binreleasedir}" file="${root}/changelog.txt" />
 		<copy todir="${binreleasedir}" file="${root}/licence.txt" />

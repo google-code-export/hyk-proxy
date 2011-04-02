@@ -18,7 +18,7 @@
 	<property name="temp" value="${root}/temp" />
 	<property name="shell" value="${root}/shell" />
 	<property name="release" value="release" />
-	<property name="version" value="0.9.1" />
+	<property name="version" value="0.9.2" />
 	<property name="versionfile" value="com/hyk/proxy/common/Version.java" />
 	<property name="release_dir_name" value="gae" />
 	<property name="project_name" value="hyk-proxy-gae" />
