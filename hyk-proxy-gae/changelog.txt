@@ -1,6 +1,20 @@
 hyk-proxy-gae Changelog
 ===================
 
+Changes in version 0.9.2 (2011.4.2)
+-------------------------------------------
+** Bug
+   * N/A
+   
+** Improvement
+   * Client:Reuse connected http(s) connection
+   * Client:Better HTTPS mode support
+   * Client:Support Goolge server as local proxy's next proxy hop
+   * Client:Auto choose connected google server as local proxy
+
+** Task
+   * NA
+
 Changes in version 0.9.1 (2010.12.11)
 -------------------------------------------
 ** Bug

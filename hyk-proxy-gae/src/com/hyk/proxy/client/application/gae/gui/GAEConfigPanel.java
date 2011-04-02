@@ -683,6 +683,9 @@ public class GAEConfigPanel extends javax.swing.JPanel {
             localProxy.user = localHttpProxyUserText.getText().trim();
             localProxy.passwd = new String(localHttpProxyPassText.getPassword()).trim();
             localProxy.type = proxyTypeComboBox.getSelectedItem().equals("HTTPS") ? ProxyType.HTTPS : ProxyType.HTTP;
+            if (null != config.getHykProxyClientLocalProxy()) {
+                localProxy.nextHopGoogleServer = config.getHykProxyClientLocalProxy().nextHopGoogleServer;
+            }
             config.setHykProxyClientLocalProxy(localProxy);
         } else {
             config.setHykProxyClientLocalProxy(null);
