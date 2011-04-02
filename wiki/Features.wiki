@@ -3,8 +3,37 @@
 
 = 简介 =
 
-hyk-proxy按发布版本计划实现的特性列表
+hyk-proxy按发布版本实现的特性列表
 
+= hyk-proxy 0.9.2特性（released） =
+ * GAE Client支持自定义appid的域名映射到任意地址/IP, eg
+   ** 修改`<hyk-proxy>`/plugins/gae/etc/GoogleMappingHosts.txt
+   ** 添加映射规则，可填多项，注意"#"开头的行是注释，不生效：
+      {{{ 
+           xyz.appspot.com=www.google.com.hk
+           abc.appspot.com=203.208.39.104
+      }}}
+ * GAE Client支持设置local proxy的下一跳Google服务地址
+   ** 某些内网环境下必须设置固定proxy才能访问外网，而此proxy无法访问appspot，不过却可以访问某些Google服务，这种情况下可以设置local proxy的下一跳Google服务地址
+   ** 编辑修改`<hyk-proxy>`/plugins/gae/etc/hyk-proxy-gae-conf.xml
+   ** 在local proxy配置中增加nextHopGoogleServer的配置，eg：
+       {{{ 
+	   <localProxy>
+		<host>proxy.abc.com</host>
+		<port>80</port> 
+		<nextHopGoogleServer>www.google.com.hk</nextHopGoogleServer>
+	   </localProxy>
+       }}}
+ * GAE Client完整支持HTTPS
+
+= hyk-proxy 0.9.1特性（released） =
+   * 更改图标/大量bug fix
+
+= hyk-proxy 0.9.0特性（released） =
+   * 支持自动升级
+   * 重新设计实现的插件体系
+   * Windows下的可执行安装包
+   
 = hyk-proxy 0.8.6特性（released） =
  * Client支持插件
  * SPAC插件 -- 完成更为强大的类似PAC功能
