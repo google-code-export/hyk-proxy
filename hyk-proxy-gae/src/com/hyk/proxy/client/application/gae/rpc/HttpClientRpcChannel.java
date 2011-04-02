@@ -137,6 +137,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 							}
 						}
 					}
+					else
+					{
+						//just try again
+						socketChannel = connectProxyServer(remoteAddress);
+					}
 				}
 			}
 			return socketChannel;
@@ -170,7 +175,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 	class HttpClientSocketChannelSelector
 	{
 		private Map<String, HttpClientSocketChannel[]> clientChannels = new HashMap<String, HttpClientSocketChannel[]>();
-		private int cursor;
+		//private int cursor;
 		private final int maxHttpConnectionSizePerAppid;
 
 		public HttpClientSocketChannelSelector(int maxHttpConnectionSizePerAppid)
@@ -190,35 +195,47 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				clientChannels.put(remoteAddress.getHost(), channels);
 			}
 			HttpClientSocketChannel channel = null;
-			int loopCount = 0;
+			//int loopCount = 0;
+			int start_cur = 0;
 			while (null == channel
-			        && loopCount <= maxHttpConnectionSizePerAppid)
+			        && start_cur <= maxHttpConnectionSizePerAppid)
 			{
-				if (cursor >= channels.length)
+				if (start_cur >= channels.length)
 				{
-					cursor = 0;
+					start_cur = 0;
 				}
-				channel = channels[cursor];
+				channel = channels[start_cur];
 				if (null == channel)
 				{
 					channel = new HttpClientSocketChannel(remoteAddress);
-					channels[cursor] = channel;
+					channels[start_cur] = channel;
+					if(logger.isDebugEnabled())
+					{
+						logger.debug("Create " + start_cur + " channel for pool!");
+					}
+					break;
 				}
 				else if (!channel.isNotWaitingReply())
 				{
 					channel = null;
 				}
-				cursor++;
-				loopCount++;
+				else
+				{
+					break;
+				}
+				start_cur++;
+				//loopCount++;
 			}
 			if (null == channel)
 			{
 				channel = new HttpClientSocketChannel(remoteAddress);
 			}
-			if (null != channel.getSocketChannel())
+			else
 			{
-				waitingReplyChannelSet.put(channel.getSocketChannel(),
-				        channel.getSocketChannel());
+				if(logger.isDebugEnabled())
+				{
+					logger.debug("Select " + start_cur + " channel in pool!");
+				}
 			}
 			return channel;
 		}
@@ -259,6 +276,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 					        + ".appspot.com";
 				}
 			}
+			targetAddr = GoogleAvailableService.getInstance().getMappingHost(targetAddr);
 			if (null == targetAddr || ClientUtils.isIPV6Address(targetAddr))
 			{
 				factory = new OioClientSocketChannelFactory(threadPool);
@@ -362,7 +380,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 				try
 				{
 					lock.lock();
-					if (cond.await(5, TimeUnit.SECONDS))
+					if (cond.await(10, TimeUnit.SECONDS))
 					{
 						if (lc.responseCode == 200)
 						{
@@ -478,6 +496,16 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 
 		HttpClientSocketChannel clientChannel = clientChannelSelector
 		        .select(remoteAddress);
+		if(clientChannel.getSocketChannel() != null)
+		{
+			waitingReplyChannelSet.put(clientChannel.getSocketChannel(),
+					clientChannel.getSocketChannel());
+		}
+		else
+		{
+			logger.error("Failed to get http(s) channel for sending RPC data.");
+			return ;
+		}
 		String url = data.address.toPrintableString();
 		// This option is only active when there is no local proxy or just an
 		// anonymouse local proxy
@@ -537,6 +565,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		// try again
 		if (!result.isSuccess())
 		{
+			waitingReplyChannelSet.remove(clientChannel.getSocketChannel());
 			clientChannel.close();
 			clientChannel.getSocketChannel().write(request)
 			        .awaitUninterruptibly();
@@ -582,6 +611,11 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 		private void notifyRpcReader(Channel channel)
 		{
 			waitingReplyChannelSet.remove(channel);
+			if(null == content)
+			{
+				logger.error("NULL content for RPC");
+				return;
+			}
 			int secid = content.readInt();
 			RegistSecurityService reg = SecurityServiceFactory
 			        .getRegistSecurityService(secid);
