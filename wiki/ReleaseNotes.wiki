@@ -1,0 +1,12 @@
+#summary hyk-proxy Release Notes
+#labels Featured
+
+_下载最新的hyk-proxy [http://code.google.com/p/hyk-proxy/downloads/list 地址]
+
+hyk-proxy - Release Notes
+
+=== Version 0.9.2 - 4月2日, 2011 ===
+ * 更多，更完善的https选项支持，包括https proxy
+ * 支持自定义的`<appid>`.appspot.com到任意域名/IP的映射设置（无需修改系统host文件）
+ * 重用已连接的HTTP(S)长连接以提高性能
+ * 支持设置本地proxy的下一跳Google服务地址（部分企业内网无法访问appspot情况可用）
