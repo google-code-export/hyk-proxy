@@ -198,12 +198,8 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			//int loopCount = 0;
 			int start_cur = 0;
 			while (null == channel
-			        && start_cur <= maxHttpConnectionSizePerAppid)
+			        && start_cur < channels.length)
 			{
-				if (start_cur >= channels.length)
-				{
-					start_cur = 0;
-				}
 				channel = channels[start_cur];
 				if (null == channel)
 				{
