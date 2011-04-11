@@ -36,12 +36,12 @@ import com.hyk.proxy.plugin.spac.script.Commands;
 public class SpacPlugin implements TUIPlugin
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
+	
 	PluginContext context;
 	@Override
     public void onLoad(PluginContext context) throws Exception
     {
-	    this.context = context;
-	    
+	    this.context = context;  
     }
 	@Override
     public void onActive(PluginContext context) throws Exception
