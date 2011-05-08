@@ -1,0 +1,3 @@
+#define your appid mapping below, eg:
+#abc.appspot.com=203.208.39.104
+#xyz.appspot.com=www.google.com.hk

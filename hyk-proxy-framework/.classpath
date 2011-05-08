@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="lib/hyk-util.jar"/>
 	<classpathentry kind="lib" path="lib/hyk-rpc.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk16-146.jar" sourcepath="C:/Src/MyProject/hyk-proxy/hyk-proxy-framework/lib/bcprov-jdk16-146/src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
