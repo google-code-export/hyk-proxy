@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.Proxy.Type;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -30,8 +31,10 @@ import java.util.concurrent.Executors;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509KeyManager;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -65,6 +68,7 @@ import com.hyk.proxy.common.http.message.HttpServerAddress;
 import com.hyk.proxy.common.rpc.service.MasterNodeService;
 import com.hyk.proxy.common.xmpp.XmppAddress;
 import com.hyk.proxy.framework.prefs.Preferences;
+import com.hyk.proxy.framework.util.BouncyCastleHelper;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.Rpctimeout;
@@ -83,7 +87,7 @@ public class ClientUtils
 
 	private static final String ContentRangeValueHeader = "bytes";
 	private static MasterNodeService master = null;
-	
+
 	private static final String DEFAULT_GOOGLE_PROXY_TYPE = "DefaultGoogleHttpProxyType";
 	public static final int DIRECT = 0;
 	public static final int OVER_HTTP = 1;
@@ -105,6 +109,20 @@ public class ClientUtils
 		tmf.init(ks);
 		TrustManager[] tm = tmf.getTrustManagers();
 		sslContext.init(km, tm, null);
+		return sslContext;
+	}
+
+	public static SSLContext getFakeSSLContext(String host, String port)
+	        throws Exception
+	{
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		X509KeyManager[] x509km = new X509KeyManager[] { new BouncyCastleHelper.FakeKeyManager(
+		        host, port) };
+		sslContext.init(x509km, null, null);
+		SSLParameters sslparams = sslContext.getDefaultSSLParameters();
+		sslparams.setNeedClientAuth(true);
+		//sslparams.s
+		//param.setSSLParameters(sslparams);
 		return sslContext;
 	}
 
@@ -215,16 +233,16 @@ public class ClientUtils
 		{
 			rpc = ClientUtils.createHttpRPC(Executors.newCachedThreadPool());
 			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
-			//wait 2s to retrieve remote object reference
+			// wait 2s to retrieve remote object reference
 			rpc.getSessionManager().setSessionTimeout(20000);
 			try
 			{
 				master = rpc
-		        .getRemoteService(
-		                MasterNodeService.class,
-		                MasterNodeService.NAME,
-		                ClientUtils
-		                        .createHttpServerAddress(Constants.MASTER_APPID));
+				        .getRemoteService(
+				                MasterNodeService.class,
+				                MasterNodeService.NAME,
+				                ClientUtils
+				                        .createHttpServerAddress(Constants.MASTER_APPID));
 			}
 			catch (Rpctimeout e)
 			{
@@ -233,7 +251,7 @@ public class ClientUtils
 			finally
 			{
 				rpc.getSessionManager().setSessionTimeout(oldtimeout);
-			}	
+			}
 		}
 		else
 		{
@@ -317,17 +335,18 @@ public class ClientUtils
 				proxy = new Proxy(Type.HTTP, new InetSocketAddress(
 				        GoogleAvailableService.getInstance()
 				                .getAvailableHttpService(), 80));
-				conn = (HttpURLConnection)(url.openConnection(proxy));
+				conn = (HttpURLConnection) (url.openConnection(proxy));
 			}
-			else if(GoogleAvailableService.getInstance().getMappingHost(host) != host)
+			else if (GoogleAvailableService.getInstance().getMappingHost(host) != host)
 			{
 				proxy = new Proxy(Type.HTTP, new InetSocketAddress(
-						GoogleAvailableService.getInstance().getMappingHost(host), 80));
-				conn = (HttpURLConnection)(url.openConnection(proxy));
+				        GoogleAvailableService.getInstance().getMappingHost(
+				                host), 80));
+				conn = (HttpURLConnection) (url.openConnection(proxy));
 			}
 			else
 			{
-				conn = (HttpURLConnection)(url.openConnection());
+				conn = (HttpURLConnection) (url.openConnection());
 			}
 			return conn.getResponseCode() == 200;
 		}
@@ -337,16 +356,16 @@ public class ClientUtils
 		}
 		finally
 		{
-			if(null != conn)
+			if (null != conn)
 			{
 				try
-                {
+				{
 					conn.disconnect();
-                }
-                catch (Exception e2)
-                {
-	                // TODO: handle exception
-                }
+				}
+				catch (Exception e2)
+				{
+					// TODO: handle exception
+				}
 			}
 		}
 	}
@@ -413,8 +432,6 @@ public class ClientUtils
 		buffer.append("============================================\r\n");
 		return buffer.toString();
 	}
-	
-
 
 	public static int selectDefaultGoogleProxy()
 	{
@@ -429,7 +446,7 @@ public class ClientUtils
 		{
 			case OVER_HTTP:
 			{
-				if(setDefaultGoogleHttpProxy())
+				if (setDefaultGoogleHttpProxy())
 				{
 					return OVER_HTTP;
 				}
@@ -437,7 +454,7 @@ public class ClientUtils
 			}
 			case OVER_HTTPS:
 			{
-				if(setDefaultGoogleHttpsProxy())
+				if (setDefaultGoogleHttpsProxy())
 				{
 					return OVER_HTTPS;
 				}
@@ -470,7 +487,7 @@ public class ClientUtils
 		}
 		return Config.getInstance().selectDefaultHttpProxy();
 	}
-	
+
 	public static void checkRemoteServer()
 	{
 		if (Config.getInstance().getHykProxyClientLocalProxy() != null
@@ -479,7 +496,7 @@ public class ClientUtils
 		{
 			return;
 		}
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 		{
 			logger.debug("Start check remote server reachable.");
 		}
@@ -506,7 +523,8 @@ public class ClientUtils
 				{
 					Preferences.setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE,
 					        OVER_HTTPS + "");
-					logger.error("Can NOT reach remote appengine server:" + auth.appid);
+					logger.error("Can NOT reach remote appengine server:"
+					        + auth.appid);
 				}
 				return;
 			}

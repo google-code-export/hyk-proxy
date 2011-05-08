@@ -10,6 +10,9 @@
 package com.hyk.proxy.client.application.gae.event;
 
 import java.net.InetSocketAddress;
+import java.security.Provider;
+import java.security.Security;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -215,6 +218,16 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					{
 						ishttps = true;
 						httpspath = request.getHeader("Host");
+						String httpshost = httpspath;
+						String httpsport = "443";
+						if (httpspath.indexOf(":") != -1)
+						{
+							httpshost = httpspath.substring(0,
+							        httpspath.indexOf(":"));
+							httpsport = httpspath.substring(httpspath
+							        .indexOf(":") + 1);
+						}
+						//sslContext = ClientUtils.getFakeSSLContext(httpshost, httpsport);
 						HttpResponse response = new DefaultHttpResponse(
 						        proxyHttpVer, HttpResponseStatus.OK);
 						event.getChannel().write(response)
@@ -237,6 +250,13 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 									                        .getAddress()
 									                        .getHostAddress(),
 									                        remote.getPort());
+									        String[] cs = engine.getEnabledCipherSuites();
+									        String[] ss  = engine.getSupportedCipherSuites();
+									        logger.debug("#####" + Arrays.toString(cs));
+									        logger.debug("#####" + Arrays.toString(ss));
+									        //engine.
+									        engine.setEnabledCipherSuites(new String[]{"SSL_RSA_EXPORT_WITH_DES40_CBC_SHA"});
+									        
 									        engine.setUseClientMode(false);
 									        event.getChannel()
 									                .getPipeline()
@@ -251,9 +271,11 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 					}
 					else
 					{
-						if(null == selector)
+						if (null == selector)
 						{
-							HttpResponse res = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.SERVICE_UNAVAILABLE);
+							HttpResponse res = new DefaultHttpResponse(
+							        HttpVersion.HTTP_1_0,
+							        HttpResponseStatus.SERVICE_UNAVAILABLE);
 							event.getChannel().write(res);
 							return;
 						}

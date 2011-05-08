@@ -67,7 +67,7 @@
 				<attribute name="Class-Path" value="../etc  
 					hyk-util.jar netty-3.1.5.GA.jar
 					log4j-1.2.14.jar slf4j-log4j12-1.5.10.jar 
-					slf4j-api-1.5.10.jar hyk-rpc.jar"/>
+					slf4j-api-1.5.10.jar hyk-rpc.jar bcprov-jdk16-146.jar"/>
 			</manifest>
 		</jar>
 		<delete dir="${classes}"/>
@@ -89,7 +89,7 @@
 		<copy todir="${binreleasedir}/bin">
 			<fileset dir="${shell}" />
 		</copy>
-		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.2.zip"/>
+		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.2.1.zip"/>
 		<copy todir="${binreleasedir}" file="${root}/readme.txt" />
 		<copy todir="${binreleasedir}" file="${root}/changelog.txt" />
 		<copy todir="${binreleasedir}" file="${root}/licence.txt" />
