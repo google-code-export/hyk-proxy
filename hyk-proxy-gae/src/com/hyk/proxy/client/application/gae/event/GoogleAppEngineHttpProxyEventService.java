@@ -57,8 +57,7 @@ import com.hyk.rpc.core.RpcCallbackResult;
  *
  */
 class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
-        RpcCallback<HttpResponseExchange>
-{
+		RpcCallback<HttpResponseExchange> {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
 	private FetchServiceSelector selector;
@@ -81,54 +80,42 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 	private HttpProxyEventCallback callback;
 
 	GoogleAppEngineHttpProxyEventService(FetchServiceSelector selector,
-	        SSLContext sslContext, Executor workerExecutor)
-	{
+			SSLContext sslContext, Executor workerExecutor) {
 		this.selector = selector;
 		this.sslContext = sslContext;
 		this.workerExecutor = workerExecutor;
 	}
 
-	protected boolean isProxyRequestReady()
-	{
+	protected boolean isProxyRequestReady() {
 		int contentLength = forwardRequest.getContentLength();
 		if (contentLength > 0
-		        && forwardRequest.getBody().length < contentLength)
-		{
+				&& forwardRequest.getBody().length < contentLength) {
 			return false;
 		}
 		return true;
 	}
 
-	protected void waitForwardBodyComplete() throws InterruptedException
-	{
+	protected void waitForwardBodyComplete() throws InterruptedException {
 		int contentLength = forwardRequest.getContentLength();
-		if (contentLength > 0 && forwardRequest.getBody().length == 0)
-		{
+		if (contentLength > 0 && forwardRequest.getBody().length == 0) {
 			byte[] body = new byte[contentLength];
 			int cur = 0;
 			int end = body.length;
-			while (cur < end)
-			{
+			while (cur < end) {
 				int reading = end - cur;
 				ChannelBuffer buffer = null;
-				if (null != lastReadLeftBuffer)
-				{
+				if (null != lastReadLeftBuffer) {
 					buffer = lastReadLeftBuffer;
 					lastReadLeftBuffer = null;
-				}
-				else
-				{
-					synchronized (chunkedBodys)
-					{
-						if (chunkedBodys.isEmpty())
-						{
+				} else {
+					synchronized (chunkedBodys) {
+						if (chunkedBodys.isEmpty()) {
 							chunkedBodys.wait();
 						}
 						buffer = chunkedBodys.removeFirst();
 					}
 				}
-				if (buffer.readableBytes() > reading)
-				{
+				if (buffer.readableBytes() > reading) {
 					buffer.readBytes(body, cur, reading);
 					lastReadLeftBuffer = buffer;
 					cur += reading;
@@ -142,34 +129,26 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		}
 	}
 
-	protected HttpRequestExchange buildForwardRequest(HttpRequest recvReq)
-	{
+	protected HttpRequestExchange buildForwardRequest(HttpRequest recvReq) {
 		chunkedBodys.clear();
 		HttpRequestExchange gaeRequest = new HttpRequestExchange();
 		StringBuffer urlbuffer = new StringBuffer();
-		if (ishttps)
-		{
+		if (ishttps) {
 			urlbuffer.append("https://").append(httpspath);
-		}
-		else
-		{
-			if (!recvReq.getUri().toLowerCase().startsWith("http://"))
-			{
+		} else {
+			if (!recvReq.getUri().toLowerCase().startsWith("http://")) {
 				urlbuffer.append("http://").append(
-				        recvReq.getHeader(HttpHeaders.Names.HOST));
+						recvReq.getHeader(HttpHeaders.Names.HOST));
 			}
 		}
 		urlbuffer.append(recvReq.getUri());
 		gaeRequest.setUrl(urlbuffer.toString());
 		gaeRequest.setMethod(recvReq.getMethod().getName());
 		Set<String> headers = recvReq.getHeaderNames();
-		for (String headerName : headers)
-		{
+		for (String headerName : headers) {
 			List<String> headerValues = recvReq.getHeaders(headerName);
-			if (null != headerValues)
-			{
-				for (String headerValue : headerValues)
-				{
+			if (null != headerValues) {
+				for (String headerValue : headerValues) {
 					gaeRequest.addHeader(headerName, headerValue);
 				}
 			}
@@ -178,17 +157,15 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		int fetchLimit = 200000;
 
 		// if(recvReq.getContentLength() > fetchLimit)
-		if (recvReq.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT)
-		{
+		if (recvReq.getContentLength() > Constants.APPENGINE_HTTP_BODY_LIMIT) {
 			ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
-			        0, fetchLimit - 1, recvReq.getContentLength());
+					0, fetchLimit - 1, recvReq.getContentLength());
 			gaeRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE, contentRange);
 			gaeRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
-			        String.valueOf(fetchLimit));
+					String.valueOf(fetchLimit));
 		}
 		ChannelBuffer contentBody = recvReq.getContent();
-		if (null != contentBody)
-		{
+		if (null != contentBody) {
 			chunkedBodys.add(contentBody);
 		}
 		return gaeRequest;
@@ -196,166 +173,128 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 
 	@Override
 	public void handleEvent(final HttpProxyEvent event,
-	        HttpProxyEventCallback callback)
-	{
+			HttpProxyEventCallback callback) {
 		this.callback = callback;
-		if (logger.isDebugEnabled())
-		{
+		if (logger.isDebugEnabled()) {
 			logger.debug("Handle event:" + event.getType());
 		}
-		try
-		{
-			switch (event.getType())
-			{
-				case RECV_HTTP_REQUEST:
-				case RECV_HTTPS_REQUEST:
-				{
-					this.channel = event.getChannel();
-					HttpRequest request = (HttpRequest) event.getSource();
-					proxyHttpVer = request.getProtocolVersion();
-					this.originalProxyEvent = event;
-					if (request.getMethod().equals(HttpMethod.CONNECT))
-					{
-						ishttps = true;
-						httpspath = request.getHeader("Host");
-						String httpshost = httpspath;
-						String httpsport = "443";
-						if (httpspath.indexOf(":") != -1)
-						{
-							httpshost = httpspath.substring(0,
-							        httpspath.indexOf(":"));
-							httpsport = httpspath.substring(httpspath
-							        .indexOf(":") + 1);
-						}
-						//sslContext = ClientUtils.getFakeSSLContext(httpshost, httpsport);
-						HttpResponse response = new DefaultHttpResponse(
-						        proxyHttpVer, HttpResponseStatus.OK);
-						event.getChannel().write(response)
-						        .addListener(new ChannelFutureListener()
-						        {
-							        @Override
-							        public void operationComplete(
-							                ChannelFuture future)
-							                throws Exception
-							        {
-								        // https connection
-								        if (event.getChannel().getPipeline()
-								                .get("ssl") == null)
-								        {
-									        InetSocketAddress remote = (InetSocketAddress) event
-									                .getChannel()
-									                .getRemoteAddress();
-									        SSLEngine engine = sslContext
-									                .createSSLEngine(remote
-									                        .getAddress()
-									                        .getHostAddress(),
-									                        remote.getPort());
-									        String[] cs = engine.getEnabledCipherSuites();
-									        String[] ss  = engine.getSupportedCipherSuites();
-									        logger.debug("#####" + Arrays.toString(cs));
-									        logger.debug("#####" + Arrays.toString(ss));
-									        //engine.
-									        engine.setEnabledCipherSuites(new String[]{"SSL_RSA_EXPORT_WITH_DES40_CBC_SHA"});
-									        
-									        engine.setUseClientMode(false);
-									        event.getChannel()
-									                .getPipeline()
-									                .addBefore(
-									                        "decoder",
-									                        "ssl",
-									                        new SslHandler(
-									                                engine));
-								        }
-							        }
-						        });
+		try {
+			switch (event.getType()) {
+			case RECV_HTTP_REQUEST:
+			case RECV_HTTPS_REQUEST: {
+				this.channel = event.getChannel();
+				HttpRequest request = (HttpRequest) event.getSource();
+				proxyHttpVer = request.getProtocolVersion();
+				this.originalProxyEvent = event;
+				if (request.getMethod().equals(HttpMethod.CONNECT)) {
+					ishttps = true;
+					httpspath = request.getHeader("Host");
+					String httpshost = httpspath;
+					String httpsport = "443";
+					if (httpspath.indexOf(":") != -1) {
+						httpshost = httpspath.substring(0,
+								httpspath.indexOf(":"));
+						httpsport = httpspath
+								.substring(httpspath.indexOf(":") + 1);
 					}
-					else
-					{
-						if (null == selector)
-						{
-							HttpResponse res = new DefaultHttpResponse(
-							        HttpVersion.HTTP_1_0,
-							        HttpResponseStatus.SERVICE_UNAVAILABLE);
-							event.getChannel().write(res);
-							return;
-						}
-						forwardRequest = buildForwardRequest(request);
-						originalRequest = forwardRequest.clone();
-						asyncFetch(forwardRequest);
+					sslContext = ClientUtils.getFakeSSLContext(httpshost,
+							httpsport);
+					HttpResponse response = new DefaultHttpResponse(
+							proxyHttpVer, HttpResponseStatus.OK);
+					event.getChannel().write(response)
+							.addListener(new ChannelFutureListener() {
+								@Override
+								public void operationComplete(
+										ChannelFuture future) throws Exception {
+									// https connection
+									if (event.getChannel().getPipeline()
+											.get("ssl") == null) {
+										InetSocketAddress remote = (InetSocketAddress) event
+												.getChannel()
+												.getRemoteAddress();
+										// SSLEngine engine = sslContext
+										// .createSSLEngine();
+										SSLEngine engine = sslContext
+												.createSSLEngine(remote
+														.getAddress()
+														.getHostAddress(),
+														remote.getPort());
+
+										engine.setUseClientMode(false);
+										event.getChannel()
+												.getPipeline()
+												.addBefore("decoder", "ssl",
+														new SslHandler(engine));
+									}
+								}
+							});
+				} else {
+					if (null == selector) {
+						HttpResponse res = new DefaultHttpResponse(
+								HttpVersion.HTTP_1_0,
+								HttpResponseStatus.SERVICE_UNAVAILABLE);
+						event.getChannel().write(res);
+						return;
 					}
-					break;
+					forwardRequest = buildForwardRequest(request);
+					originalRequest = forwardRequest.clone();
+					asyncFetch(forwardRequest);
 				}
-				case RECV_HTTP_CHUNK:
-				case RECV_HTTPS_CHUNK:
-				{
-					HttpChunk chunk = (HttpChunk) event.getSource();
-					synchronized (chunkedBodys)
-					{
-						chunkedBodys.add(chunk.getContent());
-						chunkedBodys.notify();
-					}
-					break;
-				}
+				break;
 			}
-		}
-		catch (Exception e)
-		{
+			case RECV_HTTP_CHUNK:
+			case RECV_HTTPS_CHUNK: {
+				HttpChunk chunk = (HttpChunk) event.getSource();
+				synchronized (chunkedBodys) {
+					chunkedBodys.add(chunk.getContent());
+					chunkedBodys.notify();
+				}
+				break;
+			}
+			}
+		} catch (Exception e) {
 			logger.error("Failed to handle this event.", e);
 		}
 
 	}
 
-	private void executeAsyncFetch(final HttpRequestExchange req)
-	{
+	private void executeAsyncFetch(final HttpRequestExchange req) {
 		AsyncFetchService fetchService = selector.selectAsync(req);
 		fetchService.fetch(req, GoogleAppEngineHttpProxyEventService.this);
-		if (logger.isDebugEnabled())
-		{
+		if (logger.isDebugEnabled()) {
 			logger.debug("Send proxy request");
 			logger.debug(ClientUtils.httpMessage2String(req));
 		}
 	}
 
-	protected void asyncFetch(final HttpRequestExchange req)
-	{
-		if (!isProxyRequestReady())
-		{
-			workerExecutor.execute(new Runnable()
-			{
+	protected void asyncFetch(final HttpRequestExchange req) {
+		if (!isProxyRequestReady()) {
+			workerExecutor.execute(new Runnable() {
 				@Override
-				public void run()
-				{
-					try
-					{
+				public void run() {
+					try {
 						waitForwardBodyComplete();
 						executeAsyncFetch(req);
-					}
-					catch (InterruptedException e)
-					{
+					} catch (InterruptedException e) {
 						logger.error("", e);
 					}
 				}
 			});
-		}
-		else
-		{
+		} else {
 			executeAsyncFetch(req);
 		}
 	}
 
 	protected HttpResponseExchange syncFetch(HttpRequestExchange req)
-	        throws InterruptedException
-	{
+			throws InterruptedException {
 		waitForwardBodyComplete();
 		FetchService fetchService = selector.select(req);
-		if (logger.isDebugEnabled())
-		{
+		if (logger.isDebugEnabled()) {
 			logger.debug("Send proxy request");
 			logger.debug(ClientUtils.httpMessage2String(req));
 		}
 		HttpResponseExchange res = fetchService.fetch(req);
-		if (logger.isDebugEnabled())
-		{
+		if (logger.isDebugEnabled()) {
 			logger.debug("Recv proxy response");
 			logger.debug(ClientUtils.httpMessage2String(res));
 		}
@@ -363,200 +302,165 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 	}
 
 	@Override
-	public void callBack(RpcCallbackResult<HttpResponseExchange> result)
-	{
-		try
-		{
+	public void callBack(RpcCallbackResult<HttpResponseExchange> result) {
+		try {
 			HttpResponseExchange forwardResponse = result.get();
-			if (logger.isDebugEnabled())
-			{
+			if (logger.isDebugEnabled()) {
 				logger.debug("Recv proxy response");
 				logger.debug(ClientUtils.httpMessage2String(forwardResponse));
 			}
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
 			if (forwardResponse.isResponseTooLarge()
-			        || forwardResponse.getResponseCode() == 400)
-			{
-				if (logger.isDebugEnabled())
-				{
+					|| forwardResponse.getResponseCode() == 400) {
+				if (logger.isDebugEnabled()) {
 					logger.debug("Try to start range fetch!");
 				}
-				if (!forwardRequest.containsHeader(HttpHeaders.Names.RANGE))
-				{
+				if (!forwardRequest.containsHeader(HttpHeaders.Names.RANGE)) {
 					forwardRequest.setHeader(HttpHeaders.Names.RANGE,
-					        new RangeHeaderValue(0, fetchSizeLimit - 1));
-				}
-				else
-				{
+							new RangeHeaderValue(0, fetchSizeLimit - 1));
+				} else {
 					String hv = forwardRequest
-					        .getHeaderValue(HttpHeaders.Names.RANGE);
+							.getHeaderValue(HttpHeaders.Names.RANGE);
 					RangeHeaderValue containedRange = new RangeHeaderValue(hv);
 					forwardRequest.setHeader(
-					        HttpHeaders.Names.RANGE,
-					        new RangeHeaderValue(containedRange
-					                .getFirstBytePos(), containedRange
-					                .getFirstBytePos() + fetchSizeLimit - 1));
+							HttpHeaders.Names.RANGE,
+							new RangeHeaderValue(containedRange
+									.getFirstBytePos(), containedRange
+									.getFirstBytePos() + fetchSizeLimit - 1));
 				}
 				forwardResponse = syncFetch(forwardRequest);
 			}
 
 			// Proxy request with Content-Range Header
-			if (forwardRequest.containsHeader(HttpHeaders.Names.CONTENT_RANGE))
-			{
+			if (forwardRequest.containsHeader(HttpHeaders.Names.CONTENT_RANGE)) {
 				ContentRangeHeaderValue lastContentRange = new ContentRangeHeaderValue(
-				        forwardRequest
-				                .getHeaderValue(HttpHeaders.Names.CONTENT_RANGE));
+						forwardRequest
+								.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE));
 				forwardResponse = new RangeHttpProxyChunkedOutput(
-				        lastContentRange).execute();
+						lastContentRange).execute();
 			}
 
-			if (channel.isConnected())
-			{
+			if (channel.isConnected()) {
 				String contentRangeValue = forwardResponse
-				        .getHeaderValue(HttpHeaders.Names.CONTENT_RANGE);
+						.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE);
 				ContentRangeHeaderValue contentRange = null;
-				if (null != contentRangeValue)
-				{
+				if (null != contentRangeValue) {
 					contentRange = new ContentRangeHeaderValue(
-					        contentRangeValue);
+							contentRangeValue);
 					forwardResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
-					        String.valueOf(contentRange.getInstanceLength()));
+							String.valueOf(contentRange.getInstanceLength()));
 
 					forwardResponse.setResponseCode(200);
 
 					if (!originalRequest
-					        .containsHeader(HttpHeaders.Names.RANGE))
-					{
+							.containsHeader(HttpHeaders.Names.RANGE)) {
 						forwardResponse
-						        .removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+								.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 						forwardResponse
-						        .removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
-					}
-					else
-					{
+								.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
+					} else {
 						String originalRangeValue = originalRequest
-						        .getHeaderValue(HttpHeaders.Names.RANGE);
+								.getHeaderValue(HttpHeaders.Names.RANGE);
 						RangeHeaderValue originalRange = new RangeHeaderValue(
-						        originalRangeValue);
+								originalRangeValue);
 						forwardResponse
-						        .removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+								.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 						ContentRangeHeaderValue returnContentRange = new ContentRangeHeaderValue(
-						        contentRange.toString());
-						if (originalRange.getLastBytePos() > 0)
-						{
+								contentRange.toString());
+						if (originalRange.getLastBytePos() > 0) {
 							returnContentRange.setLastBytePos(originalRange
-							        .getLastBytePos());
-						}
-						else
-						{
+									.getLastBytePos());
+						} else {
 							returnContentRange.setLastBytePos(contentRange
-							        .getInstanceLength() - 1);
+									.getInstanceLength() - 1);
 						}
 						forwardResponse.setHeader(
-						        HttpHeaders.Names.CONTENT_RANGE,
-						        returnContentRange);
+								HttpHeaders.Names.CONTENT_RANGE,
+								returnContentRange);
 						forwardResponse
-						        .setHeader(
-						                HttpHeaders.Names.CONTENT_LENGTH,
-						                (returnContentRange.getLastBytePos()
-						                        - returnContentRange
-						                                .getFirstBytePos() + 1)
-						                        + "");
-						if (logger.isDebugEnabled())
-						{
+								.setHeader(
+										HttpHeaders.Names.CONTENT_LENGTH,
+										(returnContentRange.getLastBytePos()
+												- returnContentRange
+														.getFirstBytePos() + 1)
+												+ "");
+						if (logger.isDebugEnabled()) {
 							logger.debug("Range get response content-range header is "
-							        + returnContentRange);
+									+ returnContentRange);
 						}
 					}
 
 				}
-				if (forwardResponse.getResponseCode() == 0)
-				{
+				if (forwardResponse.getResponseCode() == 0) {
 					forwardResponse.setResponseCode(400);
 				}
 				HttpResponse response = ClientUtils
-				        .buildHttpServletResponse(forwardResponse);
-				if (forwardResponse.getResponseCode() >= 400)
-				{
-					if (callback != null)
-					{
+						.buildHttpServletResponse(forwardResponse);
+				if (forwardResponse.getResponseCode() >= 400) {
+					if (callback != null) {
 						callback.onProxyEventFailed(this, response,
-						        originalProxyEvent);
+								originalProxyEvent);
 						return;
 					}
 				}
 				ChannelFuture future = channel.write(response);
 				// future.await();
 				if (null != contentRange
-				        && contentRange.getLastBytePos() < (contentRange
-				                .getInstanceLength() - 1))
-				{
+						&& contentRange.getLastBytePos() < (contentRange
+								.getInstanceLength() - 1)) {
 					chunkedInput = new RangeHttpProxyChunkedInput(selector,
-					        workerExecutor, forwardRequest,
-					        contentRange.getLastBytePos() + 1,
-					        contentRange.getInstanceLength());
+							workerExecutor, forwardRequest,
+							contentRange.getLastBytePos() + 1,
+							contentRange.getInstanceLength());
 					future = channel.write(chunkedInput);
 				}
 				// future.addListener(ChannelFutureListener.CLOSE);
-			}
-			else
-			{
-				if (logger.isDebugEnabled())
-				{
+			} else {
+				if (logger.isDebugEnabled()) {
 					logger.debug("Warn:Browser connection is already closed by browser.");
 				}
 			}
-		}
-		catch (Throwable e)
-		{
+		} catch (Throwable e) {
 			logger.error("Encounter error for request:" + forwardRequest.url, e);
-			if (channel.isConnected())
-			{
+			if (channel.isConnected()) {
 				channel.write(
-				        new DefaultHttpResponse(HttpVersion.HTTP_1_1,
-				                HttpResponseStatus.REQUEST_TIMEOUT))
-				        .addListener(ChannelFutureListener.CLOSE);
+						new DefaultHttpResponse(HttpVersion.HTTP_1_1,
+								HttpResponseStatus.REQUEST_TIMEOUT))
+						.addListener(ChannelFutureListener.CLOSE);
 			}
 		}
 	}
 
-	class RangeHttpProxyChunkedOutput
-	{
+	class RangeHttpProxyChunkedOutput {
 		private ContentRangeHeaderValue lastContentRange;
 
 		public RangeHttpProxyChunkedOutput(
-		        ContentRangeHeaderValue lastContentRange)
-		{
+				ContentRangeHeaderValue lastContentRange) {
 			this.lastContentRange = lastContentRange;
 		}
 
-		public HttpResponseExchange execute() throws Exception
-		{
+		public HttpResponseExchange execute() throws Exception {
 			HttpResponseExchange forwardResponse = null;
 			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
-			while (null != lastContentRange)
-			{
+			while (null != lastContentRange) {
 				forwardRequest.setBody(new byte[0]);
 				ContentRangeHeaderValue old = lastContentRange;
 				long sendSize = fetchSizeLimit;
-				if (old.getInstanceLength() - old.getLastBytePos() - 1 < fetchSizeLimit)
-				{
+				if (old.getInstanceLength() - old.getLastBytePos() - 1 < fetchSizeLimit) {
 					sendSize = (old.getInstanceLength() - old.getLastBytePos() - 1);
 				}
-				if (sendSize <= 0)
-				{
+				if (sendSize <= 0) {
 					break;
 				}
 				lastContentRange = new ContentRangeHeaderValue(
-				        old.getLastBytePos() + 1, old.getLastBytePos()
-				                + sendSize, old.getInstanceLength());
+						old.getLastBytePos() + 1, old.getLastBytePos()
+								+ sendSize, old.getInstanceLength());
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_RANGE,
-				        lastContentRange);
+						lastContentRange);
 				forwardRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
-				        String.valueOf(sendSize));
+						String.valueOf(sendSize));
 				forwardResponse = syncFetch(forwardRequest);
-				if (sendSize < fetchSizeLimit)
-				{
+				if (sendSize < fetchSizeLimit) {
 					lastContentRange = null;
 				}
 			}
@@ -564,20 +468,16 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		}
 	}
 
-	private void closeChannel(Channel channel)
-	{
-		if (null != channel && channel.isOpen())
-		{
+	private void closeChannel(Channel channel) {
+		if (null != channel && channel.isOpen()) {
 			channel.close();
 		}
 	}
 
 	@Override
-	public void close() throws Exception
-	{
+	public void close() throws Exception {
 		originalRequest = null;
-		if (chunkedInput != null)
-		{
+		if (chunkedInput != null) {
 			chunkedInput.close();
 		}
 		closeChannel(channel);
