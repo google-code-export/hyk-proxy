@@ -225,17 +225,18 @@ public class RangeHttpProxyChunkedInput implements ChunkedInput
 						}
 						retry--;
 					}
-					
-					if(null == res || res.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE) == null)
-					{
-						closeChunkInput();
-						return;
-					}
-					if(logger.isDebugEnabled())
+					if(null != res && logger.isDebugEnabled())
 					{
 						logger.debug("Recv range proxy response");
 						logger.debug(ClientUtils.httpMessage2String(res));
 					}
+					if(null == res || res.getHeaderValue(HttpHeaders.Names.CONTENT_RANGE) == null)
+					{
+						logger.error("Faile to fetch a chunk for range:"+headerValue);
+						closeChunkInput();
+						return;
+					}
+					
 					synchronized (fetchedResponses) 
 					{
 						boolean hasAdd = false;

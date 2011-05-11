@@ -12,8 +12,12 @@ package com.hyk.proxy.client.application.gae.config;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.net.ssl.SSLSocketFactory;
 import javax.xml.bind.JAXBContext;
@@ -248,6 +252,40 @@ public class Config
 	public void setHttpConnectionPoolSize(int httpConnectionPoolSize)
 	{
 		this.httpConnectionPoolSize = httpConnectionPoolSize;
+	}
+	
+	private List<String> injectRangeHeaderSiteSet = new ArrayList<String>();
+	private String injectRangeHeaderSites;
+	
+	@XmlElement
+	void setInjectRangeHeaderSites(String injectRangeHeaderSites)
+	{
+		this.injectRangeHeaderSites = injectRangeHeaderSites;
+		String[] sites = injectRangeHeaderSites.split(";");
+		for(String s:sites)
+		{
+			injectRangeHeaderSiteSet.add(s.trim());
+		}
+		//System.out.println("#####" + injectRangeHeaderSiteSet);
+		//System.exit(1);
+		
+	}
+	
+	String getInjectRangeHeaderSites()
+	{
+		return injectRangeHeaderSites;
+	}
+	
+	public boolean isInjectRangeHeaderSitesMatchHost(String host)
+	{
+		for(String site:injectRangeHeaderSiteSet)
+		{
+			if(host.indexOf(site) != -1)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private int rpcTimeOut;
