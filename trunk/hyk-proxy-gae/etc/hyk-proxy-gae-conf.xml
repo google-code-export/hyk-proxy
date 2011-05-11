@@ -49,6 +49,14 @@
         </Binding>
          -->
     </AppIdBindings>
+    
+    <!-- 
+       Sometimes, you already know you can inject a 'Range' header in the proxy request
+       to avoid a fail-try request. Use ';' as the separator for sites
+     -->
+    <injectRangeHeaderSites>
+        youtube.com
+    </injectRangeHeaderSites>
 
    <HttpProxyUserAgent choice="FireFox36">
        <UserAgent name="Chrome41">

@@ -4,7 +4,7 @@
  *
  * Description: BouncyCastleHelper.java 
  *
- * @author yinqiwen [ 2011-5-8 | ÉÏÎç11:27:39 ]
+ * @author yinqiwen [ 2011-5-8 | 11:27:39AM ]
  *
  */
 package com.hyk.proxy.framework.util;
@@ -12,53 +12,39 @@ package com.hyk.proxy.framework.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.FileWriter;
 import java.math.BigInteger;
-import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.crypto.CipherOutputStream;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509KeyManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.bouncycastle.asn1.x509.KeyUsage;
-import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.x509.X509V1CertificateGenerator;
+import org.bouncycastle.openssl.MiscPEMGenerator;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
@@ -70,9 +56,9 @@ import com.hyk.proxy.framework.appdata.AppData;
 /**
  *
  */
-public class BouncyCastleHelper {
+public class SslCertificateHelper {
 	protected static Logger logger = LoggerFactory
-			.getLogger(BouncyCastleHelper.class);
+			.getLogger(SslCertificateHelper.class);
 	static {
 		Security.addProvider(new BouncyCastleProvider());
 	}
@@ -99,6 +85,8 @@ public class BouncyCastleHelper {
 		if (null == caPriKey || null == caCert) {
 			try {
 				KeyStore ks = KeyStore.getInstance("JKS");
+				File kst_file = new File(AppData.GetFakeSSLCertHome(),
+						"RootKeyStore.kst");
 				FileInputStream fis = new FileInputStream(new File(
 						AppData.GetFakeSSLCertHome(), "RootKeyStore.kst"));
 				ks.load(fis, KS_PASS.toCharArray());
@@ -106,6 +94,7 @@ public class BouncyCastleHelper {
 				caPriKey = (PrivateKey) ks.getKey(CA_ALIAS,
 						KS_PASS.toCharArray());
 				fis.close();
+
 			} catch (Exception e) {
 				logger.error("Failed to load fake CA key store.", e);
 				return false;
@@ -117,50 +106,59 @@ public class BouncyCastleHelper {
 
 	private static KeyPair createRSAKeyPair() throws NoSuchAlgorithmException,
 			NoSuchProviderException {
-		KeyPairGenerator caKeyPairGen = KeyPairGenerator.getInstance("RSA",
-				"BC");
-		caKeyPairGen.initialize(1024, new SecureRandom());
-		KeyPair keypair = caKeyPairGen.genKeyPair();
+		final KeyPairGenerator g = KeyPairGenerator.getInstance("RSA");
+		final SecureRandom rnd = SecureRandom.getInstance("SHA1PRNG");
+		rnd.setSeed(System.currentTimeMillis());
+		g.initialize(2048, rnd);
+		final KeyPair keypair = g.genKeyPair();
 
 		return keypair;
 
 	}
 
-	public static X509Certificate createCACert(KeyPair pair)
+	public static X509Certificate createCACert(KeyPair keypair)
 			throws InvalidKeyException, IllegalStateException,
 			NoSuchProviderException, NoSuchAlgorithmException,
 			SignatureException, CertificateException {
-		X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
-		// signers name
-		//
-		String issuer = "CN=hyk-proxy Fake CA Certificate,OU=Certification Division,O=hyk-proxy Inc,L=hyk-proxy,S=hyk-proxy,C=hyk-proxy";
+		final Date startDate = Calendar.getInstance().getTime();
+		final Date expireDate = new Date(startDate.getTime()
+				+ (100L * 365L * 24L * 60L * 60L * 1000L));
+		// The Root CA serial number is '1'
+		final BigInteger serialNumber = new BigInteger("1");
 
-		//
-		// subjects name - the same as we are self signed.
-		//
-		String subject = "CN=hyk-proxy Fake CA Certificate,OU=Certification Division,O=hyk-proxy Inc,L=hyk-proxy,S=hyk-proxy,C=hyk-proxy";
+		final X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
+		// using the hash code of the user's name and home path, keeps anonymity
+		// but also gives user a chance to distinguish between each other
+		final X500Principal x500principal = new X500Principal(
+				"CN = hyk-proxy Framework Root Fake CA, "
+						+ "L = "
+						+ Integer.toHexString(System.getProperty("user.name")
+								.hashCode())
+						+ Integer.toHexString(System.getProperty("user.home")
+								.hashCode()) + ", "
+						+ "O = hyk-proxy Root Fake CA, "
+						+ "OU = hyk-proxy Root Fake CA, " + "C = XX");
 
-		certGen.setSerialNumber(BigInteger.valueOf(1));
-		certGen.setIssuerDN(new X500Principal(issuer));
-		certGen.setNotBefore(new Date(System.currentTimeMillis() - 1000));
-		long hundredyear = 100L * 365 * 24 * 60 * 60 * 1000;
-		certGen.setNotAfter(new Date(System.currentTimeMillis() + hundredyear));
-		certGen.setSubjectDN(new X500Principal(subject));
-		certGen.setPublicKey(pair.getPublic());
-		certGen.setSignatureAlgorithm("SHA1WithRSAEncryption");
+		certGen.setSerialNumber(serialNumber);
+		certGen.setSubjectDN(x500principal);
+		certGen.setIssuerDN(x500principal);
+		certGen.setNotBefore(startDate);
+		certGen.setNotAfter(expireDate);
+		certGen.setPublicKey(keypair.getPublic());
+		certGen.setSignatureAlgorithm("SHA1withRSA");
 
-		// Is a CA
-		certGen.addExtension(X509Extensions.BasicConstraints, true,
-				new BasicConstraints(true));
-
-		certGen.addExtension(X509Extensions.SubjectKeyIdentifier, false,
-				new SubjectKeyIdentifierStructure(pair.getPublic()));
-
-		X509Certificate cert = certGen.generateX509Certificate(
-				pair.getPrivate(), "BC");
-		cert.checkValidity(new Date());
-		cert.verify(pair.getPublic());
-		return cert;
+		KeyStore ks = null;
+		try {
+			certGen.addExtension(X509Extensions.SubjectKeyIdentifier, false,
+					new SubjectKeyIdentifierStructure(keypair.getPublic()));
+			certGen.addExtension(X509Extensions.BasicConstraints, false,
+					new BasicConstraints(true));
+			final X509Certificate cert = certGen.generate(keypair.getPrivate());
+			return cert;
+		} catch (final Exception e) {
+			throw new IllegalStateException(
+					"Errors during assembling root CA.", e);
+		}
 	}
 
 	public static X509Certificate createClientCert(String host, PublicKey pubKey)
@@ -168,44 +166,42 @@ public class BouncyCastleHelper {
 		if (!loadFakeRootCA()) {
 			return null;
 		}
-		X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
-		//
-		// issuer
-		//
-		// String issuer =
-		// "CN=hyk-proxy Fake CA Certificate,OU=Certification Division,O=hyk-proxy Inc,L=hyk-proxy,S=hyk-proxy,C=hyk-proxy";
-		String issuer = "CN=hyk-proxy Fake CA Certificate,OU=Certification Division,O=hyk-proxy Inc,C=hyk-proxy";
+		// final KeyPair mykp = this.createKeyPair();
+		// final PrivateKey privKey = mykp.getPrivate();
+		// final PublicKey pubKey = mykp.getPublic();
+
 		//
 		// subjects name table.
 		//
-		Hashtable attrs = new Hashtable();
-		Vector order = new Vector();
-		attrs.put(X509Principal.C, "hyk-proxy");
-		attrs.put(X509Principal.O, "hyk-proxy Inc");
-		attrs.put(X509Principal.OU, "Certification Division");
-		attrs.put(X509Principal.CN, host);
+		final Hashtable<Object, String> attrs = new Hashtable<Object, String>();
+		final Vector<Object> order = new Vector<Object>();
 
-		order.addElement(X509Principal.C);
-		order.addElement(X509Principal.O);
-		order.addElement(X509Principal.OU);
-		order.addElement(X509Principal.CN);
+		attrs.put(X509Name.CN, host);
+		attrs.put(X509Name.OU, "hyk-proxy Project");
+		attrs.put(X509Name.O, "hyk-proxy");
+		attrs.put(X509Name.C, "XX");
+		attrs.put(X509Name.EmailAddress, "yinqiwen@gmail.com");
+
+		order.addElement(X509Name.CN);
+		order.addElement(X509Name.OU);
+		order.addElement(X509Name.O);
+		order.addElement(X509Name.C);
+		order.addElement(X509Name.EmailAddress);
 
 		//
 		// create the certificate - version 3
 		//
+		final X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
 		v3CertGen.reset();
 
 		v3CertGen
 				.setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()));
-		// v3CertGen.setIssuerDN(new X509Principal(issuer));
-		v3CertGen.setIssuerDN(new X509Principal(issuer));
-		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 10000));
-		long hundredyear = 90L * 365 * 24 * 60 * 60 * 1000;
-		v3CertGen
-				.setNotAfter(new Date(System.currentTimeMillis() + hundredyear));
+		v3CertGen.setIssuerDN(PrincipalUtil.getSubjectX509Principal(caCert));
+		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60
+				* 60 * 24 * 30));
+		v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + 100
+				* (1000L * 60 * 60 * 24 * 30)));
 		v3CertGen.setSubjectDN(new X509Principal(order, attrs));
-		// v3CertGen.setSubjectDN(new X500Principal(
-		// "CN=hyk-proxy Fake CA Certificate"));
 		v3CertGen.setPublicKey(pubKey);
 		v3CertGen.setSignatureAlgorithm("SHA1WithRSAEncryption");
 
@@ -217,9 +213,14 @@ public class BouncyCastleHelper {
 
 		v3CertGen.addExtension(X509Extensions.AuthorityKeyIdentifier, false,
 				new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
-		X509Certificate cert = v3CertGen.generate(caPriKey);
 
+		v3CertGen.addExtension(X509Extensions.BasicConstraints, true,
+				new BasicConstraints(0));
+
+		// X509Certificate cert = v3CertGen.generateX509Certificate(caPrivKey);
+		final X509Certificate cert = v3CertGen.generate(caPriKey, "BC");
 		cert.checkValidity(new Date());
+		cert.verify(caCert.getPublicKey());
 
 		// cert.verify(caCert.getPublicKey());
 		// cert.getEncoded();
@@ -238,11 +239,16 @@ public class BouncyCastleHelper {
 			kstCache.put(host, ks);
 			return ks;
 		} else {
-			KeyPair pair = createRSAKeyPair();
-			X509Certificate cert = createClientCert(host, pair.getPublic());
+			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			final SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+			random.setSeed(Long.toString(System.currentTimeMillis()).getBytes());
+			keyGen.initialize(2048, random);
+			final KeyPair keypair = keyGen.generateKeyPair();
+			// KeyPair pair = createRSAKeyPair();
+			X509Certificate cert = createClientCert(host, keypair.getPublic());
 			ks.load(null, null);
-			ks.setKeyEntry(CLIENT_CERT_ALIAS, caPriKey, KS_PASS.toCharArray(),
-					new Certificate[] { cert, caCert });
+			ks.setKeyEntry(CLIENT_CERT_ALIAS, keypair.getPrivate(),
+					KS_PASS.toCharArray(), new Certificate[] { cert, caCert });
 			ks.store(new FileOutputStream(kst_file), KS_PASS.toCharArray());
 			kstCache.put(host, ks);
 			return ks;
@@ -250,7 +256,7 @@ public class BouncyCastleHelper {
 	}
 
 	public static void main(String[] args) throws Exception {
-		X509V3CertificateGenerator c = new X509V3CertificateGenerator();
+		// X509V3CertificateGenerator c = new X509V3CertificateGenerator();
 		KeyPair pair = createRSAKeyPair();
 		X509Certificate cert = createCACert(pair);
 		FileOutputStream fos = new FileOutputStream(CA_FILE);
@@ -261,6 +267,11 @@ public class BouncyCastleHelper {
 		ks.store(fos, KS_PASS.toCharArray());
 		fos.close();
 
+		// final Certificate cert =
+		// rootca.getCertificate(SslCertificateService.ZAPROXY_JKS_ALIAS);
+		final PemWriter pw = new PemWriter(new FileWriter("Fake-ACRoot-Certificate.cer"));
+		pw.writeObject(new MiscPEMGenerator(cert));
+		pw.flush();
 	}
 
 }

@@ -58,86 +58,68 @@ import com.hyk.rpc.core.util.RpcUtil;
  *
  */
 public class GoogleAppEngineHttpProxyEventServiceFactory implements
-        HttpProxyEventServiceFactory
-{
+		HttpProxyEventServiceFactory {
 	public static final String NAME = "GAE";
 
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 	private FetchServiceSelector selector;
-	private SSLContext sslContext;
+	// private SSLContext sslContext;
 	private ExecutorService workerExecutor;
 	// private UpdateCheck updateChecker;
 	private List<RPC> rpcs = new ArrayList<RPC>();
 
-	public void init() throws Exception
-	{
-		this.sslContext = ClientUtils.initSSLContext();
+	public void init() throws Exception {
+		// this.sslContext = ClientUtils.initSSLContext();
 		this.workerExecutor = Misc.getGlobalThreadPool();
-		
-		Misc.getGlobalThreadPool().submit(new Runnable()
-		{
+
+		Misc.getGlobalThreadPool().submit(new Runnable() {
 			@Override
-			public void run()
-			{
+			public void run() {
 				ClientUtils.checkRemoteServer();
 			}
 		});
-		int ret  = ClientUtils.selectDefaultGoogleProxy();
+		int ret = ClientUtils.selectDefaultGoogleProxy();
 		List<FetchService> fetchServices = retriveFetchServices(Config
-		        .getInstance());
-		if (fetchServices.isEmpty())
-		{
-			if(Config.getInstance().selectDefaultHttpProxy())
-			{
-				if(ret != ClientUtils.DIRECT)
-				{
+				.getInstance());
+		if (fetchServices.isEmpty()) {
+			if (Config.getInstance().selectDefaultHttpProxy()) {
+				if (ret != ClientUtils.DIRECT) {
 					Config.getInstance().clearProxy();
 				}
-				fetchServices = retriveFetchServices(Config
-				        .getInstance());
-				if (fetchServices.isEmpty())
-				{
-					if(Config.getInstance().selectDefaultHttpsProxy())
-					{
+				fetchServices = retriveFetchServices(Config.getInstance());
+				if (fetchServices.isEmpty()) {
+					if (Config.getInstance().selectDefaultHttpsProxy()) {
 						fetchServices = retriveFetchServices(Config
-						        .getInstance());
+								.getInstance());
 					}
 				}
 			}
 		}
 
-		if (fetchServices.isEmpty())
-		{
+		if (fetchServices.isEmpty()) {
 			throw new IllegalArgumentException(
-			        "No fetch service found, please check you configuration.");
+					"No fetch service found, please check you configuration.");
 		}
 
 		selector = new FetchServiceSelector(fetchServices);
-		if (fetchServices.size() > 1)
-		{
+		if (fetchServices.size() > 1) {
 			Misc.getTrace().info(
-			        fetchServices.size() + " fetch services are working.");
-		}
-		else
-		{
+					fetchServices.size() + " fetch services are working.");
+		} else {
 			Misc.getTrace().info(
-			        fetchServices.size() + " fetch service is working.");
+					fetchServices.size() + " fetch service is working.");
 		}
 
 	}
 
 	protected List<HykProxyServerAuth> retrieveShareAppIds(Config config)
-	        throws IOException, RpcException, XMPPException
-	{
+			throws IOException, RpcException, XMPPException {
 		MasterNodeService master = ClientUtils.getMasterNodeService(config);
-		if (null != master)
-		{
+		if (null != master) {
 			List<String> appids = master.randomRetrieveAppIds();
-			if (null != appids)
-			{
+			if (null != appids) {
 				List<HykProxyServerAuth> auths = new ArrayList<HykProxyServerAuth>();
-				for (String appid : appids)
-				{
+				for (String appid : appids) {
 					HykProxyServerAuth auth = new HykProxyServerAuth();
 					auth.appid = appid;
 					auth.user = Constants.ANONYMOUSE_NAME;
@@ -151,71 +133,55 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	}
 
 	protected List<FetchService> retriveFetchServices(final Config config)
-	        throws IOException, RpcException, XMPPException
-	{
-		if (logger.isDebugEnabled())
-		{
+			throws IOException, RpcException, XMPPException {
+		if (logger.isDebugEnabled()) {
 			logger.debug("Start retrive remote fetch services.");
 		}
 		List<HykProxyServerAuth> auths = config.getHykProxyServerAuths();
-		if (null == auths || auths.isEmpty())
-		{
+		if (null == auths || auths.isEmpty()) {
 			// If no config hyk-proxy-server, try retrieve share appids from
 			// master node
 			auths = retrieveShareAppIds(config);
 		}
 		List<Callable<FetchService>> invokeTasks = new LinkedList<Callable<FetchService>>();
 		// Init RPC channels
-		switch (config.getClient2ServerConnectionMode())
-		{
-			case HTTPS2GAE:
-			case HTTP2GAE:
-			{
-				rpcs.add(ClientUtils.createHttpRPC(workerExecutor));
-				break;
+		switch (config.getClient2ServerConnectionMode()) {
+		case HTTPS2GAE:
+		case HTTP2GAE: {
+			rpcs.add(ClientUtils.createHttpRPC(workerExecutor));
+			break;
+		}
+		case XMPP2GAE: {
+			for (XmppAccount account : config.getXmppAccounts()) {
+				rpcs.add(ClientUtils.createXmppRPC(account, workerExecutor));
 			}
-			case XMPP2GAE:
-			{
-				for (XmppAccount account : config.getXmppAccounts())
-				{
-					rpcs.add(ClientUtils.createXmppRPC(account, workerExecutor));
-				}
-				break;
-			}
+			break;
+		}
 		}
 		// Retrieve remote fetch services
-		for (final HykProxyServerAuth auth : auths)
-		{
-			for (final RPC rpc : rpcs)
-			{
-				invokeTasks.add(new Callable<FetchService>()
-				{
+		for (final HykProxyServerAuth auth : auths) {
+			for (final RPC rpc : rpcs) {
+				invokeTasks.add(new Callable<FetchService>() {
 					@Override
-					public FetchService call() throws Exception
-					{
+					public FetchService call() throws Exception {
 						return initFetchService(auth, rpc,
-						        config.getClient2ServerConnectionMode());
+								config.getClient2ServerConnectionMode());
 					}
 				});
 			}
 		}
 		List<FetchService> ret = new ArrayList<FetchService>();
-		try
-		{
+		try {
 			List<Future<FetchService>> invokeResults = workerExecutor
-			        .invokeAll(invokeTasks);
+					.invokeAll(invokeTasks);
 
-			for (Future<FetchService> result : invokeResults)
-			{
+			for (Future<FetchService> result : invokeResults) {
 				FetchService serv = result.get();
-				if (null != serv)
-				{
+				if (null != serv) {
 					ret.add(result.get());
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			logger.error("Failed to execute retrieve fetch service task!", e);
 		}
 
@@ -223,49 +189,40 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	}
 
 	protected FetchService initFetchService(final HykProxyServerAuth appid,
-	        RPC rpc, ConnectionMode mode)
-	{
-		try
-		{
+			RPC rpc, ConnectionMode mode) {
+		try {
 			Address remoteAddress = null;
-			switch (mode)
-			{
-				case HTTPS2GAE:
-				case HTTP2GAE:
-				{
-					remoteAddress = ClientUtils
-					        .createHttpServerAddress(appid.appid);
-					break;
-				}
-				case XMPP2GAE:
-				{
-					remoteAddress = ClientUtils.createXmppAddress(appid.appid);
-					break;
-				}
+			switch (mode) {
+			case HTTPS2GAE:
+			case HTTP2GAE: {
+				remoteAddress = ClientUtils
+						.createHttpServerAddress(appid.appid);
+				break;
+			}
+			case XMPP2GAE: {
+				remoteAddress = ClientUtils.createXmppAddress(appid.appid);
+				break;
+			}
 			}
 			int oldtimeout = rpc.getSessionManager().getSessionTimeout();
-			if (!mode.equals(ConnectionMode.XMPP2GAE))
-			{
+			if (!mode.equals(ConnectionMode.XMPP2GAE)) {
 				rpc.getSessionManager().setSessionTimeout(20000);
 			}
 			final RemoteServiceManager remoteServiceManager = rpc
-			        .getRemoteService(RemoteServiceManager.class,
-			                RemoteServiceManager.NAME, remoteAddress);
-			if (!mode.equals(ConnectionMode.XMPP2GAE))
-			{
+					.getRemoteService(RemoteServiceManager.class,
+							RemoteServiceManager.NAME, remoteAddress);
+			if (!mode.equals(ConnectionMode.XMPP2GAE)) {
 				rpc.getSessionManager().setSessionTimeout(oldtimeout);
 			}
 			AsyncRemoteServiceManager asyncRemoteServiceManager = RpcUtil
-			        .asyncWrapper(remoteServiceManager,
-			                AsyncRemoteServiceManager.class);
+					.asyncWrapper(remoteServiceManager,
+							AsyncRemoteServiceManager.class);
 			checkVersionCompatability(asyncRemoteServiceManager, appid.appid);
 			User info = new User();
 			info.setEmail(appid.user);
 			info.setPasswd(appid.passwd);
 			return remoteServiceManager.getFetchService(info);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			logger.error("Failed to init fetch service.", e);
 			return null;
 		}
@@ -273,28 +230,21 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	}
 
 	private void checkVersionCompatability(
-	        AsyncRemoteServiceManager remoteServiceManager, final String appid)
-	{
-		remoteServiceManager.getServerVersion(new RpcCallback<String>()
-		{
+			AsyncRemoteServiceManager remoteServiceManager, final String appid) {
+		remoteServiceManager.getServerVersion(new RpcCallback<String>() {
 			@Override
-			public void callBack(RpcCallbackResult<String> result)
-			{
-				try
-				{
+			public void callBack(RpcCallbackResult<String> result) {
+				try {
 					String serverVersion = result.get();
 					if (Version.value.contains(serverVersion)
-					        || serverVersion.contains(Version.value))
-					{
+							|| serverVersion.contains(Version.value)) {
 						return;
 					}
 					String cause = String
-					        .format("Client's version:%s may be not compatible with Server's version:%s .",
-					                Version.value, serverVersion);
+							.format("Client's version:%s may be not compatible with Server's version:%s .",
+									Version.value, serverVersion);
 					logger.warn(cause);
-				}
-				catch (Throwable e)
-				{
+				} catch (Throwable e) {
 					logger.error("Failed to get version from server.", e);
 				}
 			}
@@ -303,53 +253,43 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	}
 
 	@Override
-	public HttpProxyEventService createHttpProxyEventService()
-	{
-		return new GoogleAppEngineHttpProxyEventService(selector, sslContext,
-		        workerExecutor);
+	public HttpProxyEventService createHttpProxyEventService() {
+		return new GoogleAppEngineHttpProxyEventService(selector,
+				workerExecutor);
 	}
 
-	static class FetchServiceSelector extends ListSelector<FetchService>
-	{
+	static class FetchServiceSelector extends ListSelector<FetchService> {
 		// private List<FetchService> fetchServices;
 		private List<AsyncFetchService> asyncFetchServices;
 		private List<String> appidList;
 		private int cursor;
 
 		public FetchServiceSelector(List<FetchService> fetchServices)
-		        throws RpcException
-		{
+				throws RpcException {
 			super(fetchServices);
 			// Collections.shuffle(fetchServices);
 			// this.fetchServices = fetchServices;
 			asyncFetchServices = new ArrayList<AsyncFetchService>();
 			appidList = new ArrayList<String>();
-			for (FetchService service : fetchServices)
-			{
+			for (FetchService service : fetchServices) {
 				asyncFetchServices.add(RpcUtil.asyncWrapper(service,
-				        AsyncFetchService.class));
+						AsyncFetchService.class));
 				Address addr = RPC.getRemoteObjectAddress(service);
 				appidList.add(ClientUtils.extractAppId(addr));
 			}
 		}
 
-		private int getBindingServiceIndex(HttpRequestExchange req)
-		{
+		private int getBindingServiceIndex(HttpRequestExchange req) {
 			String binding = Config.getInstance().getBindingAppId(
-			        req.getHeaderValue(HttpHeaders.Names.HOST));
-			if (null != binding)
-			{
-				for (int i = cursor; i < appidList.size(); i++)
-				{
-					if (appidList.get(i).endsWith(binding))
-					{
+					req.getHeaderValue(HttpHeaders.Names.HOST));
+			if (null != binding) {
+				for (int i = cursor; i < appidList.size(); i++) {
+					if (appidList.get(i).endsWith(binding)) {
 						return i;
 					}
 				}
-				for (int i = 0; i < cursor; i++)
-				{
-					if (appidList.get(i).endsWith(binding))
-					{
+				for (int i = 0; i < cursor; i++) {
+					if (appidList.get(i).endsWith(binding)) {
 						return i;
 					}
 				}
@@ -358,25 +298,20 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 		}
 
 		public synchronized AsyncFetchService selectAsync(
-		        HttpRequestExchange req)
-		{
+				HttpRequestExchange req) {
 			int bindIndex = getBindingServiceIndex(req);
-			if (bindIndex >= 0)
-			{
+			if (bindIndex >= 0) {
 				return asyncFetchServices.get(bindIndex);
 			}
-			if (cursor >= asyncFetchServices.size())
-			{
+			if (cursor >= asyncFetchServices.size()) {
 				cursor = 0;
 			}
 			return asyncFetchServices.get(cursor++);
 		}
 
-		public FetchService select(HttpRequestExchange req)
-		{
+		public FetchService select(HttpRequestExchange req) {
 			int bindIndex = getBindingServiceIndex(req);
-			if (bindIndex >= 0)
-			{
+			if (bindIndex >= 0) {
 				return list.get(bindIndex);
 			}
 			return select();
@@ -385,18 +320,15 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 	}
 
 	@Override
-	public void destroy() throws Exception
-	{
-		for (RPC rpc : rpcs)
-		{
+	public void destroy() throws Exception {
+		for (RPC rpc : rpcs) {
 			rpc.close();
 		}
 		rpcs.clear();
 	}
 
 	@Override
-	public String getName()
-	{
+	public String getName() {
 		return NAME;
 	}
 

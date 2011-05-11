@@ -80,9 +80,9 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 	private HttpProxyEventCallback callback;
 
 	GoogleAppEngineHttpProxyEventService(FetchServiceSelector selector,
-			SSLContext sslContext, Executor workerExecutor) {
+			Executor workerExecutor) {
 		this.selector = selector;
-		this.sslContext = sslContext;
+		// this.sslContext = sslContext;
 		this.workerExecutor = workerExecutor;
 	}
 
@@ -145,7 +145,12 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		gaeRequest.setUrl(urlbuffer.toString());
 		gaeRequest.setMethod(recvReq.getMethod().getName());
 		Set<String> headers = recvReq.getHeaderNames();
+		boolean containRangeHeader = false;
 		for (String headerName : headers) {
+			if(headerName.equalsIgnoreCase(HttpHeaders.Names.RANGE))
+			{
+				containRangeHeader = true;
+			}
 			List<String> headerValues = recvReq.getHeaders(headerName);
 			if (null != headerValues) {
 				for (String headerValue : headerValues) {
@@ -167,6 +172,26 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		ChannelBuffer contentBody = recvReq.getContent();
 		if (null != contentBody) {
 			chunkedBodys.add(contentBody);
+		}
+		
+		//Try to 
+		if(!containRangeHeader && Config.getInstance().isInjectRangeHeaderSitesMatchHost(recvReq.getHeader(HttpHeaders.Names.HOST)))
+		{
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Inject a range header for host:" + recvReq.getHeader(HttpHeaders.Names.HOST));
+			}
+			//logger.info("Inject a range header for host:" + host);
+			int fetchSizeLimit = Config.getInstance().getFetchLimitSize();
+			gaeRequest.setHeader(HttpHeaders.Names.RANGE,
+					new RangeHeaderValue(0, fetchSizeLimit - 1));
+		}
+		else
+		{
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Not Inject a range header for host:" + recvReq.getHeader(HttpHeaders.Names.HOST));
+			}
 		}
 		return gaeRequest;
 	}

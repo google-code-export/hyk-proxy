@@ -68,7 +68,7 @@ import com.hyk.proxy.common.http.message.HttpServerAddress;
 import com.hyk.proxy.common.rpc.service.MasterNodeService;
 import com.hyk.proxy.common.xmpp.XmppAddress;
 import com.hyk.proxy.framework.prefs.Preferences;
-import com.hyk.proxy.framework.util.BouncyCastleHelper;
+import com.hyk.proxy.framework.util.SslCertificateHelper;
 import com.hyk.rpc.core.RPC;
 import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.Rpctimeout;
@@ -92,30 +92,30 @@ public class ClientUtils {
 	public static final int OVER_HTTP = 1;
 	public static final int OVER_HTTPS = 2;
 
-	public static SSLContext initSSLContext() throws Exception {
-		String password = "hyk-proxy";
-		SSLContext sslContext = SSLContext.getInstance("TLS");
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory
-				.getDefaultAlgorithm());
-		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-		ks.load(ClientUtils.class.getResourceAsStream("/hyk-proxy-gae.cert"),
-				password.toCharArray());
-		kmf.init(ks, password.toCharArray());
-		KeyManager[] km = kmf.getKeyManagers();
-		TrustManagerFactory tmf = TrustManagerFactory
-				.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-		tmf.init(ks);
-		TrustManager[] tm = tmf.getTrustManagers();
-		sslContext.init(km, tm, null);
-		return sslContext;
-	}
+//	public static SSLContext initSSLContext() throws Exception {
+//		String password = "hyk-proxy";
+//		SSLContext sslContext = SSLContext.getInstance("TLS");
+//		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory
+//				.getDefaultAlgorithm());
+//		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+//		ks.load(ClientUtils.class.getResourceAsStream("/hyk-proxy-gae.cert"),
+//				password.toCharArray());
+//		kmf.init(ks, password.toCharArray());
+//		KeyManager[] km = kmf.getKeyManagers();
+//		TrustManagerFactory tmf = TrustManagerFactory
+//				.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+//		tmf.init(ks);
+//		TrustManager[] tm = tmf.getTrustManagers();
+//		sslContext.init(km, tm, null);
+//		return sslContext;
+//	}
 
 	public static SSLContext getFakeSSLContext(String host, String port)
 			throws Exception {
 		SSLContext sslContext = SSLContext.getInstance("TLS");
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 
-		kmf.init(BouncyCastleHelper.getClientKeyStore(host), BouncyCastleHelper.KS_PASS.toCharArray());
+		kmf.init(SslCertificateHelper.getClientKeyStore(host), SslCertificateHelper.KS_PASS.toCharArray());
 		sslContext.init(kmf.getKeyManagers(), null, null);
 		// sslparams.s
 		// param.setSSLParameters(sslparams);
