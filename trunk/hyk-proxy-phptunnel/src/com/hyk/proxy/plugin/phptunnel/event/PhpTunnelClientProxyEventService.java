@@ -5,6 +5,8 @@ package com.hyk.proxy.plugin.phptunnel.event;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -22,6 +24,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelDownstreamHandler;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
@@ -33,8 +36,11 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpChunk;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpChunk;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMessageEncoder;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
@@ -204,7 +210,7 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 								close();
 								return;
 							}
-							int len = conn.getInputStream().read(buf);
+						    while(conn.getInputStream().read(buf) > 0);
 							close();
 						}
 						catch (Exception e)
@@ -216,7 +222,6 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 							PhpTunnelLocalServerHandler.removeCallBack(tempId);
 
 						}
-
 					}
 				});
 			}
@@ -224,7 +229,6 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 			{
 				if (event.getSource() instanceof HttpRequest)
 				{
-
 					String host = url.getHost();
 					int port = url.getPort();
 					if (port == -1)
@@ -320,52 +324,68 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 				{
 					port = 80;
 				}
+				String portstr = port != 80 ?"" + port:"";
 				HttpRequest newReq = new DefaultHttpRequest(
 				        HttpVersion.HTTP_1_1, HttpMethod.POST,
 				        url.toString());
 
-				newReq.setHeader("Host", host + ":" + port);
+				newReq.setHeader("Host", host + portstr);
 				StringBuffer headerBuf = new StringBuffer();
 				headerBuf.append(recvReq.getMethod().toString())
 				        .append(" ").append(recvReq.getUri()).append(" ")
 				        .append(recvReq.getProtocolVersion().toString())
 				        .append("\r\n");
-				recvReq.removeHeader("Proxy-Connection");
+				newReq.removeHeader("Proxy-Connection");
+				newReq.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
+                newReq.setHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+                newReq.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
 				newReq.addHeader("TunnelTarget", encrpt.encrypt(getRemoteAddress(recvReq)));
 				recvReq.setHeader("Connection", "close");
-				Set<String> headers = recvReq.getHeaderNames();
-				for (String headerName : headers)
-				{
-					List<String> headerValues = recvReq
-					        .getHeaders(headerName);
-					if (null != headerValues)
-					{
-						for (String headerValue : headerValues)
-						{
-							headerBuf.append(headerName).append(":")
-							        .append(headerValue).append("\r\n");
-							// newReq.addHeader(headerName, headerValue);
-						}
-					}
-				}
-				headerBuf.append("\r\n");
-				long oldContentLen = recvReq.getContentLength();
-				ChannelBuffer headerContentBuf = ChannelBuffers
-				        .wrappedBuffer(headerBuf.toString().getBytes());
-				long newcontentLen = oldContentLen
-				        + headerContentBuf.capacity();
-				newReq.setHeader("Content-Length", "" + newcontentLen);
-				ChannelBuffer content = null;
-				ChannelBuffer oldContentBody = recvReq.getContent();
-				if (null != oldContentBody)
-				{
-					content = ChannelBuffers.wrappedBuffer(
-					        headerContentBuf, oldContentBody);
-				}
-				else
-				{
-					content = headerContentBuf;
-				}
+				recvReq.setHeader("Proxy-Connection", "close");
+				
+				ChannelBuffer buffer = null;
+				try {
+					HttpRequestEncoder encoder = new HttpRequestEncoder();
+					//encoder.
+					Method m = HttpMessageEncoder.class.getDeclaredMethod("encode", ChannelHandlerContext.class, Channel.class,Object.class);
+				    m.setAccessible(true);
+				    buffer = (ChannelBuffer) m.invoke(encoder, null, event.getChannel(), recvReq);
+				} catch (Exception e) {
+					logger.error("failed to encode original request", e);
+				} 
+//				Set<String> headers = recvReq.getHeaderNames();
+//				for (String headerName : headers)
+//				{
+//					List<String> headerValues = recvReq
+//					        .getHeaders(headerName);
+//					if (null != headerValues)
+//					{
+//						for (String headerValue : headerValues)
+//						{
+//							headerBuf.append(headerName).append(":")
+//							        .append(headerValue).append("\r\n");
+//							// newReq.addHeader(headerName, headerValue);
+//						}
+//					}
+//				}
+//				headerBuf.append("\r\n");
+//				long oldContentLen = recvReq.getContentLength();
+//				ChannelBuffer headerContentBuf = ChannelBuffers
+//				        .wrappedBuffer(headerBuf.toString().getBytes());
+//				long newcontentLen = oldContentLen
+//				        + headerContentBuf.capacity();
+				newReq.setHeader("Content-Length", "" + buffer.readableBytes());
+				ChannelBuffer content = buffer;
+//				ChannelBuffer oldContentBody = recvReq.getContent();
+//				if (null != oldContentBody)
+//				{
+//					content = ChannelBuffers.wrappedBuffer(
+//					        headerContentBuf, oldContentBody);
+//				}
+//				else
+//				{
+//					content = headerContentBuf;
+//				}
 				
 				//String req = recvReq.getMethod().toString() +" " + recvReq.getUri() +" HTTP/1.0\r\n\r\n";
 				if(logger.isDebugEnabled())
