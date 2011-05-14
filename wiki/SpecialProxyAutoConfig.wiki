@@ -25,6 +25,20 @@
     ** 变量只有两个作用域：全局作用域以及函数作用域（第三方proxy都是全局变量表示）
     ** 语法上支持几乎所有运算符，但语义上仅实现了字符串/整数的比较（">，<，！＝，==等"），此由SPAC插件决定
     ** “＃ //"都可以作为注释符
+    ** 脚本的目前入口有三处：onRoutine/firstSelectProxy/reselectProxyWhenFailed, 入口的详细解释请参考后面"配置/脚本"章节
+    ** 目前支持的内置函数：
+        {{{
+              1. 打印函数 print($content)：打印到标准输出
+                  eg: print("hello,world!");
+              2. 获取头域值 getHeader($req, $name) : 获取HTTP请求/响应中具体头域
+                  eg： $host = getHeader($request, "Host");
+              3. int转化函数 int($str): 将字符串转化为int
+                  eg:  $contentLength = int(getHeader($errorRes, "Content-Length"));
+              4. 调用外部程序 system($cmd): 执行外部程序
+                  eg：$output=system("./my.sh");
+              5. 日志函数 log($content): 记录内容到日志文件中
+                  eg: log("hello, world");
+        }}}
 
 
 = 安装使用 =
@@ -46,40 +60,59 @@
           $MRZHANG="127.0.0.1:2010";
           $APJP="127.0.0.1:10000";
         }}}
+    ** 默认的proxy都是HTTP proxy，若是socks类型需要特殊定义：
+        {{{
+          $SSHD="socks5:127.0.0.1:7070";
+        }}}
+    ** spac.csl中定义了Routine接口方法onRoutine, 用户控制routine频率，若有定期执行某项动作的需要，可在此定义(如修改选择的proxy地址等):
+        {{{
+              def onRoutine()
+              {
+               #Do your routine business here
+               #eg: $output=system("./mysh.sh");
+               #    log($output);
+               #Tell the script engine to invoke this method 10s later
+                return 10;
+               }
+        }}}
     ** 第二步修改选择proxy方法，spac.csl定义了两个proxy选择点：
      * 第一次proxy选择, 方法firstSelectProxy
        {{{
           ##此示例方法在GAE的限制条件下选择PUFF作为proxy， 用户可以参考修改
           def firstSelectProxy(protocol, method, url, headers)
           {
+              #Let sshd handle https request
               if $protocol=="https" 
               { 
-                 return $PUFF;
+                 return $SSHD;
               }
+              #Let phptunnel handle this situation
               ##Google's limit for request body size 1m
               $contentLength = int(getHeader($headers, "content-length"));
               if $contentLength > 1024000
               {
-                return $PUFF;
+                return $PHP;
               }
      
+               # Let seattle handle this situation
               ##Only "GET/POST/PUT/DELETE/HEAD" supported in GAE
               if $method != "GET" && $method != "POST" 
                  && $method != "PUT" && $method != "DELETE"
                  && $method != "HEAD"
               {
-                 return $PUFF;
+                 return $SEATTLE;
               }
      
+               #let tor handle this situation
                ##Request with body not allowed in GAE if it's not POST/PUT
               if $contentLength > 0
               {
                   if $method != "POST" && $method != "PUT"
                   {
-	            #return $SEATTLE;
-                    return $PUFF;
+                    return $TOR;
               }
            }
+           #defaultly, GAE is the chosen one
            return $GAE;
          } 
        }}}
@@ -91,7 +124,7 @@
              $rescode = getResponseCode($errorRes);
              if $proxy == $GAE && $rescode != 503
              {
-                return $PUFF;
+                return $SSHD;
              }
              return null;
           }
