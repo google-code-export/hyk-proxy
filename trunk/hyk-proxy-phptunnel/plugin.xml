@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin name="PHPTunnel" version="0.1.0">
+<plugin name="PHPTunnel" version="0.1.1">
    <depend/>
    <entryClass>com.hyk.proxy.plugin.phptunnel.PhpTunnelPlugin</entryClass>   
    <description>

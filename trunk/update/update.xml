@@ -2,13 +2,16 @@
 	<framework>
 		<upgrade>
 			<fileset>
-				<file>hyk-proxy-0.9.2/lib/hyk-proxy-framework.jar</file>
-				<file>hyk-proxy-0.9.2/lib/hyk-util.jar</file>
-				<file>hyk-proxy-0.9.2/lib/hyk-rpc.jar</file>
-				<file>hyk-proxy-0.9.2/docs/hyk-proxy.ico</file>
-				<file>hyk-proxy-0.9.2/bin/stop.bat</file>
-				<file>hyk-proxy-0.9.2/bin/stop.sh</file>
-				<file>hyk-proxy-0.9.2/changelog.txt</file>
+				<file>hyk-proxy-0.9.3/lib/hyk-proxy-framework.jar</file>
+				<file>hyk-proxy-0.9.3/lib/hyk-util.jar</file>
+				<file>hyk-proxy-0.9.3/lib/hyk-rpc.jar</file>
+				<file>hyk-proxy-0.9.3/lib/bcprov-jdk16-146.jar</file>
+				<file>hyk-proxy-0.9.3/docs/hyk-proxy.ico</file>
+				<file>hyk-proxy-0.9.3/bin/gen_ca.bat</file>
+				<file>hyk-proxy-0.9.3/bin/gen_ca.bat</file>
+				<file>hyk-proxy-0.9.3/bin/stop.bat</file>
+				<file>hyk-proxy-0.9.3/bin/stop.sh</file>
+				<file>hyk-proxy-0.9.3/changelog.txt</file>
 			</fileset>
 		</upgrade>
 	</framework>
@@ -23,6 +26,27 @@
 			    </fileset>
 			</upgrade>
 		</plugin>
+		<plugin name="PHPTunnel">
+			<upgrade>
+			    <fileset>
+				<file>phptunnel/plugin.xml</file>
+				<file>phptunnel/changelog.txt</file>
+				<file>phptunnel/readme.txt</file>
+				<file>phptunnel/lib/hyk-proxy-phptunnel.jar</file>
+			    </fileset>
+			</upgrade>
+		</plugin>
+		<plugin name="SPAC">
+			<upgrade>
+			    <fileset>
+				<file>spac/plugin.xml</file>
+				<file>spac/changelog.txt</file>
+				<file>spac/lib/hyk-proxy-spac.jar</file>
+				<file>spac/etc/spac.csl</file>
+			    </fileset>
+			</upgrade>
+		</plugin>
+
 		<plugin name="SeattleGENI">
 			<upgrade from="0.9.0">
 			    <fileset>

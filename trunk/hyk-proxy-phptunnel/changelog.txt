@@ -1,6 +1,12 @@
 hyk-proxy-phptunnel Changelog
 ===================
 
+Changes in version 0.1.1 (2011.5.14)
+-------------------------------------------
+** Bug
+   * Remove domain name in url for proxy request
+
+
 Changes in version 0.1.0 (2010.9.11)
 -------------------------------------------
 Initial version(for hyk-proxy 0.9.0)

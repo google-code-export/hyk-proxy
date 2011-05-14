@@ -1,5 +1,4 @@
-hyk-proxy 0.9.0  Read Me
-Release 2010/09/16
+hyk-proxy Read Me
 http://hyk-proxy.googlecode.com 
 
 This file is part of hyk-proxy.                                   

@@ -71,7 +71,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 			if (!ishttps)
 			{
 				if (e.getMessage() instanceof HttpRequest)
-				{
+				{	
 					HttpRequest request = (HttpRequest) e.getMessage();
 					if (request.getMethod().equals(HttpMethod.CONNECT))
 					{

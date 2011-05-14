@@ -10,9 +10,13 @@
 package com.hyk.proxy.plugin.spac.script;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 import org.jboss.netty.handler.codec.http.HttpMessage;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tykedog.csl.api.InvokeCommand;
 
 /**
@@ -20,6 +24,7 @@ import org.tykedog.csl.api.InvokeCommand;
  */
 public class Commands
 {
+	protected static Logger logger = LoggerFactory.getLogger(Commands.class);
 	public static final InvokeCommand INT = new InvokeCommand()
 	{
 		@Override
@@ -106,12 +111,41 @@ public class Commands
 		{
 			try
 			{
-				Runtime.getRuntime().exec(arg0[0].toString());
+				StringTokenizer st = new StringTokenizer(arg0[0].toString());
+				String[] cmdarray = new String[st.countTokens()];
+				for (int i = 0; st.hasMoreTokens(); i++)
+					cmdarray[i] = st.nextToken();
+				ProcessBuilder builder = new ProcessBuilder(cmdarray);
+				builder.redirectErrorStream(true);
+				Process p = builder.start();
+
+				byte[] b = new byte[4096];
+				int ret = p.getInputStream().read(b);
+				if (ret > 0)
+				{
+					return new String(b, 0, ret);
+				}
 			}
 			catch (IOException e)
 			{
 				e.printStackTrace();
 			}
+			return null;
+		}
+	};
+
+	public static final InvokeCommand LOG = new InvokeCommand()
+	{
+		@Override
+		public String getName()
+		{
+			return "log";
+		}
+
+		@Override
+		public Object execute(Object[] arg0)
+		{
+			logger.info(arg0[0].toString());
 			return null;
 		}
 	};

@@ -1,4 +1,4 @@
-hyk-proxy 0.9.1  Read Me
+hyk-proxy-gae  Read Me
 Release 2010/06/16
 http://hyk-proxy.googlecode.com 
 
