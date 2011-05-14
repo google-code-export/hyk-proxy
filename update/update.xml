@@ -6,6 +6,8 @@
 				<file>hyk-proxy-0.9.3/lib/hyk-util.jar</file>
 				<file>hyk-proxy-0.9.3/lib/hyk-rpc.jar</file>
 				<file>hyk-proxy-0.9.3/lib/bcprov-jdk16-146.jar</file>
+				<file>hyk-proxy-0.9.3/etc/cert/Fake-ACRoot-Certificate.cer</file>
+				<file>hyk-proxy-0.9.3/etc/cert/RootKeyStore.kst</file>
 				<file>hyk-proxy-0.9.3/docs/hyk-proxy.ico</file>
 				<file>hyk-proxy-0.9.3/bin/gen_ca.bat</file>
 				<file>hyk-proxy-0.9.3/bin/gen_ca.bat</file>
