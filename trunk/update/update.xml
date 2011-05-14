@@ -3,6 +3,7 @@
 		<upgrade>
 			<fileset>
 				<file>hyk-proxy-0.9.3/lib/hyk-proxy-framework.jar</file>
+				<file>hyk-proxy-0.9.3/lib/hyk-proxy-launch.jar</file>
 				<file>hyk-proxy-0.9.3/lib/hyk-util.jar</file>
 				<file>hyk-proxy-0.9.3/lib/hyk-rpc.jar</file>
 				<file>hyk-proxy-0.9.3/lib/bcprov-jdk16-146.jar</file>
