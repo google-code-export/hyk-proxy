@@ -62,7 +62,7 @@ public class ForwardProxyEventService implements HttpProxyEventService
 		this.remoteAddr = new InetSocketAddress(host, port);
 	}
 
-	public ForwardProxyEventService(ClientSocketChannelFactory factory)
+	protected ForwardProxyEventService(ClientSocketChannelFactory factory)
 	{
 		this.factory = factory;
 	}

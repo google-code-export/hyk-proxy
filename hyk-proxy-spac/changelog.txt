@@ -1,5 +1,19 @@
 hyk-proxy-spac Changelog
 ===================
+
+Changes in version 0.4.0 (2011.5.14)
+-------------------------------------------
+** Bug
+   * Remove domain name in url for proxy request
+
+** Improvement
+   * Add support for forwarding to socks proxy
+   * Add script engine function 'system', 'log'
+   * Add proxy script  function 'onRoutine'
+   
+** Task
+   * NA
+
 Changes in version 0.3.0 (2010.9.11) (for hyk-proxy 0.9.0)
 -------------------------------------------
 ** Bug

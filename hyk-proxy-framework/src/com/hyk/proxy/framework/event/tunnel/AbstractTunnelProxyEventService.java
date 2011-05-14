@@ -309,7 +309,7 @@ public abstract class AbstractTunnelProxyEventService implements
 	}
 	
 	@ChannelPipelineCoverage("one")
-    public class EmptyHandler extends SimpleChannelUpstreamHandler
+    public static class EmptyHandler extends SimpleChannelUpstreamHandler
 	{
 
 	}

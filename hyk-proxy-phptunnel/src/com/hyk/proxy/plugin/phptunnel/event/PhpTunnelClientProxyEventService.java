@@ -331,14 +331,21 @@ class PhpTunnelClientProxyEventService extends AbstractTunnelProxyEventService
 
 				newReq.setHeader("Host", host + portstr);
 				StringBuffer headerBuf = new StringBuffer();
+				String uri = recvReq.getUri();
+				String prefix = "http://"
+			        + recvReq.getHeader(HttpHeaders.Names.HOST);
+				if(uri.startsWith(prefix))
+				{
+					uri = uri.substring(prefix.length());
+				}
 				headerBuf.append(recvReq.getMethod().toString())
-				        .append(" ").append(recvReq.getUri()).append(" ")
+				        .append(" ").append(uri).append(" ")
 				        .append(recvReq.getProtocolVersion().toString())
 				        .append("\r\n");
 				newReq.removeHeader("Proxy-Connection");
 				newReq.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/octet-stream");
-                newReq.setHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
-                newReq.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
+                //newReq.setHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+                //newReq.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING, HttpHeaders.Values.BINARY);
 				newReq.addHeader("TunnelTarget", encrpt.encrypt(getRemoteAddress(recvReq)));
 				recvReq.setHeader("Connection", "close");
 				recvReq.setHeader("Proxy-Connection", "close");

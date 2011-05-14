@@ -9,11 +9,15 @@
  */
 package com.hyk.proxy.plugin.spac.event;
 
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -29,122 +33,166 @@ import com.hyk.proxy.framework.event.HttpProxyEventType;
 import com.hyk.proxy.plugin.spac.event.forward.DirectProxyEventServiceFactory;
 import com.hyk.proxy.plugin.spac.event.forward.ForwardProxyEventService;
 import com.hyk.proxy.plugin.spac.event.forward.ForwardProxyEventServiceFactory;
+import com.hyk.proxy.plugin.spac.event.forward.SocksForwardProxyEventService;
+import com.hyk.proxy.plugin.spac.event.forward.SocksForwardProxyEventServiceFactory;
 import com.hyk.util.net.NetUtil;
-
 
 /**
  *
  */
-class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCallback
+public class SpacProxyEventService implements HttpProxyEventService,
+        HttpProxyEventCallback
 {
-	protected Logger					logger			= LoggerFactory.getLogger(getClass());
+	protected Logger logger = LoggerFactory.getLogger(getClass());
 
 	SpacProxyEventServiceFactory ownFactory;
-	
+
 	private HttpProxyEventServiceFactory delegateFactory;
 	private HttpProxyEventService delegate;
-	
-	
+
 	private HttpProxyEventCallback callback;
-	
+
 	public SpacProxyEventService(SpacProxyEventServiceFactory ownFactory)
 	{
 		this.ownFactory = ownFactory;
 	}
-	
+
 	private void selectProxy(String proxy, HttpProxyEvent event)
 	{
-		if(null == proxy)
+		if (null == proxy)
 		{
-			HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST);	
-			event.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+			HttpResponse response = new DefaultHttpResponse(
+			        HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
+			event.getChannel().write(response)
+			        .addListener(ChannelFutureListener.CLOSE);
 			return;
 		}
-//		if(null != delegate)
-//		{
-//			historys.put(delegate.getIdentifier(), delegate);
-//			delegate = null;
-//		}
-		delegateFactory = HttpProxyEventServiceFactory.Registry.getHttpProxyEventServiceFactory(proxy);
-//		if(historys.containsKey(proxy))
-//		{
-//			delegate = historys.get(proxy);
-//		}
-		if(null == delegateFactory)
+		// if(null != delegate)
+		// {
+		// historys.put(delegate.getIdentifier(), delegate);
+		// delegate = null;
+		// }
+		delegateFactory = HttpProxyEventServiceFactory.Registry
+		        .getHttpProxyEventServiceFactory(proxy);
+		// if(historys.containsKey(proxy))
+		// {
+		// delegate = historys.get(proxy);
+		// }
+		if (null == delegateFactory)
 		{
-			if(proxy.indexOf(":") != -1)
+			if (proxy.startsWith("socks"))
 			{
-				delegateFactory = HttpProxyEventServiceFactory.Registry.getHttpProxyEventServiceFactory(ForwardProxyEventServiceFactory.NAME);
+				delegateFactory = SocksForwardProxyEventServiceFactory
+				        .getInstance();
+				String[] ss = proxy.split(":");
+				if (ss.length != 3)
+				{
+					logger.error("Invalid Socks proxy setting!");
+					return;
+				}
+				String procol = ss[0].trim();
+				String host = ss[1].trim();
+				int port = Integer.parseInt(ss[2].trim());
 				if(null == delegate)
+				{
+					SocksForwardProxyEventService serv = (SocksForwardProxyEventService) delegateFactory.createHttpProxyEventService();
+					try
+                    {
+	                    serv.setSocksProxy(procol, host, port);
+                    }
+                    catch (UnknownHostException e)
+                    {
+                    	logger.error("Invalid Socks proxy setting!", e);
+    					return;
+                    }
+					delegate = serv;
+				}
+			}
+			else if (proxy.indexOf(":") != -1)
+			{
+				delegateFactory = ForwardProxyEventServiceFactory.getInstance();
+				if (null == delegate)
 				{
 					int index = proxy.indexOf(":");
 					String host = proxy.substring(0, index).trim();
-					int port = Integer.parseInt(proxy.substring(index + 1).trim());
-					ForwardProxyEventService es = (ForwardProxyEventService)delegateFactory.createHttpProxyEventService();
+					int port = Integer.parseInt(proxy.substring(index + 1)
+					        .trim());
+					ForwardProxyEventService es = (ForwardProxyEventService) delegateFactory
+					        .createHttpProxyEventService();
 					es.setRemoteAddr(host, port);
 					delegate = es;
-				}			
+				}
 			}
 		}
 		else
 		{
-			if(null != delegate)
+			if (null != delegate)
 			{
 				try
-                {
-	                delegate.close();
-                }
-                catch (Exception e)
-                {
-	                // TODO Auto-generated catch block
-	                e.printStackTrace();
-                }
+				{
+					delegate.close();
+				}
+				catch (Exception e)
+				{
+					logger.error("", e);
+				}
 			}
 			delegate = delegateFactory.createHttpProxyEventService();
 		}
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 		{
 			logger.debug("Delegate proxy to :" + delegateFactory.getName());
 		}
-		//delegate.addHttpProxyEventServiceStateListener(this);
+		// delegate.addHttpProxyEventServiceStateListener(this);
 		delegate.handleEvent(event, this);
 	}
-	
+
 	@Override
-	public void handleEvent(HttpProxyEvent event, HttpProxyEventCallback callback)
+	public void handleEvent(HttpProxyEvent event,
+	        HttpProxyEventCallback callback)
 	{
 		this.callback = callback;
-		switch(event.getType())
+		switch (event.getType())
 		{
 			case RECV_HTTP_REQUEST:
 			case RECV_HTTPS_REQUEST:
 			{
-				HttpRequest req = (HttpRequest)event.getSource();
+				if (null != delegate)
+				{
+					delegate.handleEvent(event, this);
+					break;
+				}
+				HttpRequest req = (HttpRequest) event.getSource();
 				String protocol = "http";
-				if(event.getType().equals(HttpProxyEventType.RECV_HTTPS_REQUEST))
+				if (event.getType().equals(
+				        HttpProxyEventType.RECV_HTTPS_REQUEST))
 				{
 					protocol = "https";
 				}
+
 				String proxy = null;
 				String host = req.getHeader("Host");
-				if(null != host)
+				if (null != host)
 				{
 					int index = host.indexOf(":");
-					if(index > -1)
+					if (index > -1)
 					{
 						host = host.substring(0, index);
 					}
-					if(NetUtil.isPrivateIP(host))
+					if (NetUtil.isPrivateIP(host))
 					{
 						proxy = DirectProxyEventServiceFactory.NAME;
 					}
 				}
-				if(null == proxy)
+				if (null == proxy)
 				{
-					proxy = (String)ownFactory.csl.invoke("firstSelectProxy", new Object[]{protocol, req.getMethod().toString(), req.getUri(), req});
+					proxy = (String) ownFactory.csl.invoke("firstSelectProxy",
+					        new Object[] { protocol,
+					                req.getMethod().toString(), req.getUri(),
+					                req });
 				}
-				
-				if(logger.isDebugEnabled())
+
+				if (logger.isDebugEnabled())
 				{
 					logger.debug("Select a proxy:" + proxy);
 				}
@@ -153,21 +201,20 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 			}
 			default:
 			{
-				if(null != delegate)
+				if (null != delegate)
 				{
 					delegate.handleEvent(event, this);
 				}
 				break;
 			}
 		}
-		
-	}
 
+	}
 
 	@Override
 	public void close() throws Exception
 	{
-		if(null != delegate)
+		if (null != delegate)
 		{
 			delegate.close();
 		}
@@ -176,21 +223,25 @@ class SpacProxyEventService  implements HttpProxyEventService, HttpProxyEventCal
 	@Override
 	public void onEventServiceClose(HttpProxyEventService service)
 	{
-		if(null != callback)
+		if (null != callback)
 		{
 			callback.onEventServiceClose(service);
 		}
-		//historys.remove(service.getIdentifier());
+		// historys.remove(service.getIdentifier());
 	}
 
 	@Override
-	public void onProxyEventFailed(HttpProxyEventService service, HttpResponse res, HttpProxyEvent event)
+	public void onProxyEventFailed(HttpProxyEventService service,
+	        HttpResponse res, HttpProxyEvent event)
 	{
-		//String identifier = service.getIdentifier();
-		String proxy = (String)ownFactory.csl.invoke("reselectProxyWhenFailed", new Object[]{res, delegateFactory.getName()});
-		if(null == proxy)
+		// String identifier = service.getIdentifier();
+		String proxy = (String) ownFactory.csl.invoke(
+		        "reselectProxyWhenFailed",
+		        new Object[] { res, delegateFactory.getName() });
+		if (null == proxy)
 		{
-			event.getChannel().write(res).addListener(ChannelFutureListener.CLOSE);
+			event.getChannel().write(res)
+			        .addListener(ChannelFutureListener.CLOSE);
 			return;
 		}
 		selectProxy(proxy, event);

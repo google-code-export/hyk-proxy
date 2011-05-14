@@ -43,6 +43,7 @@ import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.proxy.framework.event.HttpProxyEvent;
 import com.hyk.proxy.framework.event.HttpProxyEventCallback;
 import com.hyk.proxy.framework.event.HttpProxyEventService;
+import com.hyk.proxy.framework.event.HttpProxyEventType;
 import com.hyk.proxy.common.Constants;
 import com.hyk.proxy.common.http.header.ContentRangeHeaderValue;
 import com.hyk.proxy.common.http.header.RangeHeaderValue;
@@ -201,7 +202,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 			HttpProxyEventCallback callback) {
 		this.callback = callback;
 		if (logger.isDebugEnabled()) {
-			logger.debug("Handle event:" + event.getType());
+			logger.debug("Handle event:" + event.getType() + " in handler:" + hashCode());
 		}
 		try {
 			switch (event.getType()) {
@@ -211,8 +212,11 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 				HttpRequest request = (HttpRequest) event.getSource();
 				proxyHttpVer = request.getProtocolVersion();
 				this.originalProxyEvent = event;
+				ishttps = event.getType().equals(HttpProxyEventType.RECV_HTTPS_REQUEST);
 				if (request.getMethod().equals(HttpMethod.CONNECT)) {
-					ishttps = true;
+					if (logger.isDebugEnabled()) {
+						logger.debug("Recv https Connect request in handler:" +  hashCode());
+					} 
 					httpspath = request.getHeader("Host");
 					String httpshost = httpspath;
 					String httpsport = "443";

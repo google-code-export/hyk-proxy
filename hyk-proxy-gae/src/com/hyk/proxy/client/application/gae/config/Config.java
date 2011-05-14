@@ -390,7 +390,7 @@ public class Config
 					localProxy.nextHopGoogleServer = null;
 				}
 			}
-			if (localProxy.host.isEmpty())
+			if (null == localProxy.host || localProxy.host.isEmpty())
 			{
 				localProxy = null;
 			}

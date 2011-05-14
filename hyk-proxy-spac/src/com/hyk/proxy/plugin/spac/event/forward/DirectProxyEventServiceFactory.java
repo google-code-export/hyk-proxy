@@ -18,6 +18,11 @@ import com.hyk.proxy.framework.event.HttpProxyEventService;
 public class DirectProxyEventServiceFactory extends ForwardProxyEventServiceFactory
 {
 	public static final String NAME = "DIRECT";
+	
+	public DirectProxyEventServiceFactory()
+	{
+		
+	}
 	@Override
 	public HttpProxyEventService createHttpProxyEventService()
 	{

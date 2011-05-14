@@ -1,5 +1,16 @@
 hyk-proxy Changelog
 ===================
+Changes in version 0.9.3 (2010.5.14)
+-------------------------------------------
+** Bug
+   * N/A
+
+** Improvement
+   * Support generating fake root ac cert and generate cert by fake CA
+   
+** Task
+   * NA
+
 Changes in version 0.9.2 (2010.4.2)
 -------------------------------------------
 ** Bug

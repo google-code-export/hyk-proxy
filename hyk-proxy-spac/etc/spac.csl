@@ -2,8 +2,8 @@
 ##Third proxy client
 $TOR="127.0.0.1:9050";
 $PUFF="127.0.0.1:1984";
-$MRZHANG="127.0.0.1:2010";
 $APJP="127.0.0.1:10000";
+$SSHD="socks5:127.0.0.1:7070";
 
 ##Reserved proxy implementation
 $GAE="GAE";
@@ -11,17 +11,32 @@ $DIRECT="DIRECT";
 $SEATTLE="SeattleGENI";
 $PHP="PHPTunnel";
 
+#defined selected proxy
+$SELECTD1=$GAE
+$SELECTD2=$SEATTLE
+$SELECTD3=$PHP
+
+def onRoutine()
+{
+   #Do your routine business here
+   #eg: $output=system("./mysh.sh");
+   #    log($output);
+   #Tell the script engine to invoke this method 10s later
+   return 10;
+}
+
 def firstSelectProxy(protocol, method, url, headers)
 {
+     #Set your https proxy here
      if $protocol=="https"
      { 
-        return $SEATTLE;
+        return $SELECTD1;
      }
-     ##Google's limit for request body size 1m
+     ##Google's limit for request body size 10m
      $contentLength = int(getHeader($headers, "Content-Length"));
-     if $contentLength > 1024000
+     if $contentLength > 10240000
      {
-         return $SEATTLE;
+         return $SELECTD2;
      }
      
      ##Only "GET/POST/PUT/DELETE/HEAD" supported in GAE
@@ -29,7 +44,7 @@ def firstSelectProxy(protocol, method, url, headers)
         && $method != "PUT" && $method != "DELETE"
         && $method != "HEAD"
      {
-        return $SEATTLE;
+        return $SELECTD2;
      }
      
      ##Request with body not allowed in GAE if it's not POST/PUT
@@ -37,11 +52,11 @@ def firstSelectProxy(protocol, method, url, headers)
      {
         if $method != "POST" && $method != "PUT" 
         {
-           return $SEATTLE;
+           return $SELECTD2;
         }
      }
      
-     return $GAE;
+     return $SELECTD1;
 }
 
 def reselectProxyWhenFailed(errorRes, proxy)
@@ -50,7 +65,7 @@ def reselectProxyWhenFailed(errorRes, proxy)
    $contentLength = int(getHeader($errorRes, "Content-Length"));
    if $proxy == $GAE && $contentLength == 0
    {
-       return $SEATTLE;
+       return $SELECTD2;
    }
    return null;
 }

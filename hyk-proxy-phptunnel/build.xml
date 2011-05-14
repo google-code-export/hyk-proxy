@@ -14,7 +14,7 @@
 		<property name="temp" value="${root}/temp" />
 		<property name="shell" value="${root}/shell" />
 		<property name="release" value="release" />
-		<property name="version" value="0.1.0" />
+		<property name="version" value="0.1.1" />
 	    <property name="release_dir_name" value="phptunnel" />
 		<property name="project_name" value="hyk-proxy-phptunnel" />
 

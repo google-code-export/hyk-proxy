@@ -48,6 +48,8 @@
 					<include name="${jar}" />
 					<include name="tykedog.jar" />
 					<include name="antlr-runtime-3.2.jar" />
+					<include name="commons-lang-2.4.jar" />
+					<include name="jsocks.jar" />
 				</fileset>
 			</copy>
 			<copy todir="${releaseprojectdir}/etc">
