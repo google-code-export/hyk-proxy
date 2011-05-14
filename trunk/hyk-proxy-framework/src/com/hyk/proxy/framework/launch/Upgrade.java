@@ -159,6 +159,11 @@ public class Upgrade
 								        + filesep
 								        + targetPath.replace("/", filesep));
 							}
+							else
+							{
+								dest = FileUtil.createFile(home + filesep
+								        + targetPath.replace("/", filesep));
+							}
 							fos = new FileOutputStream(dest);
 						}
 
