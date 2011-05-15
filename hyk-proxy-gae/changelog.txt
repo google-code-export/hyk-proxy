@@ -1,7 +1,7 @@
 hyk-proxy-gae Changelog
 ===================
 
-Changes in version 0.9.3 (2011.5.14)
+Changes in version 0.9.3.2 (2011.5.14)
 -------------------------------------------
 ** Bug
    * NA

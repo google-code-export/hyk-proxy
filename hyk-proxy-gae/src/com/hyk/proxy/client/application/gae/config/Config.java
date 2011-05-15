@@ -280,7 +280,7 @@ public class Config
 	{
 		for(String site:injectRangeHeaderSiteSet)
 		{
-			if(host.indexOf(site) != -1)
+			if(!site.isEmpty() && host.indexOf(site) != -1)
 			{
 				return true;
 			}
