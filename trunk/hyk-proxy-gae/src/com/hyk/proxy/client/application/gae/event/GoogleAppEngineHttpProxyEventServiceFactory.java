@@ -240,6 +240,11 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 							|| serverVersion.contains(Version.value)) {
 						return;
 					}
+					//just return without warning for specific version
+					if(serverVersion.equalsIgnoreCase("0.9.1"))
+					{
+						return;
+					}
 					String cause = String
 							.format("Client's version:%s may be not compatible with Server's version:%s .",
 									Version.value, serverVersion);

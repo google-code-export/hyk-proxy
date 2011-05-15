@@ -174,7 +174,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 		if (null != contentBody) {
 			chunkedBodys.add(contentBody);
 		}
-		
+		originalRequest = gaeRequest.clone();
 		//Try to 
 		if(!containRangeHeader && Config.getInstance().isInjectRangeHeaderSitesMatchHost(recvReq.getHeader(HttpHeaders.Names.HOST)))
 		{
@@ -266,7 +266,7 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 						return;
 					}
 					forwardRequest = buildForwardRequest(request);
-					originalRequest = forwardRequest.clone();
+					
 					asyncFetch(forwardRequest);
 				}
 				break;
