@@ -144,15 +144,23 @@ public class Upgrade
 						// user plugin
 						if (targetPath.startsWith("."))
 						{
-							fos = new FileOutputStream(userHome + filesep
+							File dest = new File(userHome + filesep
 							        + ".hyk-proxy" + filesep
 							        + targetPath.replace("/", filesep));
+							if(dest.exists() && action.equals(UpgradeAction.ADD))
+							{
+								continue;
+							}
+							fos = new FileOutputStream(dest);
 						}
 						else
 						{
 							File dest = new File(home + filesep
 							        + targetPath.replace("/", filesep));
-
+							if(dest.exists() && action.equals(UpgradeAction.ADD))
+							{
+								continue;
+							}
 							if (!FileUtil.canWrite(dest))
 							{
 								dest = FileUtil.createFile(UPGRADE_HOME
@@ -207,9 +215,8 @@ public class Upgrade
 		}
 		catch (Exception e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-
+			UPGRADE_FILE.delete();
 		}
 		return false;
 	}

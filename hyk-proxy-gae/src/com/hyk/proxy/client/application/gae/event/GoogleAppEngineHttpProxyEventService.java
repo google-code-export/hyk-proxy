@@ -215,12 +215,16 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 				ishttps = event.getType().equals(HttpProxyEventType.RECV_HTTPS_REQUEST);
 				if (request.getMethod().equals(HttpMethod.CONNECT)) {
 					if (logger.isDebugEnabled()) {
-						logger.debug("Recv https Connect request in handler:" +  hashCode());
+						logger.debug("Recv https Connect request:" + request);
 					} 
 					httpspath = request.getHeader("Host");
+					if(httpspath == null)
+					{
+						httpspath = request.getUri();
+					}
 					String httpshost = httpspath;
 					String httpsport = "443";
-					if (httpspath.indexOf(":") != -1) {
+					if(httpspath.indexOf(":") != -1) {
 						httpshost = httpspath.substring(0,
 								httpspath.indexOf(":"));
 						httpsport = httpspath

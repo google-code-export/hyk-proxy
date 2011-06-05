@@ -46,8 +46,8 @@ import com.hyk.util.net.NetUtil;
  */
 public class Updater
 {
-	private static final long INITIAL_DELAY = 10 ; // 1s
-	private static final long FIX_RATE = 3600; // 1h
+	private static final long INITIAL_DELAY = 120 ; // 1s
+	private static final long FIX_RATE = 36000; // 10h
 
 	private static final int FRAMEWORK = 0;
 	private static final int GLOBAL_PLUGIN = 1;
@@ -60,9 +60,8 @@ public class Updater
 
 	public Updater(Framework fm)
 	{
-
-		timer.scheduleAtFixedRate(new UpdateTask(), INITIAL_DELAY, FIX_RATE,
-		        TimeUnit.SECONDS);
+		//Only check once
+		timer.schedule(new UpdateTask(), INITIAL_DELAY, TimeUnit.SECONDS);
 		this.trace = Misc.getTrace();
 		this.fm = fm;
 	}
