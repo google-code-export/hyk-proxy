@@ -1,0 +1,24 @@
+/**
+ * This file is part of the hyk-proxy project.
+ * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ *
+ * Description: FetchService.java 
+ *
+ * @author yinqiwen [ Jan 25, 2010 | 2:37:50 PM ]
+ *
+ */
+package org.hyk.proxy.gae.common.rpc.service;
+
+import org.hyk.proxy.gae.common.http.message.HttpRequestExchange;
+import org.hyk.proxy.gae.common.http.message.HttpResponseExchange;
+
+import com.hyk.rpc.core.annotation.Remote;
+
+/**
+ *
+ */
+@Remote
+public interface FetchService
+{
+	HttpResponseExchange fetch(HttpRequestExchange req);
+}

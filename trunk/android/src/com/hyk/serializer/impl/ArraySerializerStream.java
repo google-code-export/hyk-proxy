@@ -53,7 +53,7 @@ public class ArraySerializerStream<T> extends SerailizerStream<T>
 		catch(Exception e)
 		{
 			e.printStackTrace();
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 
 	}

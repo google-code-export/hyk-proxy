@@ -56,11 +56,11 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 		}
 		catch(IllegalAccessException e)
 		{
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 		catch(InvocationTargetException e)
 		{
-			throw new IOException(e.getCause());
+			throw new IOException(e.getMessage());
 		}
 	}
 
@@ -97,7 +97,7 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 		}
 		catch(IllegalAccessException e)
 		{
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 
 		return data;

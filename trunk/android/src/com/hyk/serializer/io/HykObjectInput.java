@@ -203,7 +203,7 @@ public class HykObjectInput implements ObjectInput {
 			throw e;
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 
 	}
