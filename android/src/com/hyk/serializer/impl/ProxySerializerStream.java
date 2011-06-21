@@ -47,7 +47,7 @@ public class ProxySerializerStream<T> extends SerailizerStream<T>
 		}
 		catch (Exception e)
 		{
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 	}
 

@@ -164,7 +164,7 @@ public class HykObjectOutput<T> implements ObjectOutput {
 				break;
 			}
 		} catch (Exception e) {
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 	}
 

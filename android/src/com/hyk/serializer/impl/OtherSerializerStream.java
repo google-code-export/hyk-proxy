@@ -68,7 +68,7 @@ public class OtherSerializerStream extends SerailizerStream<Object>
 		}
 		catch (Exception e)
 		{
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 	}
 
