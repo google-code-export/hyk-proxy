@@ -96,17 +96,17 @@ public class ClientUtils {
 //		return sslContext;
 //	}
 
-//	public static SSLContext getFakeSSLContext(String host, String port)
-//			throws Exception {
-//		SSLContext sslContext = SSLContext.getInstance("TLS");
-//		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-//
+	public static SSLContext getFakeSSLContext(String host, String port)
+			throws Exception {
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+
 //		kmf.init(SslCertificateHelper.getClientKeyStore(host), SslCertificateHelper.KS_PASS.toCharArray());
 //		sslContext.init(kmf.getKeyManagers(), null, null);
 //		// sslparams.s
 //		// param.setSSLParameters(sslparams);
-//		return sslContext;
-//	}
+		return sslContext;
+	}
 
 	public static boolean isIPV6Address(String address) {
 		try {

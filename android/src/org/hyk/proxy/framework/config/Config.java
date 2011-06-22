@@ -9,20 +9,16 @@
  */
 package org.hyk.proxy.framework.config;
 
-
 import org.hyk.proxy.framework.appdata.AppData;
 import org.hyk.proxy.framework.common.Constants;
 import org.hyk.proxy.framework.util.SimpleSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-
-
 /**
  *
  */
-@XmlRootElement(name = "Configure")
+
 public class Config
 {
 	protected static Logger logger = LoggerFactory.getLogger(Config.class);
@@ -33,18 +29,7 @@ public class Config
 	{
 		try
 		{
-			JAXBContext context = JAXBContext.newInstance(Config.class);
-			Unmarshaller unmarshaller = context.createUnmarshaller();
-			if(AppData.getUserFrameworkConf().exists())
-			{
-				instance = (Config) unmarshaller.unmarshal(AppData.getUserFrameworkConf());
-			}
-			else
-			{
-				instance = (Config) unmarshaller.unmarshal(Config.class
-				        .getResource("/" + Constants.CONF_FILE));
-			}
-			
+
 			instance.init();
 		}
 		catch (Exception e)
@@ -53,13 +38,11 @@ public class Config
 		}
 	}
 
-	@XmlElement(name = "localserver")
 	private SimpleSocketAddress localProxyServerAddress = new SimpleSocketAddress(
 	        "localhost", 48100);
 
 	private int threadPoolSize = 30;
 
-	@XmlElement
 	public void setThreadPoolSize(int threadPoolSize)
 	{
 		this.threadPoolSize = threadPoolSize;
@@ -72,7 +55,6 @@ public class Config
 		return proxyEventServiceFactory;
 	}
 
-	@XmlElement
 	public void setProxyEventServiceFactory(String proxyEventServiceFactory)
 	{
 		this.proxyEventServiceFactory = proxyEventServiceFactory;
