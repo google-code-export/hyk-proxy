@@ -9,6 +9,8 @@
  */
 package org.hyk.proxy.gae.common.rpc.service;
 
+import org.hyk.proxy.gae.common.gae.auth.User;
+
 import com.hyk.rpc.core.RpcCallback;
 import com.hyk.rpc.core.annotation.Async;
 

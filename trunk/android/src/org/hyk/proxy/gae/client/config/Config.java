@@ -13,38 +13,24 @@ import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.net.ssl.SSLSocketFactory;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlValue;
 
+import org.hyk.proxy.gae.client.util.GoogleAvailableService;
+import org.hyk.proxy.gae.common.Constants;
+import org.hyk.proxy.gae.common.Version;
+import org.hyk.proxy.gae.common.secure.NoneSecurityService;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hyk.proxy.client.util.GoogleAvailableService;
-import com.hyk.proxy.common.Constants;
-import com.hyk.proxy.common.Version;
-import com.hyk.proxy.common.secure.NoneSecurityService;
-
 /**
  *
  */
-@XmlRootElement(name = "Configure")
+
 public class Config
 {
 	protected static Logger logger = LoggerFactory.getLogger(Config.class);
@@ -54,10 +40,7 @@ public class Config
 	{
 		try
 		{
-			JAXBContext context = JAXBContext.newInstance(Config.class);
-			Unmarshaller unmarshaller = context.createUnmarshaller();
-			instance = (Config) unmarshaller.unmarshal(Config.class
-			        .getResource("/" + Constants.CLIENT_CONF_NAME));
+
 			instance.init();
 		}
 		catch (Exception e)
@@ -85,19 +68,19 @@ public class Config
 
 	public static class SimpleSocketAddress
 	{
-		@XmlAttribute
+
 		public String host;
-		@XmlAttribute
+
 		public int port;
 	}
 
 	public static class HykProxyServerAuth
 	{
-		@XmlAttribute
+
 		public String appid;
-		@XmlAttribute
+
 		public String user;
-		@XmlAttribute
+
 		public String passwd;
 	}
 
@@ -105,6 +88,7 @@ public class Config
 	{
 		HTTP("http"), HTTPS("https");
 		String value;
+
 		ProxyType(String v)
 		{
 			value = v;
@@ -126,19 +110,17 @@ public class Config
 
 	public static class ProxyInfo
 	{
-		@XmlElement
+
 		public String host;
-		@XmlElement
+
 		public int port = 80;
-		@XmlElement
+
 		public String user;
-		@XmlElement
+
 		public String passwd;
 
-		@XmlElement
 		public ProxyType type = ProxyType.HTTP;
 
-		@XmlElement
 		public String nextHopGoogleServer;
 
 	}
@@ -161,7 +143,7 @@ public class Config
 			// String name = null;
 			if (server.equals(GTALK_SERVER_NAME))
 			{
-				if (null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.equals(""))
 				{
 					this.serverHost = GTALK_SERVER;
 				}
@@ -174,7 +156,7 @@ public class Config
 			}
 			else if (server.equals(OVI_SERVER_NAME))
 			{
-				if (null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.equals(""))
 				{
 					this.serverHost = OVI_SERVER;
 				}
@@ -187,7 +169,7 @@ public class Config
 			}
 			else
 			{
-				if (null == this.serverHost || this.serverHost.isEmpty())
+				if (null == this.serverHost || this.serverHost.equals(""))
 				{
 					this.serverHost = server;
 				}
@@ -211,27 +193,24 @@ public class Config
 			return this;
 		}
 
-		@XmlAttribute(name = "user")
 		public String jid;
-		@XmlAttribute
+
 		public String passwd;
-		@XmlAttribute
+
 		public int serverPort;
-		@XmlAttribute
+
 		public String serverHost;
-		@XmlAttribute(name = "oldSSLEnable")
+
 		public boolean isOldSSLEnable;
 
-		@XmlTransient
 		public ConnectionConfiguration connectionConfig;
-		@XmlTransient
+
 		public String name;
 
 	}
 
 	private List<HykProxyServerAuth> hykProxyServerAuths = new LinkedList<HykProxyServerAuth>();
 
-	@XmlElements(@XmlElement(name = "hyk-proxy-server"))
 	public void setHykProxyServerAuths(
 	        List<HykProxyServerAuth> hykProxyServerAuths)
 	{
@@ -240,7 +219,6 @@ public class Config
 
 	private List<XmppAccount> xmppAccounts;
 
-	@XmlElements(@XmlElement(name = "XMPPAccount"))
 	public void setXmppAccounts(List<XmppAccount> xmppAccounts)
 	{
 		this.xmppAccounts = xmppAccounts;
@@ -248,39 +226,37 @@ public class Config
 
 	private int httpConnectionPoolSize;
 
-	@XmlElement
 	public void setHttpConnectionPoolSize(int httpConnectionPoolSize)
 	{
 		this.httpConnectionPoolSize = httpConnectionPoolSize;
 	}
-	
+
 	private List<String> injectRangeHeaderSiteSet = new ArrayList<String>();
 	private String injectRangeHeaderSites;
-	
-	@XmlElement
+
 	void setInjectRangeHeaderSites(String injectRangeHeaderSites)
 	{
 		this.injectRangeHeaderSites = injectRangeHeaderSites;
 		String[] sites = injectRangeHeaderSites.split(";");
-		for(String s:sites)
+		for (String s : sites)
 		{
 			injectRangeHeaderSiteSet.add(s.trim());
 		}
-		//System.out.println("#####" + injectRangeHeaderSiteSet);
-		//System.exit(1);
-		
+		// System.out.println("#####" + injectRangeHeaderSiteSet);
+		// System.exit(1);
+
 	}
-	
+
 	String getInjectRangeHeaderSites()
 	{
 		return injectRangeHeaderSites;
 	}
-	
+
 	public boolean isInjectRangeHeaderSitesMatchHost(String host)
 	{
-		for(String site:injectRangeHeaderSiteSet)
+		for (String site : injectRangeHeaderSiteSet)
 		{
-			if(!site.isEmpty() && host.indexOf(site) != -1)
+			if (!site.equals("") && host.indexOf(site) != -1)
 			{
 				return true;
 			}
@@ -290,7 +266,6 @@ public class Config
 
 	private int rpcTimeOut;
 
-	@XmlElement(name = "RPCTimeOut")
 	public void setRpcTimeOut(int rpcTimeOut)
 	{
 		this.rpcTimeOut = rpcTimeOut;
@@ -298,7 +273,6 @@ public class Config
 
 	private boolean simpleURLEnable;
 
-	@XmlElement
 	public void setSimpleURLEnable(boolean simpleURLEnable)
 	{
 		this.simpleURLEnable = simpleURLEnable;
@@ -306,7 +280,6 @@ public class Config
 
 	private String compressor;
 
-	@XmlElement
 	public void setCompressor(String compressor)
 	{
 		this.compressor = compressor;
@@ -314,7 +287,6 @@ public class Config
 
 	private int fetchLimitSize;
 
-	@XmlElement
 	public void setFetchLimitSize(int fetchLimitSize)
 	{
 		this.fetchLimitSize = fetchLimitSize;
@@ -322,7 +294,6 @@ public class Config
 
 	private int maxFetcherNumber;
 
-	@XmlElement
 	public void setMaxFetcherNumber(int maxFetcherNumber)
 	{
 		this.maxFetcherNumber = maxFetcherNumber;
@@ -331,7 +302,6 @@ public class Config
 	// @XmlElement
 	private ProxyInfo localProxy;
 
-	@XmlElement(name = "localProxy")
 	public void setHykProxyClientLocalProxy(ProxyInfo localProxy)
 	{
 		this.localProxy = localProxy;
@@ -348,7 +318,6 @@ public class Config
 
 	private ConnectionMode client2ServerConnectionMode;
 
-	@XmlTransient
 	public ConnectionMode getClient2ServerConnectionMode()
 	{
 		return client2ServerConnectionMode;
@@ -367,7 +336,6 @@ public class Config
 		return httpUpStreamEncrypter;
 	}
 
-	@XmlElement
 	public void setHttpUpStreamEncrypter(String httpUpStreamEncrypter)
 	{
 		this.httpUpStreamEncrypter = httpUpStreamEncrypter;
@@ -385,12 +353,12 @@ public class Config
 			{
 				localProxy.nextHopGoogleServer = localProxy.nextHopGoogleServer
 				        .trim();
-				if(localProxy.nextHopGoogleServer.isEmpty())
+				if (localProxy.nextHopGoogleServer.equals(""))
 				{
 					localProxy.nextHopGoogleServer = null;
 				}
 			}
-			if (null == localProxy.host || localProxy.host.isEmpty())
+			if (null == localProxy.host || localProxy.host.equals(""))
 			{
 				localProxy = null;
 			}
@@ -407,7 +375,7 @@ public class Config
 			for (int i = 0; i < hykProxyServerAuths.size(); i++)
 			{
 				HykProxyServerAuth auth = hykProxyServerAuths.get(i);
-				if (auth.appid == null || auth.appid.trim().isEmpty())
+				if (auth.appid == null || auth.appid.trim().equals(""))
 				{
 					hykProxyServerAuths.remove(i);
 					i--;
@@ -437,7 +405,7 @@ public class Config
 			for (int i = 0; i < xmppAccounts.size(); i++)
 			{
 				XmppAccount account = xmppAccounts.get(i);
-				if (account.jid == null || account.jid.isEmpty())
+				if (account.jid == null || account.jid.equals(""))
 				{
 					xmppAccounts.remove(i);
 					i--;
@@ -467,7 +435,7 @@ public class Config
 		}
 	}
 
-	@XmlElement
+
 	void setConnectionMode(int mode)
 	{
 		client2ServerConnectionMode = ConnectionMode.fromInt(mode);
@@ -522,6 +490,7 @@ public class Config
 	{
 		localProxy = null;
 	}
+
 	public boolean selectDefaultHttpProxy()
 	{
 		if (null == localProxy)
@@ -537,7 +506,7 @@ public class Config
 		}
 		return false;
 	}
-	
+
 	public boolean selectDefaultHttpsProxy()
 	{
 		if (null == localProxy)
@@ -556,34 +525,31 @@ public class Config
 		return false;
 	}
 
-	@XmlElementWrapper(name = "AppIdBindings")
-	@XmlElements(@XmlElement(name = "Binding"))
 	private List<AppIdBinding> appIdBindings;
 
-	@XmlElement(name = "HttpProxyUserAgent")
 	private HttpProxyUserAgent httpProxyUserAgent;
 
 	static class AppIdBinding
 	{
-		@XmlAttribute
+
 		String appid;
-		@XmlElements(@XmlElement(name = "site"))
+
 		List<String> sites;
 	}
 
 	static class HttpProxyUserAgent
 	{
-		@XmlAttribute
+
 		String choice;
-		@XmlElements(@XmlElement(name = "UserAgent"))
+
 		List<UserAgent> agents;
 	}
 
 	static class UserAgent
 	{
-		@XmlAttribute
+
 		String name;
-		@XmlValue
+
 		String value;
 	}
 
@@ -633,16 +599,7 @@ public class Config
 		try
 		{
 			init();
-			JAXBContext context = JAXBContext.newInstance(Config.class);
-			Marshaller marshaller = context.createMarshaller();
-			marshaller.setProperty("jaxb.formatted.output", Boolean.TRUE);
-			URL url = Config.class
-			        .getResource("/" + Constants.CLIENT_CONF_NAME);
-			String conf = URLDecoder.decode(url.getFile(), "UTF-8");
-			FileOutputStream fos = new FileOutputStream(conf);
-			// fos.write("<!-- This is generated by hyk-proxy-client GUI, it's not the orignal conf file -->\r\n".getBytes());
-			marshaller.marshal(this, fos);
-			fos.close();
+			//TODO
 		}
 		catch (Exception e)
 		{

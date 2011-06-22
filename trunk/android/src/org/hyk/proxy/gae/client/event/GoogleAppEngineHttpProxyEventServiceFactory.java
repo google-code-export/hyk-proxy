@@ -37,6 +37,7 @@ import org.hyk.proxy.gae.common.rpc.service.FetchService;
 import org.hyk.proxy.gae.common.rpc.service.MasterNodeService;
 import org.hyk.proxy.gae.common.rpc.service.RemoteServiceManager;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -135,7 +135,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		catch(XMPPException e)
 		{
 			logger.error("Failed to send XMPP message", e);
-			throw new IOException(e);
+			throw new IOException("Failed to send XMPP message");
 		}
 		catch(Exception e)
 		{
