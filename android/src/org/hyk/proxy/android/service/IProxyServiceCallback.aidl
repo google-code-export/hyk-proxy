@@ -1,4 +1,4 @@
-package org.hyk.proxy.service;
+package org.hyk.proxy.android.service;
 
 /**
  * Callback interface used to send

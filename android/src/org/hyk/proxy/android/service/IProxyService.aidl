@@ -1,6 +1,6 @@
-package org.hyk.proxy.service;
+package org.hyk.proxy.android.service;
 
-import org.hyk.proxy.service.IProxyServiceCallback;
+import org.hyk.proxy.android.service.IProxyServiceCallback;
 
 /**
  * an interface for calling on to a remote service
