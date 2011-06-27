@@ -11,14 +11,14 @@
 		    android:orientation="vertical"
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent">
-		    <TextView android:text="@string/wizard_details"
+		    <TextView android:text="asd"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"		
 				android:paddingTop="15px"
 				android:paddingLeft="15px"
 				android:textStyle="bold"
 				android:textColor="#00ff00" />	
-			<TextView android:text="@string/wizard_details_msg"
+			<TextView android:text="xcv"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:autoLink="web"
