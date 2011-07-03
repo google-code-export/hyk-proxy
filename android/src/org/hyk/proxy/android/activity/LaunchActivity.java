@@ -9,10 +9,11 @@
  */
 package org.hyk.proxy.android.activity;
 
-
-
 import org.hyk.proxy.android.R;
 import org.hyk.proxy.android.helper.StatusHelper;
+import org.hyk.proxy.android.service.IProxyService;
+import org.hyk.proxy.android.service.IProxyServiceCallback;
+import org.hyk.proxy.android.service.ProxyService;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -48,49 +49,120 @@ import android.widget.TextView;
 /**
  *
  */
-public class LaunchActivity extends Activity 
+public class LaunchActivity extends Activity
 {
+	private Button triggerbutton;
+	private IProxyService proxySrvice;
+	private IProxyServiceCallback callback = new IProxyServiceCallback()
+	{
+
+		@Override
+		public IBinder asBinder()
+		{
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void statusChanged(String value) throws RemoteException
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void logMessage(String value) throws RemoteException
+		{
+			StatusHelper.log(value);
+
+		}
+	};
+
+	private ServiceConnection serviceConnection = new ServiceConnection()
+	{
+
+		@Override
+		public void onServiceDisconnected(ComponentName name)
+		{
+			proxySrvice = null;
+		}
+
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service)
+		{
+			proxySrvice = IProxyService.Stub.asInterface(service);
+
+			try
+			{
+				proxySrvice.registerCallback(callback);
+				if (null != triggerbutton)
+				{
+					if (proxySrvice.getStatus() == 0)
+					{
+						triggerbutton.setText("Stop");
+						triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
+						        R.drawable.player_stop, 0, 0, 0);
+					}
+				}
+				
+			}
+			catch (RemoteException e)
+			{
+				 Log.e("", "", e);
+			}
+		}
+	};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-	    // TODO Auto-generated method stub
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.layout_main);
-	    
-	    final TextView statusView = (TextView) findViewById(R.id.statusview);
-	    StatusHelper.log("hyk-proxy-android V0.9.5 launched.", statusView);
-	    
-	    Button triggerbutton = (Button) findViewById(R.id.triggerbutton);
-	    Button cfgbutton = (Button) findViewById(R.id.configbutton);
-	    Button exitbButton = (Button) findViewById(R.id.exitbutton);
-	    Button helpButton =  (Button) findViewById(R.id.helpbutton);
-	    
-	    //get
-	    //triggerbutton.setBackgroundDrawable(Resources.getSystem().getDrawable(R.drawable.player_stop));
-	    triggerbutton.setText("Stop");
-	    
-	    cfgbutton.setOnClickListener(new OnClickListener()
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+	
+
+		setContentView(R.layout.layout_main);
+
+		final TextView statusView = (TextView) findViewById(R.id.statusview);
+		StatusHelper.log("hyk-proxy-android V0.9.5 launched.", statusView);
+		
+		
+		triggerbutton = (Button) findViewById(R.id.triggerbutton);
+		Button cfgbutton = (Button) findViewById(R.id.configbutton);
+		Button exitbButton = (Button) findViewById(R.id.exitbutton);
+		Button helpButton = (Button) findViewById(R.id.helpbutton);
+
+		Intent intent = new Intent(ProxyService.class.getName());
+		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+		// get
+		// triggerbutton.setBackgroundDrawable(Resources.getSystem().getDrawable(R.drawable.player_stop));
+		// triggerbutton.setText("Stop");
+		// triggerbutton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_stop,
+		// 0, 0, 0);
+
+		cfgbutton.setOnClickListener(new OnClickListener()
 		{
 			@Override
 			public void onClick(View v)
 			{
-				startActivityForResult(new Intent(LaunchActivity.this, ConfigurationActivity.class), 1);
+				startActivityForResult(new Intent(LaunchActivity.this,
+				        ConfigurationActivity.class), 1);
 			}
 		});
-	    
-	    helpButton.setOnClickListener(new OnClickListener()
-		{		
+
+		helpButton.setOnClickListener(new OnClickListener()
+		{
 			@Override
 			public void onClick(View v)
 			{
-				Uri uri = Uri.parse("http://code.google.com/p/hyk-proxy/");                            
-	            Intent intent = new Intent(Intent.ACTION_VIEW,uri);    
-	            startActivity(intent);    
+				Uri uri = Uri.parse("http://code.google.com/p/hyk-proxy/");
+				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+				startActivity(intent);
 			}
 		});
-	    
-	    exitbButton.setOnClickListener(new OnClickListener()
-		{		
+
+		exitbButton.setOnClickListener(new OnClickListener()
+		{
 			@Override
 			public void onClick(View v)
 			{
@@ -98,6 +170,22 @@ public class LaunchActivity extends Activity
 			}
 		});
 	}
-	
-	
+
+	@Override
+	protected void onDestroy()
+	{
+		if (proxySrvice != null)
+		{
+			try
+			{
+				proxySrvice.unregisterCallback(callback);
+			}
+			catch (RemoteException e)
+			{
+			}
+		}
+		unbindService(serviceConnection);
+		super.onDestroy();
+	}
+
 }
