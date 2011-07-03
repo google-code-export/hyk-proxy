@@ -44,11 +44,11 @@ public class Framework implements ManageResource
 	public Framework(Trace trace)
 	{
 		this.trace = trace;
-		Preferences.init();
+		//Preferences.init();
 //		pm = PluginManager.getInstance();
 		Config config = Config.loadConfig();
 		ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
-		        config.getThreadPoolSize(), 0, 0);
+		        20, 0, 0);
 		Misc.setGlobalThreadPool(workerExecutor);
 		Misc.setTrace(trace);
 //		pm.loadPlugins(trace);
