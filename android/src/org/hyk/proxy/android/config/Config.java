@@ -1,23 +1,22 @@
 /**
- * This file is part of the hyk-proxy project.
- * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ * This file is part of the hyk-proxy-android project.
+ * Copyright (c) 2011 Yin QiWen <yinqiwen@gmail.com>
  *
- * Description: Config.java 
+ * Description: ConfigService.java 
  *
- * @author yinqiwen [ 2010-5-14 | 08:49:33 PM]
+ * @author yinqiwen [ 2011-7-5 | ÏÂÎç09:03:26 ]
  *
  */
-package org.hyk.proxy.gae.client.config;
+package org.hyk.proxy.android.config;
 
-import java.io.FileOutputStream;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import org.hyk.proxy.android.R;
+import org.hyk.proxy.framework.util.SimpleSocketAddress;
 import org.hyk.proxy.gae.client.util.GoogleAvailableService;
 import org.hyk.proxy.gae.common.Constants;
 import org.hyk.proxy.gae.common.Version;
@@ -27,28 +26,129 @@ import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.preference.PreferenceManager;
+
 /**
  *
  */
-
 public class Config
 {
+
 	protected static Logger logger = LoggerFactory.getLogger(Config.class);
+	private Context ctx;
+	private SimpleSocketAddress localProxyServerAddress = new SimpleSocketAddress();
+
+	private int threadPoolSize = 30;
 	private static Config instance = null;
 
-	static
+	private Config(Context ctx)
 	{
+		this.ctx = ctx;
+	}
+
+	public static void initSingletonInstance(Context ctx)
+	{
+		if (null == instance)
+		{
+			instance = new Config(ctx);
+			
+		}
+		else
+		{
+			instance.ctx = ctx;
+		}
 		try
 		{
-
 			instance.init();
 		}
 		catch (Exception e)
 		{
-			logger.error("Failed to load default config file!", e);
+			logger.error("Failed to load config", e);
 		}
 	}
 
+	public static Config loadConfig()
+	{
+		return instance;
+	}
+	
+	public static Config getInstance()
+	{
+		return instance;
+	}
+
+	private String proxyEventServiceFactory = "GAE";
+
+	public String getProxyEventServiceFactory()
+	{
+		return proxyEventServiceFactory;
+	}
+
+	public void init() throws Exception
+	{
+		SharedPreferences pref = PreferenceManager
+		        .getDefaultSharedPreferences(ctx);
+		//General part
+		localProxyServerAddress.host = pref.getString(ctx.getString(R.string.PROXY_SERVICE_HOST), "localhost");
+		try
+        {
+			localProxyServerAddress.port = Integer.parseInt(pref.getString(ctx.getString(R.string.PROXY_SERVICE_PORT).trim(), "48100"));
+        }
+        catch (Exception e)
+        {
+        	localProxyServerAddress.port = 48100;
+        }
+        
+        try
+        {
+        	threadPoolSize = Integer.parseInt(pref.getString(ctx.getString(R.string.THREAD_POOL_SIZE).trim(), "20"));
+        }
+        catch (Exception e)
+        {
+        	threadPoolSize = 20;
+        }
+		
+		
+		//Google AppEngine part
+		client2ServerConnectionMode = ConnectionMode.fromString(pref.getString(ctx.getString(R.string.GAE_CONNECTION_MODE), "HTTP"));
+		String appids = pref.getString(ctx.getString(R.string.GOOGLE_APPID_LIST), "");
+		if(!appids.equals(""))
+		{
+			String[] appid_list = appids.split(",");
+			for (int i = 0; i < appid_list.length; i++)
+            {
+	            String appid = appid_list[i];
+	            HykProxyServerAuth auth = new HykProxyServerAuth();
+	            if(appid.indexOf("@") == -1)
+	            {
+	            	auth.appid = appid.trim();
+	            }
+	            else
+	            {
+	            	String[] temp = appid.split("@");
+	            	auth.appid = temp[1].trim();
+	            	auth.user = temp[0].split(":")[0].trim();
+	            	auth.passwd = temp[0].split(":")[1].trim();
+	            }
+	            hykProxyServerAuths.add(auth);
+            }
+		}
+		postInit();
+	}
+
+	public SimpleSocketAddress getLocalProxyServerAddress()
+	{
+		return localProxyServerAddress;
+	}
+
+	public int getThreadPoolSize()
+	{
+		return threadPoolSize;
+	}
+	
 	public static enum ConnectionMode
 	{
 		HTTP2GAE(1), XMPP2GAE(2), HTTPS2GAE(3);
@@ -63,15 +163,24 @@ public class Config
 		{
 			return values()[v - 1];
 		}
+		
+		public static ConnectionMode fromString(String s)
+		{
+			if(s.equalsIgnoreCase("HTTPS"))
+			{
+				return HTTPS2GAE;
+			}
+			else if(s.equalsIgnoreCase("HTTP"))
+			{
+				return HTTP2GAE;
+			}
+			else if(s.equalsIgnoreCase("XMPP"))
+			{
+				return XMPP2GAE;
+			}
+			return HTTP2GAE;
+		}
 
-	}
-
-	public static class SimpleSocketAddress
-	{
-
-		public String host;
-
-		public int port;
 	}
 
 	public static class HykProxyServerAuth
@@ -316,7 +425,7 @@ public class Config
 	// @XmlElement
 	// private ProxyInfo defaultLocalProxy;
 
-	private ConnectionMode client2ServerConnectionMode;
+	private ConnectionMode client2ServerConnectionMode = ConnectionMode.HTTP2GAE;
 
 	public ConnectionMode getClient2ServerConnectionMode()
 	{
@@ -341,7 +450,7 @@ public class Config
 		this.httpUpStreamEncrypter = httpUpStreamEncrypter;
 	}
 
-	public void init() throws Exception
+	public void postInit() throws Exception
 	{
 		if (localProxy != null)
 		{
@@ -539,17 +648,13 @@ public class Config
 
 	static class HttpProxyUserAgent
 	{
-
 		String choice;
-
 		List<UserAgent> agents;
 	}
 
 	static class UserAgent
 	{
-
 		String name;
-
 		String value;
 	}
 
@@ -589,21 +694,14 @@ public class Config
 		return defaultUserAgent;
 	}
 
-	public static Config getInstance()
+	
+	public  String getPreferenceValue(String key)
 	{
-		return instance;
+		return null;
 	}
-
-	public void saveConfig() throws Exception
+	
+	public void setPrefernceValue(String key, String value)
 	{
-		try
-		{
-			init();
-			//TODO
-		}
-		catch (Exception e)
-		{
-			throw e;
-		}
+		
 	}
 }

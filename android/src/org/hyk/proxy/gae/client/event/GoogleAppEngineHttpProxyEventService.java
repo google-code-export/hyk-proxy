@@ -18,11 +18,11 @@ import java.util.concurrent.Executor;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.event.HttpProxyEvent;
 import org.hyk.proxy.framework.event.HttpProxyEventCallback;
 import org.hyk.proxy.framework.event.HttpProxyEventService;
 import org.hyk.proxy.framework.event.HttpProxyEventType;
-import org.hyk.proxy.gae.client.config.Config;
 import org.hyk.proxy.gae.client.event.GoogleAppEngineHttpProxyEventServiceFactory.FetchServiceSelector;
 import org.hyk.proxy.gae.client.util.ClientUtils;
 import org.hyk.proxy.gae.common.Constants;

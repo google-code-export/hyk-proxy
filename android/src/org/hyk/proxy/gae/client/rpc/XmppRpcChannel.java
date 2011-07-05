@@ -14,7 +14,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.hyk.proxy.gae.client.config.Config.XmppAccount;
+import org.hyk.proxy.android.config.Config.XmppAccount;
 import org.hyk.proxy.gae.common.Constants;
 import org.hyk.proxy.gae.common.xmpp.XmppAddress;
 import org.jivesoftware.smack.Chat;

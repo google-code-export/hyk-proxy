@@ -18,14 +18,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.hyk.proxy.android.config.Config;
+import org.hyk.proxy.android.config.Config.ConnectionMode;
+import org.hyk.proxy.android.config.Config.HykProxyServerAuth;
+import org.hyk.proxy.android.config.Config.XmppAccount;
 import org.hyk.proxy.framework.common.Misc;
 import org.hyk.proxy.framework.event.HttpProxyEventService;
 import org.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
 import org.hyk.proxy.framework.util.ListSelector;
-import org.hyk.proxy.gae.client.config.Config;
-import org.hyk.proxy.gae.client.config.Config.ConnectionMode;
-import org.hyk.proxy.gae.client.config.Config.HykProxyServerAuth;
-import org.hyk.proxy.gae.client.config.Config.XmppAccount;
 import org.hyk.proxy.gae.client.util.ClientUtils;
 import org.hyk.proxy.gae.common.Constants;
 import org.hyk.proxy.gae.common.Version;

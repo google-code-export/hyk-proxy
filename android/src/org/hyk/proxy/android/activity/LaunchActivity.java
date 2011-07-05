@@ -99,16 +99,22 @@ public class LaunchActivity extends Activity
 				{
 					if (proxySrvice.getStatus() == 0)
 					{
+						triggerbutton.setText("Start");
+						triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
+						        R.drawable.player_play, 0, 0, 0);
+					}
+					else
+					{
 						triggerbutton.setText("Stop");
 						triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
 						        R.drawable.player_stop, 0, 0, 0);
 					}
 				}
-				
+
 			}
 			catch (RemoteException e)
 			{
-				 Log.e("", "", e);
+				Log.e("", "", e);
 			}
 		}
 	};
@@ -118,15 +124,12 @@ public class LaunchActivity extends Activity
 	{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		
-	
 
 		setContentView(R.layout.layout_main);
 
 		final TextView statusView = (TextView) findViewById(R.id.statusview);
 		StatusHelper.log("hyk-proxy-android V0.9.5 launched.", statusView);
-		
-		
+
 		triggerbutton = (Button) findViewById(R.id.triggerbutton);
 		Button cfgbutton = (Button) findViewById(R.id.configbutton);
 		Button exitbButton = (Button) findViewById(R.id.exitbutton);
@@ -134,11 +137,34 @@ public class LaunchActivity extends Activity
 
 		Intent intent = new Intent(ProxyService.class.getName());
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-		// get
-		// triggerbutton.setBackgroundDrawable(Resources.getSystem().getDrawable(R.drawable.player_stop));
-		// triggerbutton.setText("Stop");
-		// triggerbutton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_stop,
-		// 0, 0, 0);
+
+		triggerbutton.setOnClickListener(new OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				if (null != proxySrvice)
+				{
+					try
+                    {
+						if (proxySrvice.getStatus() == 0)
+						{
+							proxySrvice.start();
+						}
+						else
+						{
+							proxySrvice.stop();
+						}
+                    }
+                    catch (Exception e)
+                    {
+	                    // TODO: handle exception
+                    }
+					
+				}
+
+			}
+		});
 
 		cfgbutton.setOnClickListener(new OnClickListener()
 		{

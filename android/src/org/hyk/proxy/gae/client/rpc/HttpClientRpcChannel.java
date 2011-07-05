@@ -29,10 +29,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-import org.hyk.proxy.gae.client.config.Config;
-import org.hyk.proxy.gae.client.config.Config.ConnectionMode;
-import org.hyk.proxy.gae.client.config.Config.ProxyInfo;
-import org.hyk.proxy.gae.client.config.Config.ProxyType;
+import org.hyk.proxy.android.config.Config;
+import org.hyk.proxy.android.config.Config.ConnectionMode;
+import org.hyk.proxy.android.config.Config.ProxyInfo;
+import org.hyk.proxy.android.config.Config.ProxyType;
 import org.hyk.proxy.gae.client.util.ClientUtils;
 import org.hyk.proxy.gae.client.util.GoogleAvailableService;
 import org.hyk.proxy.gae.common.http.message.HttpServerAddress;

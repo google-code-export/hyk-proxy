@@ -19,7 +19,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hyk.proxy.framework.config.Config;
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.util.SimpleSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
