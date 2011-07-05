@@ -1,28 +1,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 <PreferenceCategory android:title="General">
-<CheckBoxPreference 
-android:defaultValue="true" 
-android:key="pref_start_boot"
-android:title="Start Orbot on Boot"
-android:summary="Start Orbot on Boot"
-android:enabled="true"/>
 
-<EditTextPreference android:key="pref_listen_host"
+<EditTextPreference android:key="@string/PROXY_SERVICE_HOST"
 android:defaultValue="localhost"
 android:title="ProxyServiceHost"
 android:summary="Proxy Service Listen Host"
 android:dialogTitle="ProxyServiceHost Setting"
+android:persistent="true"
 />
 
-<EditTextPreference android:key="pref_listen_port"
+<EditTextPreference android:key="@string/PROXY_SERVICE_PORT"
 android:defaultValue="48100"
 android:title="ProxyServicePort"
 android:summary="Proxy Service Listen Port"
 android:dialogTitle="ProxyServicePort Setting"
+android:persistent="true"
 />
 
-<EditTextPreference android:key="pref_threadpool_size"
+<EditTextPreference android:key="@string/THREAD_POOL_SIZE"
 android:defaultValue="30"
 android:title="ThreadPoolSize"
 android:summary="Application Thread Pool Size"
@@ -39,20 +35,29 @@ android:title="use google proxy"
 android:summary="use google proxy"
 android:enabled="true"/>
 
-<Preference
-android:defaultValue="" 
-android:key="appid_list"
-android:title="AppIDs"
-android:summary="Remote AppIDs"
-android:enabled="true"/>
-
-
-<EditTextPreference android:key="pref_threadpool_size"
-android:defaultValue="30"
-android:title="ThreadPoolSize"
-android:summary="Thread Pool Size"
-android:dialogTitle="ThreadPoolSize Setting"
+<EditTextPreference android:key="@string/GOOGLE_APPID_LIST"
+android:defaultValue=""
+android:title="Appengine appids"
+android:summary="Format: [user:password@]appid1, [user:password@]appid2"
+android:dialogTitle="Appengine AppIDs Setting"
 />
+
+
+<EditTextPreference android:key="@string/GAE_CONNECTION_MODE"
+android:defaultValue="HTTP"
+android:title="Connection Mode"
+android:summary="Appspot Web Server Connection Mode"
+android:dialogTitle="Connection Mode Setting"
+/>
+
+<EditTextPreference android:key="@string/XMPP_ACCOUNTS"
+android:defaultValue=""
+android:title="XMPP Accounts"
+android:summary="Format: [user:password@]server1[:port], [user:password@]server2[:port]"
+android:dialogTitle="Appengine AppIDs Setting"
+/>
+
+
 </PreferenceCategory>
 
 <PreferenceCategory android:title="Node Configuration" android:summary="These are advanced settings that can reduce your anonymity">

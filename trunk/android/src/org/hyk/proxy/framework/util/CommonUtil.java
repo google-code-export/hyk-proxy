@@ -18,7 +18,7 @@ import java.net.Proxy.Type;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.hyk.proxy.framework.config.Config;
+import org.hyk.proxy.android.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

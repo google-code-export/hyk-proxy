@@ -15,7 +15,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.hyk.proxy.gae.client.config.Config;
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.gae.client.event.GoogleAppEngineHttpProxyEventServiceFactory.FetchServiceSelector;
 import org.hyk.proxy.gae.client.util.ClientUtils;
 import org.hyk.proxy.gae.common.http.header.RangeHeaderValue;

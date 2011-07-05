@@ -9,8 +9,12 @@
  */
 package org.hyk.proxy.android.service;
 
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.Framework;
+import org.hyk.proxy.framework.httpserver.HttpLocalProxyServer;
 import org.hyk.proxy.framework.trace.Trace;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import android.app.Service;
 import android.content.Intent;
@@ -23,6 +27,7 @@ import android.os.RemoteException;
  */
 public class ProxyService extends Service
 {
+	protected static Logger	logger	= LoggerFactory.getLogger(HttpLocalProxyServer.class);
 	private IProxyServiceCallback callback = null;
 
 	private Trace trace = new Trace()
@@ -74,7 +79,7 @@ public class ProxyService extends Service
 		}
 	};
 	
-	private Framework fr = new Framework(trace);
+	private Framework fr = null;
 	
 	private IBinder binder = new IProxyService.Stub()
 	{
@@ -84,21 +89,23 @@ public class ProxyService extends Service
 		        throws RemoteException
 		{
 			callback = cb;
-			callback.logMessage("@@@@@@@@@@@@@@@");
 		}
 
 		@Override
 		public int getStatus() throws RemoteException
 		{
 			// TODO Auto-generated method stub
-			return 0;
+			return fr.isStarted()?1:0;
 		}
 
 
 		@Override
         public void start() throws RemoteException
         {
-			fr.start();
+			Config.initSingletonInstance(ProxyService.this);
+			String x = Config.getInstance().getLocalProxyServerAddress().host;
+			logger.info("########" +x);
+			//fr.start();
         }
 
 		@Override
@@ -111,8 +118,7 @@ public class ProxyService extends Service
         public void unregisterCallback(IProxyServiceCallback cb)
                 throws RemoteException
         {
-	        // TODO Auto-generated method stub
-	        
+			callback = null;
         }
 	};
 
@@ -120,8 +126,11 @@ public class ProxyService extends Service
 	public void onCreate()
 	{
 		super.onCreate();
-        
+		Config.initSingletonInstance(this);
+		fr = new Framework(trace);
+		
 	}
+	
 
 	@Override
 	public IBinder onBind(Intent arg)

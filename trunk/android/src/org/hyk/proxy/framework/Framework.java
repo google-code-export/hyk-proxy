@@ -13,12 +13,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.hyk.proxy.framework.common.Constants;
 import org.hyk.proxy.framework.common.Misc;
-import org.hyk.proxy.framework.config.Config;
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
 import org.hyk.proxy.framework.httpserver.HttpLocalProxyServer;
 import org.hyk.proxy.framework.management.ManageResource;
 import org.hyk.proxy.framework.management.UDPManagementServer;
-import org.hyk.proxy.framework.prefs.Preferences;
 import org.hyk.proxy.framework.trace.Trace;
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
@@ -48,7 +47,7 @@ public class Framework implements ManageResource
 //		pm = PluginManager.getInstance();
 		Config config = Config.loadConfig();
 		ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
-		        20, 0, 0);
+				config.getThreadPoolSize(), 0, 0);
 		Misc.setGlobalThreadPool(workerExecutor);
 		Misc.setTrace(trace);
 //		pm.loadPlugins(trace);

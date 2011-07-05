@@ -2,4 +2,10 @@
 <resources>
     <string name="hello">Hello World!</string>
     <string name="app_name">hyk-proxy-android</string>
+    <string name="PROXY_SERVICE_HOST">ProxyServiceHost</string>
+    <string name="PROXY_SERVICE_PORT">ProxyServicePort</string>
+    <string name="THREAD_POOL_SIZE">ThreadPoolSize</string>
+    <string name="GOOGLE_APPID_LIST">AppIDs</string>
+    <string name="GAE_CONNECTION_MODE">ConnectionMode</string>
+    <string name="XMPP_ACCOUNTS">XMPPAccounts</string>
 </resources>
