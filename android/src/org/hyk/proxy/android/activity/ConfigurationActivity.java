@@ -41,7 +41,7 @@ public class ConfigurationActivity extends PreferenceActivity implements
 	}
 
 	@Override
-	public boolean onPreferenceClick(Preference arg0)
+	public boolean onPreferenceClick(Preference pref)
 	{
 		// TODO Auto-generated method stub
 		return false;

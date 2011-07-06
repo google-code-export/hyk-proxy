@@ -89,6 +89,7 @@ public class RemoteObjectProxy implements InvocationHandler, Externalizable {
 	public void readExternal(SerializerInput in) throws IOException
 	{
 		objID = in.readLong();
+		System.out.println("######" + objID);
 		hostAddress = in.readObject(Address.class);
 		sessionManager = ThreadLocalUtil.getThreadLocalUtil(SessionManager.class).getThreadLocalObject();
 	}

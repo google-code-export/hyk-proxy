@@ -8,4 +8,5 @@
     <string name="GOOGLE_APPID_LIST">AppIDs</string>
     <string name="GAE_CONNECTION_MODE">ConnectionMode</string>
     <string name="XMPP_ACCOUNTS">XMPPAccounts</string>
+    <string name="LOCAL_PROXY">LocalProxy</string>
 </resources>
