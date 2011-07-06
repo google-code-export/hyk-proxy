@@ -9,11 +9,12 @@
  */
 package org.hyk.proxy.framework;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.common.Constants;
 import org.hyk.proxy.framework.common.Misc;
-import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
 import org.hyk.proxy.framework.httpserver.HttpLocalProxyServer;
 import org.hyk.proxy.framework.management.ManageResource;
@@ -22,6 +23,12 @@ import org.hyk.proxy.framework.trace.Trace;
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hyk.proxy.client.application.gae.event.GoogleAppEngineHttpProxyEventServiceFactory;
+import com.hyk.proxy.client.util.GoogleAvailableService;
+import com.hyk.proxy.common.ExtensionsLauncher;
+
+
 
 /**
  *
@@ -48,11 +55,17 @@ public class Framework implements ManageResource
 		Config config = Config.loadConfig();
 		ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
 				config.getThreadPoolSize(), 0, 0);
+		//ThreadPoolExecutor workerExecutor = new ScheduledThreadPoolExecutor(config.getThreadPoolSize());
 		Misc.setGlobalThreadPool(workerExecutor);
 		Misc.setTrace(trace);
-//		pm.loadPlugins(trace);
-//		pm.activatePlugins(trace);
-//		updater = new Updater(this);
+		init();
+	}
+	
+	private void init()
+	{
+		GoogleAvailableService.getInstance();
+		ExtensionsLauncher.init();
+		HttpProxyEventServiceFactory.Registry.register(new GoogleAppEngineHttpProxyEventServiceFactory());
 	}
 
 	public void stop()
@@ -105,18 +118,15 @@ public class Framework implements ManageResource
 			{
 				logger.error("No event service factory found with name:"
 				        + config.getProxyEventServiceFactory());
+				trace.error("No event service factory found with name:"
+				        + config.getProxyEventServiceFactory());
 				return false;
 			}
 			esf.init();
 			server = new HttpLocalProxyServer(
 			        config.getLocalProxyServerAddress(),
 			        Misc.getGlobalThreadPool(), esf);
-			commandServer = new UDPManagementServer(
-			        config.getLocalProxyServerAddress());
-			Misc.setManagementServer(commandServer);
-			commandServer.addManageResource(this);
-//			commandServer.addManageResource(pm);
-			Misc.getGlobalThreadPool().execute(commandServer);
+			//Misc.getGlobalThreadPool().execute(commandServer);
 			trace.notice("Local HTTP Server Running...\nat "
 			        + config.getLocalProxyServerAddress());
 			isStarted = true;
@@ -124,6 +134,7 @@ public class Framework implements ManageResource
 		}
 		catch (Exception e)
 		{
+			trace.error("Failed to launch local proxy server for reason:" + e.getMessage());
 			logger.error("Failed to launch local proxy server.", e);
 		}
 		return false;

@@ -8,6 +8,8 @@ import java.io.NotSerializableException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import com.hyk.io.buffer.ChannelDataBuffer;
 import com.hyk.serializer.Externalizable;
@@ -21,6 +23,15 @@ import com.hyk.serializer.util.ContextUtil;
  */
 public class ObjectSerializerStream<T> extends SerailizerStream<T>
 {	
+	static class FieldComarator implements Comparator<Field>
+	{
+		@Override
+        public int compare(Field object1, Field object2)
+        {
+	        return object1.getName().compareTo(object2.getName());
+        }
+		
+	}
 	@Override
 	protected T unmarshal(Class<T> type, ChannelDataBuffer data) throws NotSerializableException, IOException, InstantiationException
 	{
@@ -39,6 +50,7 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 				return ret;
 			}
 			Field[] fs = ReflectionCache.getSerializableFields(type);
+			Arrays.sort(fs, new FieldComarator());
 			while(true)
 			{
 				int tag = readTag(data);
@@ -82,6 +94,7 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 		{
 			//writeInt(data, 0);
 			Field[] fs = ReflectionCache.getSerializableFields(clazz);
+			Arrays.sort(fs, new FieldComarator());
 			for(int i = 0; i < fs.length; i++)
 			{
 				Field f = fs[i];
@@ -92,6 +105,7 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 					writeObject(data, fieldValue, f.getType());
 					
 				}
+				
 			}
 			writeTag(data, 0);
 		}

@@ -17,10 +17,6 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.hyk.proxy.android.R;
 import org.hyk.proxy.framework.util.SimpleSocketAddress;
-import org.hyk.proxy.gae.client.util.GoogleAvailableService;
-import org.hyk.proxy.gae.common.Constants;
-import org.hyk.proxy.gae.common.Version;
-import org.hyk.proxy.gae.common.secure.NoneSecurityService;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.util.StringUtils;
 import org.slf4j.Logger;
@@ -28,8 +24,12 @@ import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.preference.PreferenceManager;
+
+import com.hyk.proxy.client.util.GoogleAvailableService;
+import com.hyk.proxy.common.Constants;
+import com.hyk.proxy.common.Version;
+import com.hyk.proxy.common.secure.NoneSecurityService;
 
 /**
  *
@@ -54,7 +54,7 @@ public class Config
 		if (null == instance)
 		{
 			instance = new Config(ctx);
-			
+
 		}
 		else
 		{
@@ -74,7 +74,7 @@ public class Config
 	{
 		return instance;
 	}
-	
+
 	public static Config getInstance()
 	{
 		return instance;
@@ -91,51 +91,68 @@ public class Config
 	{
 		SharedPreferences pref = PreferenceManager
 		        .getDefaultSharedPreferences(ctx);
-		//General part
-		localProxyServerAddress.host = pref.getString(ctx.getString(R.string.PROXY_SERVICE_HOST), "localhost");
+		// General part
+		localProxyServerAddress.host = pref.getString(
+		        ctx.getString(R.string.PROXY_SERVICE_HOST), "localhost");
 		try
-        {
-			localProxyServerAddress.port = Integer.parseInt(pref.getString(ctx.getString(R.string.PROXY_SERVICE_PORT).trim(), "48100"));
-        }
-        catch (Exception e)
-        {
-        	localProxyServerAddress.port = 48100;
-        }
-        
-        try
-        {
-        	threadPoolSize = Integer.parseInt(pref.getString(ctx.getString(R.string.THREAD_POOL_SIZE).trim(), "20"));
-        }
-        catch (Exception e)
-        {
-        	threadPoolSize = 20;
-        }
-		
-		
-		//Google AppEngine part
-		client2ServerConnectionMode = ConnectionMode.fromString(pref.getString(ctx.getString(R.string.GAE_CONNECTION_MODE), "HTTP"));
-		String appids = pref.getString(ctx.getString(R.string.GOOGLE_APPID_LIST), "");
-		if(!appids.equals(""))
+		{
+			localProxyServerAddress.port = Integer.parseInt(pref.getString(ctx
+			        .getString(R.string.PROXY_SERVICE_PORT).trim(), "48100"));
+		}
+		catch (Exception e)
+		{
+			localProxyServerAddress.port = 48100;
+		}
+
+		try
+		{
+			threadPoolSize = Integer.parseInt(pref.getString(
+			        ctx.getString(R.string.THREAD_POOL_SIZE).trim(), "20"));
+		}
+		catch (Exception e)
+		{
+			threadPoolSize = 20;
+		}
+
+		// Google AppEngine part
+		client2ServerConnectionMode = ConnectionMode.fromString(pref.getString(
+		        ctx.getString(R.string.GAE_CONNECTION_MODE), "HTTP"));
+		String appids = pref.getString(
+		        ctx.getString(R.string.GOOGLE_APPID_LIST), "");
+		if (!appids.equals(""))
 		{
 			String[] appid_list = appids.split(",");
 			for (int i = 0; i < appid_list.length; i++)
-            {
-	            String appid = appid_list[i];
-	            HykProxyServerAuth auth = new HykProxyServerAuth();
-	            if(appid.indexOf("@") == -1)
-	            {
-	            	auth.appid = appid.trim();
-	            }
-	            else
-	            {
-	            	String[] temp = appid.split("@");
-	            	auth.appid = temp[1].trim();
-	            	auth.user = temp[0].split(":")[0].trim();
-	            	auth.passwd = temp[0].split(":")[1].trim();
-	            }
-	            hykProxyServerAuths.add(auth);
-            }
+			{
+				String appid = appid_list[i];
+				HykProxyServerAuth auth = HykProxyServerAuth.fromStr(appid
+				        .trim());
+				hykProxyServerAuths.add(auth);
+			}
 		}
+		
+		String xmpp_accounts_str = pref.getString(
+		        ctx.getString(R.string.XMPP_ACCOUNTS), "");
+		if (!xmpp_accounts_str.equals(""))
+		{
+			String[] xmpp_account_list = xmpp_accounts_str.split(",");
+			for (int i = 0; i < xmpp_account_list.length; i++)
+			{
+				String xmpp_account = xmpp_account_list[i].trim();
+				XmppAccount account = XmppAccount.fromStr(xmpp_account);
+				xmppAccounts.add(account);
+			}
+		}
+		
+		String localProxyStr = pref.getString(
+		        ctx.getString(R.string.LOCAL_PROXY), "");
+		localProxyStr = localProxyStr.trim();
+		if(localProxyStr.length() != 0)
+		{
+			ProxyInfo info = ProxyInfo.fromStr(localProxyStr);
+			localProxy = info;
+		}
+			
 		postInit();
 	}
 
@@ -148,7 +165,7 @@ public class Config
 	{
 		return threadPoolSize;
 	}
-	
+
 	public static enum ConnectionMode
 	{
 		HTTP2GAE(1), XMPP2GAE(2), HTTPS2GAE(3);
@@ -163,18 +180,18 @@ public class Config
 		{
 			return values()[v - 1];
 		}
-		
+
 		public static ConnectionMode fromString(String s)
 		{
-			if(s.equalsIgnoreCase("HTTPS"))
+			if (s.equalsIgnoreCase("HTTPS"))
 			{
 				return HTTPS2GAE;
 			}
-			else if(s.equalsIgnoreCase("HTTP"))
+			else if (s.equalsIgnoreCase("HTTP"))
 			{
 				return HTTP2GAE;
 			}
-			else if(s.equalsIgnoreCase("XMPP"))
+			else if (s.equalsIgnoreCase("XMPP"))
 			{
 				return XMPP2GAE;
 			}
@@ -191,6 +208,23 @@ public class Config
 		public String user;
 
 		public String passwd;
+
+		public static HykProxyServerAuth fromStr(String str)
+		{
+			HykProxyServerAuth auth = new HykProxyServerAuth();
+			if (str.indexOf("@") == -1)
+			{
+				auth.appid = str.trim();
+			}
+			else
+			{
+				String[] temp = str.split("@");
+				auth.appid = temp[1].trim();
+				auth.user = temp[0].split(":")[0].trim();
+				auth.passwd = temp[0].split(":")[1].trim();
+			}
+			return auth;
+		}
 	}
 
 	public static enum ProxyType
@@ -232,6 +266,62 @@ public class Config
 
 		public String nextHopGoogleServer;
 
+		public static ProxyInfo fromStr(String str)
+		{
+			String proxystr = str;
+			ProxyInfo info = new ProxyInfo();
+			if (str.startsWith("https://"))
+			{
+				info.type = ProxyType.HTTPS;
+				proxystr = proxystr.substring("https://".length());
+			}
+			else if (str.startsWith("http://"))
+			{
+				info.type = ProxyType.HTTP;
+				proxystr = proxystr.substring("http://".length());
+			}
+			String server_part = proxystr;
+			String user_part = null;
+			if (proxystr.indexOf("@") != -1)
+			{
+				server_part = proxystr.split("@")[1].trim();
+				user_part = proxystr.split("@")[0].trim();
+			}
+
+			if (server_part.indexOf(":") != -1)
+			{
+				info.host = server_part.split(":")[0].trim();
+				info.port = Integer.parseInt(server_part.split(":")[1].trim());
+			}
+			else
+			{
+				info.host = server_part;
+				if (info.type.equals(ProxyType.HTTPS))
+				{
+					info.port = 443;
+				}
+				else
+				{
+					info.port = 80;
+				}
+			}
+			
+			if(null != user_part)
+			{
+				if (user_part.indexOf(":") != -1)
+				{
+					info.user = user_part.split(":")[0].trim();
+					info.passwd = user_part.split(":")[1].trim();
+				}
+				else
+				{
+					info.user = user_part;
+					info.passwd = "";
+				}
+			}
+			return info;
+		}
+
 	}
 
 	public static class XmppAccount
@@ -245,6 +335,31 @@ public class Config
 		private static final int OVI_SERVER_PORT = 5223;
 
 		protected static final int DEFAULT_PORT = 5222;
+
+		public static XmppAccount fromStr(String str)
+		{
+			XmppAccount account = new XmppAccount();
+			if (str.indexOf("@") == -1)
+			{
+				return null;
+			}
+			else
+			{
+				String[] temp = str.split("@");
+				String uaser_part = temp[0].trim();
+				String server_part = temp[1].trim();
+				// account.name = uaser_part.split(":")[0].trim();
+				account.passwd = uaser_part.split(":")[1].trim();
+				if (server_part.indexOf(":") != -1)
+				{
+					account.serverPort = Integer.parseInt(server_part
+					        .split(":")[1]);
+				}
+				account.jid = uaser_part.split(":")[0].trim() + "@"
+				        + server_part.split(":")[0].trim();
+			}
+			return account.init();
+		}
 
 		public XmppAccount init()
 		{
@@ -326,14 +441,14 @@ public class Config
 		this.hykProxyServerAuths = hykProxyServerAuths;
 	}
 
-	private List<XmppAccount> xmppAccounts;
+	private List<XmppAccount> xmppAccounts = new LinkedList<Config.XmppAccount>();
 
 	public void setXmppAccounts(List<XmppAccount> xmppAccounts)
 	{
 		this.xmppAccounts = xmppAccounts;
 	}
 
-	private int httpConnectionPoolSize;
+	private int httpConnectionPoolSize = 7;
 
 	public void setHttpConnectionPoolSize(int httpConnectionPoolSize)
 	{
@@ -341,7 +456,7 @@ public class Config
 	}
 
 	private List<String> injectRangeHeaderSiteSet = new ArrayList<String>();
-	private String injectRangeHeaderSites;
+	private String injectRangeHeaderSites = "youtube.com";
 
 	void setInjectRangeHeaderSites(String injectRangeHeaderSites)
 	{
@@ -373,21 +488,21 @@ public class Config
 		return false;
 	}
 
-	private int rpcTimeOut;
+	private int rpcTimeOut = 45;
 
 	public void setRpcTimeOut(int rpcTimeOut)
 	{
 		this.rpcTimeOut = rpcTimeOut;
 	}
 
-	private boolean simpleURLEnable;
+	private boolean simpleURLEnable = true;
 
 	public void setSimpleURLEnable(boolean simpleURLEnable)
 	{
 		this.simpleURLEnable = simpleURLEnable;
 	}
 
-	private String compressor;
+	private String compressor = "lzf";
 
 	public void setCompressor(String compressor)
 	{
@@ -438,7 +553,7 @@ public class Config
 		this.client2ServerConnectionMode = client2ServerConnectionMode;
 	}
 
-	private String httpUpStreamEncrypter;
+	private String httpUpStreamEncrypter = "se1";
 
 	public String getHttpUpStreamEncrypter()
 	{
@@ -543,7 +658,6 @@ public class Config
 			simpleURLEnable = true;
 		}
 	}
-
 
 	void setConnectionMode(int mode)
 	{
@@ -694,14 +808,13 @@ public class Config
 		return defaultUserAgent;
 	}
 
-	
-	public  String getPreferenceValue(String key)
+	public String getPreferenceValue(String key)
 	{
 		return null;
 	}
-	
+
 	public void setPrefernceValue(String key, String value)
 	{
-		
+
 	}
 }

@@ -413,7 +413,11 @@ public abstract class SerailizerStream<T>
 			//data.position(data.position() + size);
 			return s;
 		}
-		throw new IOException("No enought data in stream!" + data.getInputStream().available() +"-" + size);
+		else
+		{
+			throw new IOException("No enought data in stream!" + data.getInputStream().available() +"-" + size);
+		}
+		
 	}
 
 	protected static void writeByte(ChannelDataBuffer data, final byte value) throws IOException
@@ -580,6 +584,7 @@ public abstract class SerailizerStream<T>
 
 	protected static <T> T readObject(ChannelDataBuffer data, Class<T> type) throws IOException
 	{
+		//System.out.println("######" + type.getName());
 		Type dataType = ReflectionCache.getType(type);
 		switch (dataType) 
 		{

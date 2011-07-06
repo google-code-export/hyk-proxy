@@ -103,9 +103,9 @@ public class ProxyService extends Service
         public void start() throws RemoteException
         {
 			Config.initSingletonInstance(ProxyService.this);
-			String x = Config.getInstance().getLocalProxyServerAddress().host;
-			logger.info("########" +x);
-			//fr.start();
+			System.setProperty("java.net.preferIPv4Stack", "true");
+    		System.setProperty("java.net.preferIPv6Addresses", "false");
+			fr.start();
         }
 
 		@Override
