@@ -9,7 +9,10 @@
  */
 package org.hyk.proxy.framework;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.framework.common.Misc;
@@ -60,7 +63,8 @@ public class Framework
 //		pm = PluginManager.getInstance();
 		Config config = Config.getInstance();
 		ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
-				config.getThreadPoolSize(), 0, 0);
+				100, 0, 0);
+
 		//ThreadPoolExecutor workerExecutor = new ScheduledThreadPoolExecutor(config.getThreadPoolSize());
 		Misc.setGlobalThreadPool(workerExecutor);
 		Misc.setTrace(trace);

@@ -31,11 +31,15 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509KeyManager;
 
 import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.android.config.Config.ConnectionMode;
@@ -94,7 +98,7 @@ public class ClientUtils
 	public static final int OVER_HTTPS = 2;
 
 	public static AssetManager assetManager;
-
+static KeyManager[] tempkms;
 //	public static SSLSocket getSSLSocket(Channel ch, SSLSocketFactory fatory)
 //	{
 //		try
@@ -138,6 +142,36 @@ public class ClientUtils
 	// return sslContext;
 	// }
 
+//	public static void printChoosedAlias( SSLEngine engine)
+//	{
+//		if(null == tempkms) return;
+//		for (KeyManager km:tempkms)
+//        {
+//			System.out.println("#######" + km.getClass().getName() );
+//			if(km instanceof X509ExtendedKeyManager)
+//			{
+//				System.out.println("@@@@@" + km.getClass().getName() );
+//				X509ExtendedKeyManager ekm = (X509ExtendedKeyManager) km;
+//				String alials = ekm.chooseEngineServerAlias("RSA", null,
+//						engine);
+//				System.out.println("@@@@@" +alials);
+//				Object obj = ekm.getCertificateChain(alials);
+//				if(null == obj)
+//				{
+//					System.out.println("#######NULL cert Chain" );
+//				}
+//				else
+//				{
+//					System.out.println("#######non NULL cert Chain" );
+//				}
+//			}
+//			else
+//			{
+//				System.out.println("^^^^^^" + km.getClass().getName() );
+//			}
+//        }
+//	}
+	
 	public static SSLContext getFakeSSLContext(String host, String port)
 	        throws Exception
 	{
@@ -155,12 +189,49 @@ public class ClientUtils
 		kmf.init(ks, "hyk-proxy".toCharArray());
 		TrustManagerFactory trustManagerFactory = TrustManagerFactory
 		        .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-
+		//kmf.getKeyManagers()
 		trustManagerFactory.init(ks);
+		//X509KeyManager km = null;
+//		KeyManager[] kms = kmf.getKeyManagers();
+//		tempkms = kms;
+//		for (KeyManager km:kms)
+//        {
+//			//System.out.println("#######" + km.getClass().getName() );
+//			if(km instanceof X509ExtendedKeyManager)
+//			{
+//				System.out.println("@@@@@" + km.getClass().getName() );
+//				X509ExtendedKeyManager ekm = (X509ExtendedKeyManager) km;
+//				String alials = ekm.chooseEngineServerAlias("RSA", null,
+//                       null);
+//				System.out.println("@@@@@" +alials);
+//				Object obj = ekm.getCertificateChain(alials);
+//				if(null == obj)
+//				{
+//					System.out.println("#######NULL cert Chain" );
+//				}
+//				else
+//				{
+//					System.out.println("#######non NULL cert Chain" );
+//				}
+//			}
+//			else
+//			{
+//				System.out.println("^^^^^^" + km.getClass().getName() );
+//			}
+//        }
+//		Object obj = ks.getCertificateChain(null);
+//		if(null == obj)
+//		{
+//			System.out.println("#######NULL cert Chain" );
+//		}
+//		else
+//		{
+//			System.out.println("#######non NULL cert Chain" );
+//		}
+		
 		sslContext.init(kmf.getKeyManagers(),
 		        trustManagerFactory.getTrustManagers(), null);
-		// // sslparams.s
-		// // param.setSSLParameters(sslparams);
+		
 		return sslContext;
 	}
 
