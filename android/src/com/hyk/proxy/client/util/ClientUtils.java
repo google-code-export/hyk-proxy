@@ -9,15 +9,22 @@
  */
 package com.hyk.proxy.client.util;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.SocketAddress;
 import java.net.Proxy.Type;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.channels.SocketChannel;
+import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -26,6 +33,9 @@ import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.hyk.proxy.android.config.Config;
 import org.hyk.proxy.android.config.Config.ConnectionMode;
@@ -33,6 +43,7 @@ import org.hyk.proxy.android.config.Config.HykProxyServerAuth;
 import org.hyk.proxy.android.config.Config.XmppAccount;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
@@ -41,6 +52,9 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jivesoftware.smack.XMPPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import android.content.res.AssetManager;
+import android.text.GetChars;
 
 import com.hyk.compress.CompressorFactory;
 import com.hyk.compress.preference.DefaultCompressPreference;
@@ -59,6 +73,7 @@ import com.hyk.rpc.core.RpcException;
 import com.hyk.rpc.core.Rpctimeout;
 import com.hyk.rpc.core.address.Address;
 import com.hyk.rpc.core.constant.RpcConstants;
+import com.hyk.serializer.reflect.ReflectionCache;
 
 /**
  *
@@ -77,6 +92,33 @@ public class ClientUtils
 	public static final int DIRECT = 0;
 	public static final int OVER_HTTP = 1;
 	public static final int OVER_HTTPS = 2;
+
+	public static AssetManager assetManager;
+
+//	public static SSLSocket getSSLSocket(Channel ch, SSLSocketFactory fatory)
+//	{
+//		try
+//		{
+//			ArrayList<Field> fs = ReflectionCache.getAllDeaclaredFields(ch
+//			        .getClass());
+//			for (Field f : fs)
+//			{
+//				if (f.getType().equals(SocketChannel.class))
+//				{
+//					SocketChannel raw = (SocketChannel) f.get(ch);
+//					InetSocketAddress ss = (InetSocketAddress) raw.socket()
+//					        .getRemoteSocketAddress();
+//					return (SSLSocket) fatory.createSocket(raw.socket(), ss
+//					        .getAddress().getHostAddress(), ss.getPort(), true);
+//				}
+//			}
+//		}
+//		catch (Exception e)
+//		{
+//
+//		}
+//		return null;
+//	}
 
 	// public static SSLContext initSSLContext() throws Exception {
 	// String password = "hyk-proxy";
@@ -99,12 +141,24 @@ public class ClientUtils
 	public static SSLContext getFakeSSLContext(String host, String port)
 	        throws Exception
 	{
+		InputStream kstis = null;
+		if (null != assetManager)
+		{
+			kstis = assetManager.open("cert/RootKeyStore.kst");
+		}
 		SSLContext sslContext = SSLContext.getInstance("TLS");
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory
+		        .getDefaultAlgorithm());
+		KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
-		// kmf.init(SslCertificateHelper.getClientKeyStore(host),
-		// SslCertificateHelper.KS_PASS.toCharArray());
-		// sslContext.init(kmf.getKeyManagers(), null, null);
+		ks.load(kstis, "hyk-proxy".toCharArray());
+		kmf.init(ks, "hyk-proxy".toCharArray());
+		TrustManagerFactory trustManagerFactory = TrustManagerFactory
+		        .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+		trustManagerFactory.init(ks);
+		sslContext.init(kmf.getKeyManagers(),
+		        trustManagerFactory.getTrustManagers(), null);
 		// // sslparams.s
 		// // param.setSSLParameters(sslparams);
 		return sslContext;
@@ -498,13 +552,13 @@ public class ClientUtils
 			{
 				if (ClientUtils.isHttpServerReachable(auth.appid, true))
 				{
-					Config.getInstance().setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE,
-					        OVER_HTTP + "");
+					Config.getInstance().setPrefernceValue(
+					        DEFAULT_GOOGLE_PROXY_TYPE, OVER_HTTP + "");
 				}
 				else
 				{
-					Config.getInstance().setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE,
-					        OVER_HTTPS + "");
+					Config.getInstance().setPrefernceValue(
+					        DEFAULT_GOOGLE_PROXY_TYPE, OVER_HTTPS + "");
 					logger.error("Can NOT reach remote appengine server:"
 					        + auth.appid);
 				}
@@ -515,7 +569,8 @@ public class ClientUtils
 				break;
 			}
 		}
-		Config.getInstance().setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE, DIRECT + "");
+		Config.getInstance().setPrefernceValue(DEFAULT_GOOGLE_PROXY_TYPE,
+		        DIRECT + "");
 	}
 
 }

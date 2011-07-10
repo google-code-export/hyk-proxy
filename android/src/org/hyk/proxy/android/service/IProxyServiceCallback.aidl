@@ -9,7 +9,7 @@ oneway interface IProxyServiceCallback {
     /**
      * Called when the service has a something to display to the user
      */
-    void statusChanged(String value);
+    void statusChanged(int value);
     
     /**
      * Called when the service has something to add to the log

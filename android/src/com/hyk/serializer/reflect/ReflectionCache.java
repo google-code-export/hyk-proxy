@@ -97,7 +97,7 @@ public class ReflectionCache
 		return cons;
 	}
 
-	protected static ArrayList<Field> getAllDeaclaredFields(Class clazz)
+	public static ArrayList<Field> getAllDeaclaredFields(Class clazz)
 	{
 		if(null == clazz || clazz.isPrimitive())
 		{

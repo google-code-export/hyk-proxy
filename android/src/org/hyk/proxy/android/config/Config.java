@@ -54,10 +54,13 @@ public class Config
 		if (null == instance)
 		{
 			instance = new Config(ctx);
-
 		}
 		else
 		{
+			if (instance.ctx == ctx)
+			{
+				return;
+			}
 			instance.ctx = ctx;
 		}
 		try
@@ -68,10 +71,24 @@ public class Config
 		{
 			logger.error("Failed to load config", e);
 		}
+
 	}
 
-	public static Config loadConfig()
+	public static Config reloadConfig()
 	{
+		if(instance != null)
+		{
+			Config cfg = new Config(instance.ctx);
+			try
+            {
+	            cfg.init();
+            }
+            catch (Exception e)
+            {
+	            e.printStackTrace();
+            }
+			instance = cfg;
+		}
 		return instance;
 	}
 
@@ -130,7 +147,7 @@ public class Config
 				hykProxyServerAuths.add(auth);
 			}
 		}
-		
+
 		String xmpp_accounts_str = pref.getString(
 		        ctx.getString(R.string.XMPP_ACCOUNTS), "");
 		if (!xmpp_accounts_str.equals(""))
@@ -143,16 +160,16 @@ public class Config
 				xmppAccounts.add(account);
 			}
 		}
-		
+
 		String localProxyStr = pref.getString(
 		        ctx.getString(R.string.LOCAL_PROXY), "");
 		localProxyStr = localProxyStr.trim();
-		if(localProxyStr.length() != 0)
+		if (localProxyStr.length() != 0)
 		{
 			ProxyInfo info = ProxyInfo.fromStr(localProxyStr);
 			localProxy = info;
 		}
-			
+
 		postInit();
 	}
 
@@ -305,8 +322,8 @@ public class Config
 					info.port = 80;
 				}
 			}
-			
-			if(null != user_part)
+
+			if (null != user_part)
 			{
 				if (user_part.indexOf(":") != -1)
 				{
@@ -358,7 +375,7 @@ public class Config
 				account.jid = uaser_part.split(":")[0].trim() + "@"
 				        + server_part.split(":")[0].trim();
 			}
-			return account.init();
+			return account;
 		}
 
 		public XmppAccount init()
@@ -406,6 +423,7 @@ public class Config
 			String serviceName = server;
 			connectionConfig = new ConnectionConfiguration(this.serverHost,
 			        serverPort, serviceName);
+			//System.out.println("######" + serverHost + ":" + serverPort + "#" +  serviceName);
 			if (isOldSSLEnable)
 			{
 				connectionConfig
@@ -413,7 +431,6 @@ public class Config
 				connectionConfig
 				        .setSocketFactory(SSLSocketFactory.getDefault());
 			}
-
 			return this;
 		}
 

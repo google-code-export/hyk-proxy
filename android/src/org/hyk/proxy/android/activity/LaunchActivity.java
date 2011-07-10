@@ -16,33 +16,18 @@ import org.hyk.proxy.android.service.IProxyServiceCallback;
 import org.hyk.proxy.android.service.ProxyService;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.NotificationManager;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -53,6 +38,46 @@ public class LaunchActivity extends Activity
 {
 	private Button triggerbutton;
 	private IProxyService proxySrvice;
+	private StatusHelper statusHelper;
+	private Handler handler = new Handler();
+	private void statusChanged(final int value)
+	{
+		handler.post(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if (value == 0)
+				{
+					triggerbutton.setEnabled(true);
+					triggerbutton.setText("Start");
+					triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
+					        R.drawable.player_play, 0, 0, 0);
+				}
+				else
+				{
+					triggerbutton.setEnabled(true);
+					triggerbutton.setText("Stop");
+					triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
+					        R.drawable.player_stop, 0, 0, 0);
+				}	
+				if (value == 1)
+				{
+					statusHelper.log("Local HTTP(s) proxy server is started.");
+				}
+				else if (value == 0)
+				{
+					statusHelper.log("Local HTTP(s) proxy server is stoped.");
+				}
+				else
+				{
+					statusHelper.log("Local HTTP(s) proxy server is starting.");
+				}
+			}
+		});
+		
+	}
+
 	private IProxyServiceCallback callback = new IProxyServiceCallback()
 	{
 
@@ -64,17 +89,15 @@ public class LaunchActivity extends Activity
 		}
 
 		@Override
-		public void statusChanged(String value) throws RemoteException
+		public void statusChanged(int value) throws RemoteException
 		{
-			// TODO Auto-generated method stub
-
+			LaunchActivity.this.statusChanged(value);
 		}
 
 		@Override
 		public void logMessage(String value) throws RemoteException
 		{
-			StatusHelper.log(value);
-
+			statusHelper.log(value);
 		}
 	};
 
@@ -91,26 +114,11 @@ public class LaunchActivity extends Activity
 		public void onServiceConnected(ComponentName name, IBinder service)
 		{
 			proxySrvice = IProxyService.Stub.asInterface(service);
-
 			try
 			{
 				proxySrvice.registerCallback(callback);
-				if (null != triggerbutton)
-				{
-					if (proxySrvice.getStatus() == 0)
-					{
-						triggerbutton.setText("Start");
-						triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
-						        R.drawable.player_play, 0, 0, 0);
-					}
-					else
-					{
-						triggerbutton.setText("Stop");
-						triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
-						        R.drawable.player_stop, 0, 0, 0);
-					}
-				}
-
+				int status = proxySrvice.getStatus();
+				statusChanged(status);
 			}
 			catch (RemoteException e)
 			{
@@ -128,7 +136,8 @@ public class LaunchActivity extends Activity
 		setContentView(R.layout.layout_main);
 
 		final TextView statusView = (TextView) findViewById(R.id.statusview);
-		StatusHelper.log("hyk-proxy-android V0.9.5 launched.", statusView);
+		statusHelper = new StatusHelper(statusView, handler);
+		statusHelper.log("hyk-proxy-android V0.9.4 launched.");
 
 		triggerbutton = (Button) findViewById(R.id.triggerbutton);
 		Button cfgbutton = (Button) findViewById(R.id.configbutton);
@@ -136,8 +145,9 @@ public class LaunchActivity extends Activity
 		Button helpButton = (Button) findViewById(R.id.helpbutton);
 
 		Intent intent = new Intent(ProxyService.class.getName());
+		startService(intent);
+		
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-
 		triggerbutton.setOnClickListener(new OnClickListener()
 		{
 			@Override
@@ -146,21 +156,31 @@ public class LaunchActivity extends Activity
 				if (null != proxySrvice)
 				{
 					try
-                    {
-						if (proxySrvice.getStatus() == 0)
+					{
+						// changeTriggerButtonView();
+						int status = proxySrvice.getStatus();
+						if (status == 0)
 						{
+							triggerbutton.setEnabled(false);
+							//triggerbutton.setText("Starting");
 							proxySrvice.start();
 						}
-						else
+						else if (status == 1)
 						{
 							proxySrvice.stop();
+							unbindService(serviceConnection);
+							stopService(new Intent(ProxyService.class.getName()));
 						}
-                    }
-                    catch (Exception e)
-                    {
-	                    // TODO: handle exception
-                    }
-					
+						else if (status == 2)
+						{
+							return;
+						}
+					}
+					catch (Exception e)
+					{
+						// TODO: handle exception
+					}
+
 				}
 
 			}
@@ -192,7 +212,7 @@ public class LaunchActivity extends Activity
 			@Override
 			public void onClick(View v)
 			{
-				System.exit(0);
+				LaunchActivity.this.finish();
 			}
 		});
 	}

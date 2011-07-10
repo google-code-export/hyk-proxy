@@ -60,7 +60,7 @@ public class UDPManagementServer implements Runnable
 	{
 		DatagramSocket socket = new DatagramSocket();
 		byte[] data = (resourceName + " " + cmd).getBytes();
-		Config config = Config.loadConfig();
+		Config config = Config.getInstance();
 		SimpleSocketAddress addr = config.getLocalProxyServerAddress();
 		DatagramPacket packet = new DatagramPacket(data, data.length, new InetSocketAddress(addr.host, addr.port));
 		socket.send(packet);

@@ -414,6 +414,7 @@ public class HttpClientRpcChannel extends AbstractDefaultRpcChannel
 			try
 			{
 				SSLContext sslContext = SSLContext.getInstance("TLS");
+				sslContext.init(null, null, null);
 				SSLEngine sslEngine = sslContext.createSSLEngine();
 				sslEngine.setUseClientMode(true);
 				pipeline.addFirst("sslHandler", new SslHandler(sslEngine));

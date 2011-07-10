@@ -11,6 +11,7 @@ package org.hyk.proxy.android.helper;
 
 import java.util.Date;
 
+import android.os.Handler;
 import android.widget.TextView;
 
 /**
@@ -18,32 +19,32 @@ import android.widget.TextView;
  */
 public class StatusHelper
 {
-	private static TextView statusView = null;
+	private TextView statusView = null;
+	private Handler handler = null;
 	
-	public static void SetStatusView(TextView view)
+	public StatusHelper(TextView view, Handler h)
 	{
-		if(null != view)
-		{
-			statusView = view;
-		}
+		statusView = view;
+		handler = h;
 	}
 	
-	public static void log(String msg)
+	public  void log(final String msg)
 	{
-		if(null == statusView)
+
+		handler.post(new Runnable()
 		{
-			return;
-		}
-		Date now = new Date(System.currentTimeMillis());
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("[").append(now.getHours()).append(":").append(now.getMinutes()).append(":").append(now.getSeconds()).append("]");
-		buffer.append(msg).append("\n");
-		statusView.append(buffer);
-	}
-	
-	public static void log(String msg, TextView view)
-	{
-		SetStatusView(view);
-		log(msg);
+			
+			@Override
+			public void run()
+			{
+				Date now = new Date(System.currentTimeMillis());
+				StringBuilder buffer = new StringBuilder();
+				buffer.append("[").append(now.getHours()).append(":").append(now.getMinutes()).append(":").append(now.getSeconds()).append("]");
+				buffer.append(msg).append("\n");
+				statusView.append(buffer);
+				
+			}
+		});
+		
 	}
 }

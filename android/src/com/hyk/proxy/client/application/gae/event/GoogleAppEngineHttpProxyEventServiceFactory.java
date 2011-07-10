@@ -72,6 +72,15 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 				ClientUtils.checkRemoteServer();
 			}
 		});
+		try
+        {
+	        ClientUtils.getFakeSSLContext("", "");
+        }
+        catch (Exception e)
+        {
+	        e.printStackTrace();
+        }
+		Misc.getTrace().info("GAE connection mode:" + Config.getInstance().getClient2ServerConnectionMode());
 		int ret = ClientUtils.selectDefaultGoogleProxy();
 		List<FetchService> fetchServices = retriveFetchServices(Config
 				.getInstance());
@@ -205,7 +214,6 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 			final RemoteServiceManager remoteServiceManager = rpc
 					.getRemoteService(RemoteServiceManager.class,
 							RemoteServiceManager.NAME, remoteAddress);
-			System.out.println("#########################");
 			if (!mode.equals(ConnectionMode.XMPP2GAE)) {
 				rpc.getSessionManager().setSessionTimeout(oldtimeout);
 			}
