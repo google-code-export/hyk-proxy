@@ -44,7 +44,7 @@ public class CommonUtil
         }
         catch (Exception e)
         {
-        	Config conf = Config.loadConfig();
+        	Config conf = Config.getInstance();
 			SimpleSocketAddress localServAddr = conf
 			        .getLocalProxyServerAddress();
 			Proxy proxy = new Proxy(Type.HTTP, new InetSocketAddress(
@@ -76,7 +76,7 @@ public class CommonUtil
 		{
 			logger.error("Failed to download file:" + url, e);
 			// Try use proxy again
-			Config conf = Config.loadConfig();
+			Config conf = Config.getInstance();
 			SimpleSocketAddress localServAddr = conf
 			        .getLocalProxyServerAddress();
 			Proxy proxy = new Proxy(Type.HTTP, new InetSocketAddress(

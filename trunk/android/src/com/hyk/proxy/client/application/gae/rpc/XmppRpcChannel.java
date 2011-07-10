@@ -58,6 +58,8 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 		ConnectionConfiguration connConfig = account.connectionConfig;
 		xmppConnection = new XMPPConnection(connConfig);
 		xmppConnection.connect();
+		connConfig.setTruststoreType("bks");
+		//SASLAuthentication.supportSASLMechanism("PLAIN", 0);
 		xmppConnection.login(account.name, account.passwd, Constants.PROJECT_NAME);
 		Presence presence = new Presence(Presence.Type.available);
 		xmppConnection.sendPacket(presence);

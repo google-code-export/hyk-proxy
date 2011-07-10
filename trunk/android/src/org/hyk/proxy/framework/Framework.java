@@ -9,15 +9,12 @@
  */
 package org.hyk.proxy.framework;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.hyk.proxy.android.config.Config;
-import org.hyk.proxy.framework.common.Constants;
 import org.hyk.proxy.framework.common.Misc;
 import org.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
 import org.hyk.proxy.framework.httpserver.HttpLocalProxyServer;
-import org.hyk.proxy.framework.management.ManageResource;
 import org.hyk.proxy.framework.management.UDPManagementServer;
 import org.hyk.proxy.framework.trace.Trace;
 import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
@@ -33,7 +30,7 @@ import com.hyk.proxy.common.ExtensionsLauncher;
 /**
  *
  */
-public class Framework implements ManageResource
+public class Framework 
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -44,15 +41,24 @@ public class Framework implements ManageResource
 //	private Updater updater;
 
 	private boolean isStarted = false;
+	private boolean isStarting = false;
 	
 	private Trace trace;
 
-	public Framework(Trace trace)
+	static
+	{
+		GoogleAvailableService.getInstance();
+		ExtensionsLauncher.init();
+	}
+	
+	private static Framework instance = null;
+	
+	private Framework(Trace trace)
 	{
 		this.trace = trace;
 		//Preferences.init();
 //		pm = PluginManager.getInstance();
-		Config config = Config.loadConfig();
+		Config config = Config.getInstance();
 		ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
 				config.getThreadPoolSize(), 0, 0);
 		//ThreadPoolExecutor workerExecutor = new ScheduledThreadPoolExecutor(config.getThreadPoolSize());
@@ -61,10 +67,18 @@ public class Framework implements ManageResource
 		init();
 	}
 	
+	public static Framework getInstance(Trace trace)
+	{
+		if(null == instance)
+		{
+			 instance = new Framework(trace);
+		}
+		instance.trace = trace;
+		return instance;
+	}
+	
 	private void init()
 	{
-		GoogleAvailableService.getInstance();
-		ExtensionsLauncher.init();
 		HttpProxyEventServiceFactory.Registry.register(new GoogleAppEngineHttpProxyEventServiceFactory());
 	}
 
@@ -87,6 +101,7 @@ public class Framework implements ManageResource
 				esf.destroy();
 			}
 			isStarted = false;
+			isStarting = false;
 		}
 		catch (Exception e)
 		{
@@ -99,6 +114,11 @@ public class Framework implements ManageResource
 	{
 		return isStarted;
 	}
+	
+	public boolean isStarting()
+	{
+		return isStarting;
+	}
 
 	public boolean start()
 	{
@@ -110,7 +130,7 @@ public class Framework implements ManageResource
 		try
 		{
 			stop();
-			Config config = Config.loadConfig();
+			Config config = Config.reloadConfig();
 			esf = HttpProxyEventServiceFactory.Registry
 			        .getHttpProxyEventServiceFactory(config
 			                .getProxyEventServiceFactory());
@@ -122,12 +142,13 @@ public class Framework implements ManageResource
 				        + config.getProxyEventServiceFactory());
 				return false;
 			}
+			isStarting = true;
 			esf.init();
 			server = new HttpLocalProxyServer(
 			        config.getLocalProxyServerAddress(),
 			        Misc.getGlobalThreadPool(), esf);
 			//Misc.getGlobalThreadPool().execute(commandServer);
-			trace.notice("Local HTTP Server Running...\nat "
+			trace.notice("Local HTTP(s) Proxy Server Running at "
 			        + config.getLocalProxyServerAddress());
 			isStarted = true;
 			return true;
@@ -136,23 +157,10 @@ public class Framework implements ManageResource
 		{
 			trace.error("Failed to launch local proxy server for reason:" + e.getMessage());
 			logger.error("Failed to launch local proxy server.", e);
+			isStarted = false;
+			isStarting = false;
 		}
 		return false;
 	}
 
-	@Override
-	public String handleManagementCommand(String cmd)
-	{
-		if (cmd.equals(Constants.STOP_CMD))
-		{
-			System.exit(1);
-		}
-		return null;
-	}
-
-	@Override
-	public String getName()
-	{
-		return Constants.FRAMEWORK_NAME;
-	}
 }

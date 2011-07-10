@@ -18,7 +18,7 @@
 		</activity>
 		<activity android:name=".activity.ConfigurationActivity"></activity>
 		
-		<service android:enabled="true" android:name=".service.ProxyService" android:exported="false">
+		<service  android:name=".service.ProxyService" android:exported="false">
 			<intent-filter>
 	             <action android:name="org.hyk.proxy.android.service.ProxyService" />
 	             <category android:name="android.intent.category.DEFAULT" />
