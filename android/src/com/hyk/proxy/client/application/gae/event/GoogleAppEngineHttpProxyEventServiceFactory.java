@@ -72,14 +72,6 @@ public class GoogleAppEngineHttpProxyEventServiceFactory implements
 				ClientUtils.checkRemoteServer();
 			}
 		});
-		try
-        {
-	        ClientUtils.getFakeSSLContext("", "");
-        }
-        catch (Exception e)
-        {
-	        e.printStackTrace();
-        }
 		Misc.getTrace().info("GAE connection mode:" + Config.getInstance().getClient2ServerConnectionMode());
 		int ret = ClientUtils.selectDefaultGoogleProxy();
 		List<FetchService> fetchServices = retriveFetchServices(Config

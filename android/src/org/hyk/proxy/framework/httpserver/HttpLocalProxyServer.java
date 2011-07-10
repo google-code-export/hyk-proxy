@@ -5,12 +5,14 @@ package org.hyk.proxy.framework.httpserver;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.hyk.proxy.framework.event.HttpProxyEventServiceFactory;
+import org.hyk.proxy.framework.httpserver.reverse.HttpsReverseServer;
 import org.hyk.proxy.framework.util.SimpleSocketAddress;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -25,6 +27,7 @@ import org.jboss.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.proxy.client.util.ClientUtils;
 import com.hyk.util.net.NetUtil;
 
 
@@ -70,6 +73,15 @@ public class HttpLocalProxyServer
 				return pipeline;
 			}
 		});
+		try
+        {
+	        HttpsReverseServer.initSigletonInstance(ClientUtils.getFakeSSLContext("", ""));
+        }
+        catch (Exception e)
+        {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+        }
 		serverChannel = bootstrap.bind(new InetSocketAddress(address.host, address.port));
 		//monitor.notifyRunDetail("Local Http Server Running... \nat " + address.host + ":" + address.port);
     }

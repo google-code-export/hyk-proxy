@@ -25,6 +25,7 @@ import org.hyk.proxy.framework.event.HttpProxyEvent;
 import org.hyk.proxy.framework.event.HttpProxyEventCallback;
 import org.hyk.proxy.framework.event.HttpProxyEventService;
 import org.hyk.proxy.framework.event.HttpProxyEventType;
+import org.hyk.proxy.framework.httpserver.reverse.LocalHttpsForwardHandler;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -281,6 +282,11 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 							                ChannelFuture future)
 							                throws Exception
 							        {
+							        	event.getChannel().getPipeline().remove("decoder");
+							        	event.getChannel().getPipeline().remove("encoder");
+							        	event.getChannel().getPipeline().remove("handler");
+							        	event.getChannel().getPipeline().remove("chunkedWriter");
+							        	event.getChannel().getPipeline().addLast("forward", new LocalHttpsForwardHandler());
 								        // https connection
 								        // SSLSocketFactory f =
 										// sslContext.getSocketFactory();
@@ -292,29 +298,30 @@ class GoogleAppEngineHttpProxyEventService implements HttpProxyEventService,
 										// s.getInputStream().read(buff);
 								        // System.out.println("###########" +
 										// new String(buff, 0, len));
-								        if (event.getChannel().getPipeline()
-								                .get("ssl") == null)
-								        {
-									        InetSocketAddress remote = (InetSocketAddress) event
-									                .getChannel()
-									                .getRemoteAddress();
-									        // SSLEngine engine = sslContext
-									        // .createSSLEngine();
-									        SSLEngine engine = sslContext
-									                .createSSLEngine(remote
-									                        .getAddress()
-									                        .getHostAddress(),
-									                        remote.getPort());
-
-									        engine.setUseClientMode(false);
-									        event.getChannel()
-									                .getPipeline()
-									                .addBefore(
-									                        "decoder",
-									                        "ssl",
-									                        new SslHandler(
-									                                engine));
-								        }
+//								        if (event.getChannel().getPipeline()
+//								                .get("ssl") == null)
+//								        {
+//									        InetSocketAddress remote = (InetSocketAddress) event
+//									                .getChannel()
+//									                .getRemoteAddress();
+//									        // SSLEngine engine = sslContext
+//									        // .createSSLEngine();
+//									        SSLEngine engine = sslContext
+//									                .createSSLEngine(remote
+//									                        .getAddress()
+//									                        .getHostAddress(),
+//									                        remote.getPort());
+//
+//									        engine.setUseClientMode(false);
+//									        //ClientUtils.printChoosedAlias(engine);
+//									        event.getChannel()
+//									                .getPipeline()
+//									                .addBefore(
+//									                        "decoder",
+//									                        "ssl",
+//									                        new SslHandler(
+//									                                engine));
+//								        }
 							        }
 						        });
 					}
