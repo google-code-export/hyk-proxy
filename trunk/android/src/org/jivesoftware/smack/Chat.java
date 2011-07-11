@@ -110,6 +110,7 @@ public class Chat {
         message.setTo(participant);
         message.setType(Message.Type.chat);
         message.setThread(threadID);
+        
         chatManager.sendMessage(this, message);
     }
 

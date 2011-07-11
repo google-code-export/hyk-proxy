@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hyk.proxy.client.util.ClientUtils;
+import com.hyk.rpc.core.constant.RpcConstants;
 
 import android.app.Service;
 import android.content.Intent;
@@ -120,9 +121,9 @@ public class ProxyService extends Service
 		public void start() throws RemoteException
 		{
 			Config.initSingletonInstance(ProxyService.this);
+			System.setProperty(RpcConstants.SERIALIZE_REFLECTIOON_SORT_FIELD, "true");
 			System.setProperty("java.net.preferIPv4Stack", "true");
-			System.setProperty("java.net.preferIPv6Addresses", "false");
-//			
+			System.setProperty("java.net.preferIPv6Addresses", "false");	
 			
 			final IProxyServiceCallback tempcb = callback;
 			frameworkExecutor.execute(new Runnable()
