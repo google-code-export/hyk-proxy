@@ -12,9 +12,11 @@ package org.hyk.proxy.framework.httpserver.reverse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -60,6 +62,22 @@ public class HttpsReverseServer implements Runnable
 	public SocketAddress getReverseServerSocketAddress()
 	{
 		return server.getLocalSocketAddress();
+	}
+	
+	public void stop()
+	{
+		running = false;
+		InetSocketAddress addr = (InetSocketAddress) getReverseServerSocketAddress();
+		try
+        {
+	        Socket temp = new Socket(addr.getHostName(), getReverseServerPort());
+	        temp.close();
+        }
+        catch (Exception e)
+        {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+        }
 	}
 
 	@Override

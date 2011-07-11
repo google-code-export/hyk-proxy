@@ -12,10 +12,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import com.hyk.io.buffer.ChannelDataBuffer;
+import com.hyk.rpc.core.constant.RpcConstants;
 import com.hyk.serializer.Externalizable;
 import com.hyk.serializer.annotation.Stream;
 import com.hyk.serializer.reflect.ReflectionCache;
 import com.hyk.serializer.util.ContextUtil;
+import com.hyk.util.thread.ThreadLocalUtil;
 
 /**
  * @author qiying.wang
@@ -23,6 +25,11 @@ import com.hyk.serializer.util.ContextUtil;
  */
 public class ObjectSerializerStream<T> extends SerailizerStream<T>
 {	
+	public static class ResortFieldIndicator
+	{
+		public boolean resort;
+	}
+	
 	static class FieldComarator implements Comparator<Field>
 	{
 		@Override
@@ -50,7 +57,13 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 				return ret;
 			}
 			Field[] fs = ReflectionCache.getSerializableFields(type);
-			Arrays.sort(fs, new FieldComarator());
+			ResortFieldIndicator indicator =  ThreadLocalUtil.getThreadLocalUtil(ResortFieldIndicator.class).getThreadLocalObject();
+			String indicatorstr = System.getProperty(RpcConstants.SERIALIZE_REFLECTIOON_SORT_FIELD);
+			if((null != indicator && indicator.resort) || null != indicatorstr)
+			{
+				Arrays.sort(fs, new FieldComarator());
+			}
+			
 			while(true)
 			{
 				int tag = readTag(data);
@@ -94,7 +107,12 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 		{
 			//writeInt(data, 0);
 			Field[] fs = ReflectionCache.getSerializableFields(clazz);
-			Arrays.sort(fs, new FieldComarator());
+			ResortFieldIndicator indicator =  ThreadLocalUtil.getThreadLocalUtil(ResortFieldIndicator.class).getThreadLocalObject();
+			String indicatorstr = System.getProperty(RpcConstants.SERIALIZE_REFLECTIOON_SORT_FIELD);
+			if((null != indicator && indicator.resort) || null != indicatorstr)
+			{
+				Arrays.sort(fs, new FieldComarator());
+			}
 			for(int i = 0; i < fs.length; i++)
 			{
 				Field f = fs[i];
@@ -103,7 +121,6 @@ public class ObjectSerializerStream<T> extends SerailizerStream<T>
 				{
 					writeTag(data, i + 1);
 					writeObject(data, fieldValue, f.getType());
-					
 				}
 				
 			}

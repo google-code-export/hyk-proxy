@@ -362,9 +362,9 @@ public class Config
 			}
 			else
 			{
-				String[] temp = str.split("@");
-				String uaser_part = temp[0].trim();
-				String server_part = temp[1].trim();
+			    int index = str.lastIndexOf("@");
+			    String uaser_part = str.substring(0, index);
+			    String server_part = str.substring(index+1);
 				// account.name = uaser_part.split(":")[0].trim();
 				account.passwd = uaser_part.split(":")[1].trim();
 				if (server_part.indexOf(":") != -1)

@@ -21,4 +21,6 @@ public class RpcConstants
 	public static final String COMPRESS_PREFER = "com.hyk.rpc.compress.prefer";
 	public static final String REMOTE_OBJECTID_GEN = "com.hyk.rpc.core.remote.idgen";
 	public static final String REMOTE_OBJECT_STORAGE = "com.hyk.rpc.core.remote.obj.storage";
+	
+	public static final String SERIALIZE_REFLECTIOON_SORT_FIELD = " com.hyk.serializer.sort_field";
 }

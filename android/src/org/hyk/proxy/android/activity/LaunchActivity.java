@@ -213,6 +213,7 @@ public class LaunchActivity extends Activity
 			public void onClick(View v)
 			{
 				LaunchActivity.this.finish();
+				//System.exit(1);
 			}
 		});
 	}

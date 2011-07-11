@@ -16,12 +16,12 @@ public class Constants
 {
 
 	public static final String CLIENT_CONF_NAME = "hyk-proxy-gae-conf.xml";
-	public static final String PROJECT_NAME = "hyk-proxy-gae";
+	public static final String PROJECT_NAME = "hyk-proxy-android";
 	public static final String SERVER_PACKAGE_URL = "http://hyk-proxy.googlecode.com/files/hyk-proxy-gae-server-0.9.1.zip";
 
 	public static final int APPENGINE_HTTP_BODY_LIMIT = 1024000;
 
-	public static final String HTTP_INVOKE_PATH = "/invoke";
+	public static final String HTTP_INVOKE_PATH = "/invoke-android";
 
 	public static final String MASTER_APPID = "hyk-proxy-master";
 
