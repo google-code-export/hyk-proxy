@@ -1,9 +1,9 @@
 <information>
-   <framework version="0.9.4">
+   <framework version="0.9.4.1">
          <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-0.9.3.zip</url>
    </framework>
    <plugins>
-      <plugin name="GAE" version="0.9.4">
+      <plugin name="GAE" version="0.9.4.1">
          <desc>Default plugin, powered by AppEngine</desc>
          <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-gae-0.9.4.zip</url>
       </plugin>

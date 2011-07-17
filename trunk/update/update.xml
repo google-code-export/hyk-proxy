@@ -2,19 +2,19 @@
 	<framework>
 		<upgrade>
 			<fileset>
-				<file>hyk-proxy-0.9.4/lib/hyk-proxy-framework.jar</file>
-				<file>hyk-proxy-0.9.4/lib/hyk-proxy-launch.jar</file>
-				<file>hyk-proxy-0.9.4/lib/hyk-util.jar</file>
-				<file>hyk-proxy-0.9.4/lib/hyk-rpc.jar</file>
-				<file>hyk-proxy-0.9.4/lib/bcprov-jdk16-146.jar</file>
-				<file>hyk-proxy-0.9.4/etc/cert/Fake-ACRoot-Certificate.cer</file>
-				<file>hyk-proxy-0.9.4/etc/cert/RootKeyStore.kst</file>
-				<file>hyk-proxy-0.9.4/docs/hyk-proxy.ico</file>
-				<file>hyk-proxy-0.9.4/bin/gen_ca.bat</file>
-				<file>hyk-proxy-0.9.4/bin/gen_ca.bat</file>
-				<file>hyk-proxy-0.9.4/bin/stop.bat</file>
-				<file>hyk-proxy-0.9.4/bin/stop.sh</file>
-				<file>hyk-proxy-0.9.4/changelog.txt</file>
+				<file>hyk-proxy-0.9.4.1/lib/hyk-proxy-framework.jar</file>
+				<file>hyk-proxy-0.9.4.1/lib/hyk-proxy-launch.jar</file>
+				<file>hyk-proxy-0.9.4.1/lib/hyk-util.jar</file>
+				<file>hyk-proxy-0.9.4.1/lib/hyk-rpc.jar</file>
+				<file>hyk-proxy-0.9.4.1/lib/bcprov-jdk16-146.jar</file>
+				<file>hyk-proxy-0.9.4.1/etc/cert/Fake-ACRoot-Certificate.cer</file>
+				<file>hyk-proxy-0.9.4.1/etc/cert/RootKeyStore.kst</file>
+				<file>hyk-proxy-0.9.4.1/docs/hyk-proxy.ico</file>
+				<file>hyk-proxy-0.9.4.1/bin/gen_ca.bat</file>
+				<file>hyk-proxy-0.9.4.1/bin/gen_ca.bat</file>
+				<file>hyk-proxy-0.9.4.1/bin/stop.bat</file>
+				<file>hyk-proxy-0.9.4.1/bin/stop.sh</file>
+				<file>hyk-proxy-0.9.4.1/changelog.txt</file>
 			</fileset>
 		</upgrade>
 	</framework>
