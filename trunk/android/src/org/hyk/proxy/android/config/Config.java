@@ -365,7 +365,7 @@ public class Config
 			    int index = str.lastIndexOf("@");
 			    String uaser_part = str.substring(0, index);
 			    String server_part = str.substring(index+1);
-				// account.name = uaser_part.split(":")[0].trim();
+				account.name = uaser_part.split(":")[0].trim();
 				account.passwd = uaser_part.split(":")[1].trim();
 				if (server_part.indexOf(":") != -1)
 				{
@@ -375,6 +375,9 @@ public class Config
 				account.jid = uaser_part.split(":")[0].trim() + "@"
 				        + server_part.split(":")[0].trim();
 			}
+			//System.out.println("#####" + account.jid);
+			//System.out.println("#####" + account.name);
+			//System.out.println("#####" + account.passwd);
 			return account;
 		}
 

@@ -53,6 +53,7 @@ public class Launcher extends HttpServlet{
 	
 	public static HttpServletRpcChannel getHttpServletRpcChannel()
 	{
+
 		return httpServletRpcChannel;
 	}
 	
@@ -154,6 +155,7 @@ public class Launcher extends HttpServlet{
 		catch(Exception e)
 		{
 			logger.error("Error occured when init launch servlet!", e);
+			throw new ServletException(e);
 		}
 		
 		

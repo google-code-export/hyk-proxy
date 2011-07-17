@@ -119,8 +119,9 @@ public class Upgrade
 						String entryPath = details[2].trim();
 						String targetPath = entryPath;
 
-						ZipFile zipFile = new ZipFile(new File(UPGRADE_HOME,
-						        zipFileName));
+						File rawfile = new File(UPGRADE_HOME,
+						        zipFileName);
+						ZipFile zipFile = new ZipFile(rawfile);
 
 						//framework
 						if (targetPath.startsWith("hyk-proxy-"))
@@ -134,7 +135,16 @@ public class Upgrade
 							entryPath = entryPath.substring(index + 1);
 						}
 						ZipEntry entry = new ZipEntry(entryPath);
-						InputStream fis = zipFile.getInputStream(entry);
+						InputStream fis = null;
+						try
+                        {
+							fis = zipFile.getInputStream(entry);
+                        }
+                        catch (Exception e)
+                        {
+                        	rawfile.delete();
+	                        break;
+                        }
 						if(null == fis)
 						{
 							track.write("Error: " + entryPath + " is null in zip file:" + zipFileName);

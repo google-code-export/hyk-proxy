@@ -15,7 +15,7 @@
 	<property name="docs" value="${root}/docs" />
 	<property name="shell" value="${root}/shell" />
 	<property name="release" value="release" />
-	<property name="version" value="0.9.3" />
+	<property name="version" value="0.9.4" />
 	<property name="versionfile" value="com/hyk/proxy/framework/common/Version.java" />
 	<property name="project_name" value="hyk-proxy" />
 	<property name="releasename" value="${project_name}-${version}"/>
@@ -89,7 +89,7 @@
 		<copy todir="${binreleasedir}/bin">
 			<fileset dir="${shell}" />
 		</copy>
-		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.3.2.zip"/>
+		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.4.zip"/>
 		<copy todir="${binreleasedir}" file="${root}/readme.txt" />
 		<copy todir="${binreleasedir}" file="${root}/changelog.txt" />
 		<copy todir="${binreleasedir}" file="${root}/licence.txt" />

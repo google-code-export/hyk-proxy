@@ -69,6 +69,18 @@ public class CSLApiImpl extends ApiAdapter
 			Integer b = (Integer)oprb;
 			return a.compareTo(b);
 		}
+		if(opra instanceof Boolean && oprb instanceof Boolean)
+		{
+			Boolean a = (Boolean)opra;
+			Boolean b = (Boolean)oprb;
+			return a.compareTo(b);
+		}
+		if(opra instanceof Comparable && oprb instanceof Comparable)
+		{
+			Comparable a = (Comparable)opra;
+			Comparable b = (Comparable)oprb;
+			return a.compareTo(b);
+		}
 		return 0;
 	}
 	

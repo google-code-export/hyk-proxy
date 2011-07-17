@@ -11,7 +11,7 @@
 		<property name="lib" value="${root}/lib" />
 		<property name="etc" value="${root}/etc" />
 		<property name="release" value="release" />
-		<property name="version" value="0.4.0" />
+		<property name="version" value="0.4.1" />
 	    <property name="release_dir_name" value="spac" />
 		<property name="project_name" value="hyk-proxy-spac" />
 

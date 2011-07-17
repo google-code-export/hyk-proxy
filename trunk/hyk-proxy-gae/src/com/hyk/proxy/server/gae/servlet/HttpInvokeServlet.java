@@ -18,6 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hyk.serializer.impl.ObjectSerializerStream.ResortFieldIndicator;
+import com.hyk.util.thread.ThreadLocalUtil;
+
 //import com.hyk.proxy.gae.server.core.Launcher;
 
 /**
@@ -32,11 +35,18 @@ public class HttpInvokeServlet extends HttpServlet
 	{
 		if(logger.isDebugEnabled())
 		{
-			logger.debug("Process message");
+			logger.error("Process message for path:" + req.getServletPath());
 		}
 
 		try
 		{
+			if(req.getServerName().indexOf("HttpInvoke4Android") != -1)
+			{
+				ResortFieldIndicator indicator = new ResortFieldIndicator();
+				indicator.resort = true;
+				ThreadLocalUtil.getThreadLocalUtil(ResortFieldIndicator.class).setThreadLocalObject(indicator);
+			}
+			//ThreadLocalUtil<Resor>
 			Launcher.getHttpServletRpcChannel().processHttpRequest(req, resp);
 		}
 		catch(Throwable e)

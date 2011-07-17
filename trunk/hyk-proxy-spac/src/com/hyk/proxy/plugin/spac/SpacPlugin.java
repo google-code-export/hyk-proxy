@@ -61,6 +61,14 @@ public class SpacPlugin implements TUIPlugin
 		        .register(new DirectProxyEventServiceFactory());
 
 		final CSL tmp = csl;
+		try
+        {
+			tmp.invoke("onInit", null);
+        }
+        catch (Exception e)
+        {
+	        // TODO: handle exception
+        }
 		new Thread(new Runnable()
 		{
 			@Override

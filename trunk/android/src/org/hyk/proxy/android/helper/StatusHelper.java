@@ -45,6 +45,10 @@ public class StatusHelper
 				
 			}
 		});
-		
+	}
+	
+	public void clear()
+	{
+		statusView.setText("");
 	}
 }

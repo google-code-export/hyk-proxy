@@ -14,7 +14,7 @@
 		<property name="temp" value="${root}/temp" />
 		<property name="shell" value="${root}/shell" />
 		<property name="release" value="release" />
-		<property name="version" value="0.9.1" />
+		<property name="version" value="0.9.4" />
 	    <property name="release_dir_name" value="seattle" />
 		<property name="project_name" value="hyk-proxy-seattle" />
 

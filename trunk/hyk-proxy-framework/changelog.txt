@@ -1,5 +1,16 @@
 hyk-proxy Changelog
 ===================
+Changes in version 0.9.4 (2010.7.17)
+-------------------------------------------
+** Bug
+   * N/A
+
+** Improvement
+   * Upgrade RPC lib(compatible with android)
+   
+** Task
+   * NA
+
 Changes in version 0.9.3 (2010.5.14)
 -------------------------------------------
 ** Bug
