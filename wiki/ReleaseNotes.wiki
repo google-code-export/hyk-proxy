@@ -5,6 +5,9 @@ _下载最新的hyk-proxy [http://code.google.com/p/hyk-proxy/downloads/list 地
 
 hyk-proxy - Release Notes
 
+=== Version 0.9.4 - 7月17日, 2011 ===
+ * GAE的支持Android Client（Server端需要升级部署）
+
 === Version 0.9.3 - 5月14日, 2011 ===
  * GAE的HTTPS代理场景下动态伪造X509证书
  * GAE支持配置站点自动注入Range头域（减少失败尝试）
