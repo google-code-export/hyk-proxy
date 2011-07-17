@@ -1,6 +1,17 @@
 hyk-proxy-seattle Changelog
 ===================
 
+Changes in version 0.9.4 (2011.7.17)
+-------------------------------------------
+** Bug
+   * Upgrade for hyk-proxy-framework V0.9.3+
+   
+** Improvement
+   * List remote server's connection time
+    
+** Task
+   * NA
+
 Changes in version 0.9.1 (2010.12.11)
 -------------------------------------------
 ** Bug

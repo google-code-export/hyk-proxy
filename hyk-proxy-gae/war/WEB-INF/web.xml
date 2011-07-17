@@ -25,6 +25,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 	<servlet-mapping>
 		<servlet-name>HttpInvoke</servlet-name>
 		<url-pattern>/invoke</url-pattern>
+		<url-pattern>/invoke-android</url-pattern>
 	</servlet-mapping>
 
 	<security-constraint>

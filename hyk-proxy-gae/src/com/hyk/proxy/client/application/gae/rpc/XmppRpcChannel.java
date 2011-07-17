@@ -128,6 +128,7 @@ public class XmppRpcChannel extends AbstractDefaultRpcChannel implements Message
 				logger.debug("Send message from " + this.address + " to " + xmppAddress.toPrintableString());
 			}
 			semaphore.acquire();
+			
 			//chat.sendMessage(Base64.byteArrayBufferToBase64(data.content));
 			chat.sendMessage(Base64.encodeToString(ChannelDataBuffer.asByteArray(data.content), false));
 			Thread.sleep(1000);

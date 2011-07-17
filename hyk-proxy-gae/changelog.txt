@@ -1,6 +1,17 @@
 hyk-proxy-gae Changelog
 ===================
 
+Changes in version 0.9.4 (2011.7.17)
+-------------------------------------------
+** Bug
+   * NA
+   
+** Improvement
+   * Upgrade RPC lib(compatible with android)
+
+** Task
+   * NA
+
 Changes in version 0.9.3.2 (2011.5.14)
 -------------------------------------------
 ** Bug

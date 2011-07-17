@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin name="SPAC" version="0.4.0">
+<plugin name="SPAC" version="0.4.1">
    <depend/>
    <entryClass>com.hyk.proxy.plugin.spac.SpacPlugin</entryClass>   
    <description>

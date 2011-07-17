@@ -16,11 +16,13 @@ import org.hyk.proxy.android.service.IProxyServiceCallback;
 import org.hyk.proxy.android.service.ProxyService;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -40,6 +42,7 @@ public class LaunchActivity extends Activity
 	private IProxyService proxySrvice;
 	private StatusHelper statusHelper;
 	private Handler handler = new Handler();
+
 	private void statusChanged(final int value)
 	{
 		handler.post(new Runnable()
@@ -60,7 +63,7 @@ public class LaunchActivity extends Activity
 					triggerbutton.setText("Stop");
 					triggerbutton.setCompoundDrawablesWithIntrinsicBounds(
 					        R.drawable.player_stop, 0, 0, 0);
-				}	
+				}
 				if (value == 1)
 				{
 					statusHelper.log("Local HTTP(s) proxy server is started.");
@@ -75,7 +78,7 @@ public class LaunchActivity extends Activity
 				}
 			}
 		});
-		
+
 	}
 
 	private IProxyServiceCallback callback = new IProxyServiceCallback()
@@ -126,6 +129,48 @@ public class LaunchActivity extends Activity
 			}
 		}
 	};
+	
+	protected void showHelpDialog()
+	{
+		AlertDialog.Builder builder = new Builder(LaunchActivity.this);
+		builder.setMessage("Not supported now.");
+		builder.setTitle("Help");
+		builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
+		{
+			@Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+				dialog.dismiss();
+            }
+		});
+		builder.create().show();
+	}
+
+	protected void showExitDialog()
+	{
+		AlertDialog.Builder builder = new Builder(LaunchActivity.this);
+		builder.setMessage("Exit&Stop hyk-proxy?");
+		builder.setTitle("Alert");
+		builder.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+		{
+			@Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+				dialog.dismiss();
+				LaunchActivity.this.finish();
+				System.exit(0);
+            }
+		});
+		builder.setNegativeButton("No", new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				dialog.dismiss();
+			}
+		});
+		builder.create().show();
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -146,7 +191,7 @@ public class LaunchActivity extends Activity
 
 		Intent intent = new Intent(ProxyService.class.getName());
 		startService(intent);
-		
+
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 		triggerbutton.setOnClickListener(new OnClickListener()
 		{
@@ -162,7 +207,7 @@ public class LaunchActivity extends Activity
 						if (status == 0)
 						{
 							triggerbutton.setEnabled(false);
-							//triggerbutton.setText("Starting");
+							// triggerbutton.setText("Starting");
 							proxySrvice.start();
 						}
 						else if (status == 1)
@@ -201,9 +246,10 @@ public class LaunchActivity extends Activity
 			@Override
 			public void onClick(View v)
 			{
-				Uri uri = Uri.parse("http://code.google.com/p/hyk-proxy/");
-				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-				startActivity(intent);
+				if(null != statusHelper)
+				{
+					statusHelper.clear();
+				}
 			}
 		});
 
@@ -212,8 +258,8 @@ public class LaunchActivity extends Activity
 			@Override
 			public void onClick(View v)
 			{
-				LaunchActivity.this.finish();
-				//System.exit(1);
+				// LaunchActivity.this.finish();
+				showExitDialog();
 			}
 		});
 	}
