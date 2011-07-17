@@ -1,19 +1,19 @@
 <information>
    <framework version="0.9.4">
-         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-0.9.3.zip</url>
+         <url>http://hyk-proxy.googlecode.com/files/hyk-proxy-0.9.4.zip</url>
    </framework>
    <plugins>
       <plugin name="GAE" version="0.9.4">
          <desc>Default plugin, powered by AppEngine</desc>
-         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-gae-0.9.3.2.zip</url>
+         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-gae-0.9.4.zip</url>
       </plugin>
       <plugin name="SPAC" version="0.4.1">
          <desc>SPAC=Special Proxy Auto Config</desc>
-         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-spac-0.4.0.zip</url>
+         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-spac-0.4.1.zip</url>
       </plugin>
       <plugin name="SeattleGENI" version="0.9.4">
          <desc>This plugin is powered by SeattleGENI</desc>
-         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-seattle-0.9.1.zip</url>
+         <url>http://hyk-proxy-plugins.googlecode.com/files/hyk-proxy-seattle-0.9.4.zip</url>
       </plugin>
       <plugin name="PHPTunnel" version="0.1.1">
          <desc>Use PHP web server as proxy</desc>
