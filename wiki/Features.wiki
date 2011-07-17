@@ -5,6 +5,9 @@
 
 hyk-proxy按发布版本实现的特性列表
 
+= hyk-proxy 0.9.4特性（released） =
+ * GAE支持Android Client（Server需要升级部署）
+
 = hyk-proxy 0.9.3特性（released） =
  * GAE的https代理场景下支持动态伪造证书
    ** 浏览器可以导入`<hyk-proxy>`/etc/cert/Fake-ACRoot-Certificate.cer
