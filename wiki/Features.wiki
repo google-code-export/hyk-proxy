@@ -69,7 +69,16 @@ hyk-proxy按发布版本实现的特性列表
 = hyk-proxy 0.8.6特性（released） =
  * Client支持插件
  * SPAC插件 -- 完成更为强大的类似PAC功能
- * 多AppId情况下，支持AppId和固定site的绑定
+ * 多`AppId`情况下，支持`AppId`和固定site的绑定.编辑修改`<hyk-proxy>`/plugins/gae/etc/hyk-proxy-gae-conf.xml, eg:
+   {{{ 
+	<AppIdBindings>
+           <Binding appid="hyk-proxy-demo">
+               <site>twitter</site>
+               <site>youtube</site>
+           </Binding>
+       </AppIdBindings>
+    }}}
+   
 
 = hyk-proxy 0.8.5特性（released） =
 
