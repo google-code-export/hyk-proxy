@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+
+<project name="arch" default="dist">
+	<property name="root" value="." />
+
+	<property name='dist_jar' value='arch.jar' />
+	<property name="classes" value="${root}/build" />
+	<property name="distroot" value="${root}/dist" />
+	<property name="docdir" value="${root}/doc" />
+	<property name="lib" value="${root}/lib" />
+	<property name="srcroot" value="${root}/src" />
+	<property name="src3rd-compress" value="${root}/3rd/compress" />
+	<property name="testroot" value="${root}/test" />
+	<property name="junit_jar" value="${root}/lib/junit.jar" />
+	<property name="version" value="0.1.1" />
+	<property name="release" value="release" />
+	<property name="project_name" value="hyk-util" />
+
+	<target name="prepare">
+	    <mkdir dir="${classes}"/>
+	    <mkdir dir="${distroot}"/>
+	</target>
+	
+	<target name="compile" depends="prepare">
+	    <javac debug="on" target="1.5" source="1.5" srcdir="${srcroot}" destdir="${classes}">
+	    </javac>
+	</target>
+	
+    <target name="dist" depends="compile">
+    	<copy todir="${classes}">
+	    	<fileset dir="${srcroot}">
+	    		<include name="**/*.xml"/>
+	    	</fileset>
+    	</copy>
+	    <jar destfile="${distroot}/${dist_jar}" basedir="${classes}"/>
+	    <delete dir="${classes}"/>
+	</target>
+	
+	<target name="release" depends="dist">
+		<delete file="VERSION"/>
+		<touch file="VERSION"/>
+		<delete file="${project_name}-${version}.zip"/>
+	    <mkdir dir="${release}/${project_name}/"/>
+	    <copy todir="${release}/${project_name}">
+	    	<fileset dir="${root}">
+	    		<include name="dist**/*"/>
+	    		<include name="src/**/*"/>
+	    		<include name="test/**/*"/>
+	    		<include name="lib/**/*"/>
+	    		<include name="doc/**/*"/>
+	    		<include name="*.xml"/>
+	    		<include name="README"/>
+	    		<include name="CHANGELOG"/>
+	    		<include name="TODO"/>
+	    		<exclude name="**/*.jar"/>
+	    		<exclude name="**/log4j*.jar"/>
+	    		<exclude name="**/concurrent.jar"/>
+	    		<exclude name="**/junit.jar"/>
+	    		<exclude name="**/sip-sdp.jar"/>
+	    		<exclude name="**/hyk-framework.jar"/>
+	    	</fileset>
+	    </copy>
+		<zip destfile="${project_name}-${version}.zip" basedir="${release}"/>
+	    <delete dir="${release}"/>
+	</target>
+</project>
