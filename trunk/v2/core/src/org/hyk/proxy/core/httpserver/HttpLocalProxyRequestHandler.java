@@ -91,7 +91,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		event.setAttachment(e.getChannel());
 		try
         {
-			session = sessionManager.handleChunk(session, event);
+			EventDispatcher.getSingletonInstance().dispatch(event);
         }
         catch (Exception ex)
         {
@@ -115,7 +115,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		{
 			HTTPRequestEvent event = buildEvent(request);
 			event.setAttachment(e.getChannel());
-			session = sessionManager.handleRequest(event);
+			EventDispatcher.getSingletonInstance().dispatch(event);
 		}
 		catch (Exception ex)
 		{
@@ -155,7 +155,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		logger.error("exceptionCaught.", e.getCause());
 	}
 
-	private void close()
+	public void close()
 	{
 		if (localChannel != null && localChannel.isConnected())
 		{
