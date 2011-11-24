@@ -6,5 +6,7 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/slf4j-jdk14-1.6.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/arch"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hyk-proxy-core"/>
+	<classpathentry kind="lib" path="/hyk-proxy-core/lib/netty-3.2.6.Final.jar" sourcepath="E:/Java/netty-3.2.6.Final-dist.tar/netty-3.2.6.Final/jar/netty-3.2.6.Final-sources.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
