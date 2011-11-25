@@ -19,6 +19,7 @@ import org.arch.event.EventVersion;
 @EventVersion(1)
 public class HTTPErrorEvent extends Event
 {
+	public int errno;
 	public String error;
 
 	@Override
@@ -26,6 +27,7 @@ public class HTTPErrorEvent extends Event
     {
 		try
         {
+			errno = BufferHelper.readVarInt(buffer);
 	        error = BufferHelper.readVarString(buffer);
         }
         catch (IOException e)
@@ -38,6 +40,7 @@ public class HTTPErrorEvent extends Event
 	@Override
     protected boolean onEncode(Buffer buffer)
     {
+		BufferHelper.writeVarInt(buffer, errno);
 	    if(null == error)
 	    {
 	    	BufferHelper.writeVarInt(buffer, 0);
