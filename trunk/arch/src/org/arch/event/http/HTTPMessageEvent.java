@@ -25,6 +25,19 @@ public abstract class HTTPMessageEvent extends Event
 
 	protected abstract boolean doEncode(Buffer buffer);
 
+	
+	public String getHeader(String name)
+	{
+		for(KeyValuePair<String, String> header:headers)
+		{
+			if(header.getName().equalsIgnoreCase(name))
+			{
+				return header.getValue();
+			}
+		}
+		return null;
+	}
+	
 	@Override
 	protected boolean onDecode(Buffer buffer)
 	{

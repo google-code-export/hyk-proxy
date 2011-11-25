@@ -17,13 +17,11 @@ import org.arch.event.EventVersion;
 @EventVersion(1)
 public class HTTPChunkEvent extends Event
 {
-	public boolean isHttpsChunk;
 	public byte[] content = new byte[0];
 	
 	@Override
     protected boolean onDecode(Buffer buffer)
     {
-		isHttpsChunk = BufferHelper.readBool(buffer);
 		try
         {
 			int contenlen = BufferHelper.readVarInt(buffer);
@@ -42,7 +40,6 @@ public class HTTPChunkEvent extends Event
 	@Override
     protected boolean onEncode(Buffer buffer)
     {
-	    BufferHelper.writeBoolean(buffer, isHttpsChunk);
 	    BufferHelper.writeVarInt(buffer, content.length);
 	    buffer.write(content);
 	    return true;
