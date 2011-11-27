@@ -18,8 +18,7 @@ import org.jboss.netty.channel.Channel;
  */
 public class ClientProxyEventHandler implements EventHandler
 {
-	
-	ProxySessionManager sessionManager = null;
+	private ProxySessionManager sessionManager = new ProxySessionManager();
 	
 	private void handleRequest(HTTPRequestEvent event, Channel localChannel)
 	{

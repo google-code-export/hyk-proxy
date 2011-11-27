@@ -9,7 +9,12 @@ import org.arch.event.Event;
  * @author qiyingwang
  *
  */
-public interface ClientConnection
+public abstract class ClientConnection
 {
-	public boolean send(Event event);
+	protected abstract boolean doSend(Event event);
+	
+	public boolean send(Event event)
+	{
+		return false;
+	}
 }

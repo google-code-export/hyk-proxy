@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.hyk.proxy.gae.common.Version;
+import org.hyk.proxy.gae.common.GAEPluginVersion;
 
 
 
@@ -37,7 +37,7 @@ public class IndexServlet extends HttpServlet
 		{
 			int len = is.read(buffer);
 			String format = new String(buffer, 0, len);
-			INDEX_PAGE = String.format(format, Version.value, Version.value);
+			INDEX_PAGE = String.format(format, GAEPluginVersion.value, GAEPluginVersion.value);
 		}
 		catch(IOException e)
 		{

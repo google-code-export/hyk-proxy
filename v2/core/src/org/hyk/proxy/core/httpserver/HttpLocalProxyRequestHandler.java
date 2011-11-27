@@ -36,9 +36,6 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
-	private boolean isReadingChunks = false;
-	private boolean ishttps = false;
-
 	private Channel localChannel = null;
 
 	public HttpLocalProxyRequestHandler()
@@ -68,7 +65,6 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	private void handleChunks(MessageEvent e)
 	{
 		HTTPChunkEvent event = new HTTPChunkEvent();
-		event.isHttpsChunk = ishttps;
 		ChannelBuffer content = null;
 		if (e.getMessage() instanceof HttpChunk)
 		{
@@ -99,14 +95,6 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 
 	private void handleHttpRequest(HttpRequest request, MessageEvent e)
 	{
-		if (request.getMethod().equals(HttpMethod.CONNECT))
-		{
-			ishttps = true;
-		}
-		if (request.isChunked())
-		{
-			isReadingChunks = true;
-		}
 		try
 		{
 			HTTPRequestEvent event = buildEvent(request);
