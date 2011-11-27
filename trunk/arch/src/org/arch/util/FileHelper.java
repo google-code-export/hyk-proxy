@@ -24,6 +24,44 @@ import java.util.zip.ZipFile;
  */
 public class FileHelper
 {
+	public static boolean canWrite(File file)
+	{
+		if(file.isFile())
+		{
+			try
+            {
+				if(file.canWrite())
+				{
+					FileOutputStream fos = new FileOutputStream(file, true);
+					fos.close();
+		            return true;
+				}
+            }
+            catch (Exception e)
+            {
+	            // TODO: handle exception
+            }
+			return false;
+		}
+		else
+		{
+			File test = new File(file, ".test");
+			try
+            {
+				if(test.createNewFile())
+				{
+					test.delete();
+					return true;
+				}
+				return false;		
+            }
+            catch (Exception e)
+            {
+	            return false;
+            }
+		}
+	}
+	
 	public static File createFile(String path) throws IOException
 	{
 		File file = new File(path);
@@ -72,43 +110,6 @@ public class FileHelper
 	public static void unzip(File srcFile, File destDir)throws ZipException, IOException
 	{
 		unzip(srcFile, destDir, true);
-	}
-	
-	public static boolean canWrite(File file)
-	{
-		if(file.isFile())
-		{
-			try
-            {
-				if(file.canWrite())
-				{
-					new FileOutputStream(file, true);
-		            return true;
-				}
-            }
-            catch (Exception e)
-            {
-	            // TODO: handle exception
-            }
-			return false;
-		}
-		else
-		{
-			File test = new File(file, ".test");
-			try
-            {
-				if(test.createNewFile())
-				{
-					test.delete();
-					return true;
-				}
-				return false;		
-            }
-            catch (Exception e)
-            {
-	            return false;
-            }
-		}
 	}
 	
 	

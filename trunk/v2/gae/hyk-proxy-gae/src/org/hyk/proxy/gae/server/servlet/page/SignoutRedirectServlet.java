@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.hyk.proxy.gae.common.Version;
+import org.hyk.proxy.gae.common.GAEPluginVersion;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -51,7 +51,7 @@ public class SignoutRedirectServlet extends HttpServlet
 	{
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
-		String out = String.format(INDEX_PAGE, Version.value, user.getNickname(), userService.createLogoutURL("/admin"));
+		String out = String.format(INDEX_PAGE, GAEPluginVersion.value, user.getNickname(), userService.createLogoutURL("/admin"));
 		resp.setStatus(200);
 		resp.setContentLength(out.length());
 		resp.getWriter().write(out);

@@ -14,7 +14,6 @@ import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.event.http.HTTPResponseEvent;
 import org.hyk.proxy.gae.client.connection.ClientConnection;
-import org.hyk.proxy.gae.client.connection.http.HTTPConnectionManager;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;

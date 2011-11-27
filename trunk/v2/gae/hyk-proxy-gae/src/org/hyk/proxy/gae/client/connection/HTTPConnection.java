@@ -10,11 +10,11 @@ import org.hyk.proxy.gae.client.connection.ClientConnection;
  * @author qiyingwang
  *
  */
-public class HTTPConnection implements ClientConnection
+public class HTTPConnection extends  ClientConnection
 {
 	private boolean waitingResponse = false;
 	
-	public boolean send(Event event)
+	protected boolean doSend(Event event)
 	{
 		if(waitingResponse)
 		{

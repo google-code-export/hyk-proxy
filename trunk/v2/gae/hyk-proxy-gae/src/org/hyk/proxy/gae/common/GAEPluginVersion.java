@@ -1,6 +1,6 @@
 package org.hyk.proxy.gae.common;
 
-public class Version
+public class GAEPluginVersion
 {
 	public static final String value = "0.10.1";
 }

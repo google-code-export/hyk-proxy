@@ -11,6 +11,24 @@ import java.io.IOException;
  */
 public class BufferHelper
 {
+	public static int writeBytes(Buffer buffer, byte[] bs)
+	{
+		try
+		{
+			if (null == bs)
+			{
+				writeVarInt(buffer, 0);
+				return 1;
+			}
+			writeVarInt(buffer, bs.length);
+			return buffer.write(bs);
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
+	}
+	
 	public static int writeBytes(Buffer buffer, String s)
 	{
 		if (null == s)

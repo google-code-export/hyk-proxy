@@ -2,7 +2,7 @@
 
 <hyk-proxy>
    <compress-setting>
-       <compressor>lzf</compressor>
+       <compressor>snappy</compressor>
        <ignore>
            <content-type>audio</content-type>
            <content-type>video</content-type>
