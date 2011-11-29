@@ -61,8 +61,9 @@ public class ProxySession
 	private String httpspath;
 	private ProxySessionStatus status;
 
-	private Map<Long,Buffer> rangeFetchContents = new HashMap<Long, Buffer>();
+	private Map<Long, Buffer> rangeFetchContents = new HashMap<Long, Buffer>();
 	private long waitingWriteStreamPos = -1;
+	private Buffer uploadBuffer = new Buffer(0);
 
 	public ProxySession(Integer id, Channel localChannel)
 	{
@@ -132,12 +133,12 @@ public class ProxySession
 			HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
 			newEvent.setHeader(HttpHeaders.Names.RANGE, headerValue.toString());
 			getConcurrentClientConnection(newEvent).send(newEvent);
-			if(-1 == waitingWriteStreamPos)
+			if (-1 == waitingWriteStreamPos)
 			{
 				waitingWriteStreamPos = begin;
 			}
 		}
-		if(waitingWriteStreamPos >= limit)
+		if (waitingWriteStreamPos >= limit)
 		{
 			waitingWriteStreamPos = -1;
 			status = ProxySessionStatus.SESSION_COMPLETED;
@@ -155,10 +156,12 @@ public class ProxySession
 		String rangeValue = proxyEvent.getHeader(HttpHeaders.Names.RANGE);
 		RangeHeaderValue range = new RangeHeaderValue(rangeValue);
 		rangeFetchContents.put(contentRange.getFirstBytePos(), ev.content);
-		while(rangeFetchContents.containsKey(waitingWriteStreamPos))
+		while (rangeFetchContents.containsKey(waitingWriteStreamPos))
 		{
 			Buffer content = rangeFetchContents.remove(waitingWriteStreamPos);
-			ChannelBuffer buf = ChannelBuffers.wrappedBuffer(content.getRawBuffer(), content.getReadIndex(), content.readableBytes());
+			ChannelBuffer buf = ChannelBuffers.wrappedBuffer(
+			        content.getRawBuffer(), content.getReadIndex(),
+			        content.readableBytes());
 			localHTTPChannel.write(buf);
 			waitingWriteStreamPos = contentRange.getLastBytePos() + 1;
 		}
@@ -208,6 +211,7 @@ public class ProxySession
 				response.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
 				        String.valueOf(contentRange.getInstanceLength()));
 				response.setStatus(HttpResponseStatus.OK);
+
 			}
 			else
 			{
@@ -251,7 +255,7 @@ public class ProxySession
 			contentRange = new ContentRangeHeaderValue(contentRangeStr);
 		}
 		HttpResponse response = buildHttpResponse(ev);
-		ChannelFuture future = localHTTPChannel.write(response);
+		localHTTPChannel.write(response);
 		// future.await();
 		if (null != contentRange
 		        && contentRange.getLastBytePos() < (contentRange
@@ -278,6 +282,42 @@ public class ProxySession
 		}
 	}
 
+	private void handleRangeUploadResponse(HTTPResponseEvent ev)
+	{
+		ContentRangeHeaderValue contentRange = null;
+		String contentRangeStr = ev.getHeader(HttpHeaders.Names.CONTENT_RANGE);
+		if (null != contentRangeStr)
+		{
+			contentRange = new ContentRangeHeaderValue(contentRangeStr);
+			if (contentRange.getLastBytePos() == contentRange
+			        .getInstanceLength() - 1)
+			{
+				HttpResponse response = buildHttpResponse(ev);
+				response.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
+				response.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
+				response.setStatus(HttpResponseStatus.OK);
+				localHTTPChannel.write(response);
+			}
+			else
+			{
+				int fetchSizeLimit = GAEClientConfiguration.getInstance()
+				        .getFetchLimitSize();
+				long start = contentRange.getLastBytePos() + 1;
+				long end = start + fetchSizeLimit - 1;
+				if (end >= contentRange.getInstanceLength() - 1)
+				{
+					end = contentRange.getInstanceLength() - 1;
+				}
+				contentRange.setLastBytePos(end);
+				proxyEvent.setHeader(HttpHeaders.Names.CONTENT_RANGE,
+				        contentRange.toString());
+				proxyEvent.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
+				        String.valueOf(end - start + 1));
+				completeProxyRequest(uploadBuffer);
+			}
+		}
+	}
+
 	public void handleResponse(Event res)
 	{
 		if (res instanceof HTTPResponseEvent)
@@ -292,6 +332,11 @@ public class ProxySession
 				case WAITING_MULTI_RANGE_RESPONSE:
 				{
 					handleMultiRangeFetchResponse((HTTPResponseEvent) res);
+					break;
+				}
+				case WATING_RANGE_UPLOAD_RESPONSE:
+				{
+					handleRangeUploadResponse((HTTPResponseEvent) res);
 					break;
 				}
 				default:
@@ -382,16 +427,16 @@ public class ProxySession
 		event.url = urlbuffer.toString();
 
 		proxyEvent = event;
-
+		int fetchSizeLimit = GAEClientConfiguration.getInstance()
+		        .getFetchLimitSize();
 		if (proxyEvent.getContentLength() > GAEConstants.APPENGINE_HTTP_BODY_LIMIT)
 		{
 			ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
-			        0, proxyEvent.getCurrentContentLength() - 1,
-			        event.getContentLength());
+			        0, fetchSizeLimit - 1, event.getContentLength());
 			proxyEvent.setHeader(HttpHeaders.Names.CONTENT_RANGE,
 			        String.valueOf(contentRange));
 			proxyEvent.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
-			        String.valueOf(proxyEvent.getCurrentContentLength()));
+			        String.valueOf(fetchSizeLimit - 1));
 		}
 		else
 		{
@@ -399,8 +444,6 @@ public class ProxySession
 			        .isInjectRangeHeaderSitesMatchHost(
 			                proxyEvent.getHeader(HttpHeaders.Names.HOST)))
 			{
-				int fetchSizeLimit = GAEClientConfiguration.getInstance()
-				        .getFetchLimitSize();
 				if (logger.isDebugEnabled())
 				{
 					logger.debug("Inject a range header for host:"
@@ -441,33 +484,47 @@ public class ProxySession
 		}
 	}
 
-	private void completeProxyRequest(HTTPChunkEvent event)
+	private void completeProxyRequest(Buffer buffer)
 	{
-		proxyEvent.content.write(event.content);
+		int length = proxyEvent.getContentLength();
+		int rest = length - proxyEvent.content.readableBytes();
+		proxyEvent.content.write(buffer, rest);
 		if (isProxyRequestReady(proxyEvent))
 		{
-			getClientConnection(proxyEvent).send(event);
+			getClientConnection(proxyEvent).send(proxyEvent);
 			status = ProxySessionStatus.WAITING_NORMAL_RESPONSE;
 		}
+		if (buffer.readable() && buffer != uploadBuffer)
+		{
+			uploadBuffer.write(buffer, buffer.readableBytes());
+		}
+		if (proxyEvent.containsHeader(HttpHeaders.Names.CONTENT_RANGE))
+		{
+			status = ProxySessionStatus.WATING_RANGE_UPLOAD_RESPONSE;
+		}
+	}
 
+	private void completeProxyRequest(HTTPChunkEvent event)
+	{
+		completeProxyRequest(Buffer.wrapReadableContent(event.content));
 	}
 
 	public void handle(HTTPChunkEvent event)
 	{
-		if (null != proxyEvent && !isProxyRequestReady(proxyEvent))
+		if (!isProxyRequestReady(proxyEvent))
 		{
 			completeProxyRequest(event);
-			return;
 		}
 		else
 		{
-
+			uploadBuffer.write(event.content);
 		}
 	}
 
 	public void close()
 	{
 		waitingWriteStreamPos = -1;
+		// rangeUploadingEnable = false;
 		rangeFetchContents.clear();
 		ProxySessionManager.getInstance().removeSession(this);
 	}
