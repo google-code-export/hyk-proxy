@@ -26,9 +26,14 @@ public class Buffer
 
 	public static Buffer wrapReadableContent(byte[] content)
 	{
+		return wrapReadableContent(content, 0, content.length);
+	}
+	
+	public static Buffer wrapReadableContent(byte[] content, int offset, int len)
+	{
 		Buffer buf = new Buffer(content);
-		buf.write_index = content.length;
-		buf.read_index = 0;
+		buf.write_index = len;
+		buf.read_index = offset;
 		return buf;
 	}
 	

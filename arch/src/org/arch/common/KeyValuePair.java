@@ -27,4 +27,9 @@ public class KeyValuePair<K, V>
 	{
 		return value;
 	}
+	
+	public void setValue(V v)
+	{
+		this.value = v;
+	}
 }

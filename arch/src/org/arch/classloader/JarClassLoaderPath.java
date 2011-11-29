@@ -15,7 +15,7 @@ import java.util.jar.JarFile;
 /**
  *
  */
-class JarClassLoaderPath
+public class JarClassLoaderPath
 {
 	public JarClassLoaderPath(String[] jarpaths, String[] dirs) throws IOException
     {
