@@ -25,7 +25,8 @@ import java.util.Properties;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
-import org.arch.classloader.ArchClassLoader;
+import org.arch.classloader.JarClassLoader;
+import org.arch.classloader.JarClassLoaderPath;
 import org.arch.util.FileHelper;
 import org.hyk.proxy.core.common.AppData;
 import org.hyk.proxy.core.common.Constants;
@@ -93,7 +94,7 @@ public class PluginManager
 	public static class InstalledPlugin
 	{
 		public PluginContext context;
-		public ArchClassLoader classloader;
+		public JarClassLoader classloader;
 		public Plugin plugin;
 		public PluginDescription desc;
 		public PluginState state;
@@ -156,10 +157,8 @@ public class PluginManager
 			}
 			else
 			{
-				beforeInstall = Arrays.asList(AppData.getUserPluginsHome()
-				        .list());
-				FileHelper.unzip(zipFile, AppData.getUserPluginsHome(), false);
-				afterInstall = AppData.getUserPluginsHome().list();
+				logger.error("Plugin home:" + AppData.getPluginsHome() + " is not writable.");
+				return null;
 			}
 			String dir = null;
 			for (int i = 0; i < afterInstall.length; i++)
@@ -194,8 +193,7 @@ public class PluginManager
 				        + zipFile.getName());
 				return null;
 			}
-			InstalledPlugin resolve = resolvePlugin(dir,
-					FileHelper.canWrite(AppData.getPluginsHome()));
+			InstalledPlugin resolve = resolvePlugin(dir);
 			return loadPlugin(resolve);
 		}
 		catch (Exception e)
@@ -205,19 +203,11 @@ public class PluginManager
 		}
 	}
 
-	private InstalledPlugin resolvePlugin(String dir, boolean isGlobal)
+	private InstalledPlugin resolvePlugin(String dir)
 	{
 		File home = null;
-		if (isGlobal)
-		{
-			home = new File(AppData.getPluginsHome().getAbsolutePath()
-			        + Constants.FILE_SP + dir);
-		}
-		else
-		{
-			home = new File(AppData.getUserPluginsHome().getAbsolutePath()
-			        + Constants.FILE_SP + dir);
-		}
+		home = new File(AppData.getPluginsHome().getAbsolutePath()
+		        + Constants.FILE_SP + dir);
 		String[] homedir = new String[] { home.getAbsolutePath(),
 		        home.getAbsolutePath() + Constants.FILE_SP + "etc" };
 		String libdir = home.getAbsolutePath() + Constants.FILE_SP + "lib";
@@ -327,7 +317,7 @@ public class PluginManager
 				{
 					try
 					{
-						resolvePlugin(fname, true);
+						resolvePlugin(fname);
 					}
 					catch (Exception e)
 					{
@@ -342,8 +332,7 @@ public class PluginManager
 					{
 						try
                         {
-							resolvePlugin(dir,
-							        FileHelper.canWrite(AppData.getPluginsHome()));
+							resolvePlugin(dir);
                         }
                         catch (Exception e)
                         {
@@ -352,23 +341,6 @@ public class PluginManager
 					}
 				}
 			}
-		}
-		String[] dirs = AppData.getUserPluginsHome().list();
-		for (String dir : dirs)
-		{
-			if (null == dir || dir.trim().isEmpty())
-			{
-				continue;
-			}
-			if (new File(AppData.getUserPluginsHome().getAbsolutePath()
-			        + Constants.FILE_SP + dir).isDirectory())
-			{
-				resolvePlugin(dir, false);
-			}
-		}
-		for (InstalledPlugin resolve : plugins.values())
-		{
-			loadPlugin(resolve);
 		}
 	}
 

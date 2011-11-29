@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -275,6 +277,18 @@ public class SslCertificateHelper
 			return ks;
 		}
 	}
+	
+	public static SSLContext getFakeSSLContext(String host, String port)
+			throws Exception {
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+
+		kmf.init(SslCertificateHelper.getClientKeyStore(host), SslCertificateHelper.KS_PASS.toCharArray());
+		sslContext.init(kmf.getKeyManagers(), null, null);
+		// sslparams.s
+		// param.setSSLParameters(sslparams);
+		return sslContext;
+	}
 
 	public static void main(String[] args) throws Exception
 	{
@@ -302,5 +316,4 @@ public class SslCertificateHelper
 		pw.writeObject(new MiscPEMGenerator(cert));
 		pw.flush();
 	}
-
 }

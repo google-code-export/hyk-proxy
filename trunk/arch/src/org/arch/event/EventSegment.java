@@ -4,6 +4,7 @@
 package org.arch.event;
 
 import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 
 /**
  * @author qiyingwang
@@ -13,9 +14,9 @@ import org.arch.buffer.Buffer;
 @EventVersion(1)
 public class EventSegment extends Event
 {
-	int sequence;
-	int total;
-	Buffer content;
+	public int sequence;
+	public int total;
+	public Buffer content;
 	
 	@Override
     public boolean onDecode(Buffer buffer)
@@ -27,8 +28,11 @@ public class EventSegment extends Event
 	@Override
     public boolean onEncode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+	    BufferHelper.writeVarInt(buffer, sequence);
+	    BufferHelper.writeVarInt(buffer, total);
+	    BufferHelper.writeVarInt(buffer, content.readableBytes());
+	    buffer.write(content, content.readableBytes());
+	    return true;
     }
 
 	

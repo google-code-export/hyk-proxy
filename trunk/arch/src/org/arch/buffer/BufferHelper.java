@@ -526,7 +526,7 @@ public class BufferHelper
 		}
 		else
 		{
-			return "";
+			return null;
 		}
 	}
 	

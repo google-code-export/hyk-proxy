@@ -10,8 +10,10 @@
 package org.hyk.proxy.core.httpserver;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.arch.common.KeyValuePair;
+import org.arch.common.Pair;
 import org.arch.event.EventDispatcher;
 import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPRequestEvent;
@@ -23,7 +25,6 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +39,13 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 
 	private Channel localChannel = null;
 
+	private Integer id;
+	
+	private static AtomicInteger seed = new AtomicInteger(0);
+	
 	public HttpLocalProxyRequestHandler()
 	{
-
+		id = seed.getAndIncrement();
 	}
 
 	private HTTPRequestEvent buildEvent(HttpRequest request)
@@ -51,8 +56,10 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		ChannelBuffer content = request.getContent();
 		if (null != content)
 		{
-			event.content = new byte[content.readableBytes()];
-			content.readBytes(event.content);
+			int buflen = content.readableBytes();
+			event.content.ensureWritableBytes(content.readableBytes());
+			content.readBytes(event.content.getRawBuffer(), event.content.getWriteIndex(), event.content.writeableBytes());
+			event.content.advanceWriteIndex(buflen);
 		}
 		for (Map.Entry<String, String> header : request.getHeaders())
 		{
@@ -80,7 +87,8 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 			event.content = new byte[content.readableBytes()];
 			content.readBytes(event.content);
 		}
-		event.setAttachment(e.getChannel());
+		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(e.getChannel(), id);
+		event.setAttachment(attach);
 		try
 		{
 			EventDispatcher.getSingletonInstance().dispatch(event);
@@ -98,7 +106,8 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		try
 		{
 			HTTPRequestEvent event = buildEvent(request);
-			event.setAttachment(e.getChannel());
+			Pair<Channel, Integer> attach = new Pair<Channel, Integer>(e.getChannel(), id);
+			event.setAttachment(attach);
 			EventDispatcher.getSingletonInstance().dispatch(event);
 		}
 		catch (Exception ex)
