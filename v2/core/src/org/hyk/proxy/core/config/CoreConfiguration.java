@@ -1,42 +1,97 @@
+/**
+ * This file is part of the hyk-proxy project.
+ * Copyright (c) 2010 Yin QiWen <yinqiwen@gmail.com>
+ *
+ * Description: Config.java 
+ *
+ * @author yinqiwen [ 2010-5-14 | 08:49:33 PM]
+ *
+ */
 package org.hyk.proxy.core.config;
 
-import java.util.Properties;
 
-public class CoreConfiguration extends BasicConfiguration
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import org.hyk.proxy.core.common.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ *
+ */
+@XmlRootElement(name = "Configure")
+public class CoreConfiguration
 {
-	private String listenHost = "localhost";
-	private int listenPort = 48100;
-	private int threadpoolSize = 30;
-	
-	public String getListenHost()
+	protected static Logger logger = LoggerFactory.getLogger(CoreConfiguration.class);
+
+	private static CoreConfiguration instance = null;
+
+	static
 	{
-		return listenHost;
+		try
+		{
+			JAXBContext context = JAXBContext.newInstance(CoreConfiguration.class);
+			Unmarshaller unmarshaller = context.createUnmarshaller();
+			instance = (CoreConfiguration) unmarshaller.unmarshal(CoreConfiguration.class
+			        .getResource("/" + Constants.CONF_FILE));			
+			instance.init();
+		}
+		catch (Exception e)
+		{
+			logger.error("Failed to load default config file!", e);
+		}
 	}
 
-	public int getListenPort()
+	@XmlElement(name = "LocalServer")
+	private SimpleSocketAddress localProxyServerAddress = new SimpleSocketAddress(
+	        "localhost", 48100);
+
+	private int threadPoolSize = 30;
+
+	@XmlElement(name = "ThreadPoolSize")
+	public void setThreadPoolSize(int threadPoolSize)
 	{
-		return listenPort;
+		this.threadPoolSize = threadPoolSize;
+	}
+
+	private String proxyEventServiceFactory = "GAE";
+
+	public String getProxyEventServiceFactory()
+	{
+		return proxyEventServiceFactory;
+	}
+
+	@XmlElement
+	public void setProxyEventServiceFactory(String proxyEventServiceFactory)
+	{
+		this.proxyEventServiceFactory = proxyEventServiceFactory;
+	}
+
+	public void init() throws Exception
+	{
+
+	}
+
+	public SimpleSocketAddress getLocalProxyServerAddress()
+	{
+		return localProxyServerAddress;
 	}
 
 	public int getThreadPoolSize()
 	{
-		return threadpoolSize;
+		return threadPoolSize;
 	}
 
-	@Override
-    protected String getTagName()
-    {
-	    return "Core";
-    }
+	private CoreConfiguration()
+	{
+		// nothing
+	}
 
-	@Override
-    protected void doInit(Properties props)
-    {
-		listenHost = props.getProperty("ListenHost");
-		String portstr = props.getProperty("ListenPort");
-		String threadpoolStr = props.getProperty("ThreadPoolSize");
-		listenPort = Integer.parseInt(portstr);
-		threadpoolSize = Integer.parseInt(threadpoolStr);
-    }
-
+	public static CoreConfiguration getInstance()
+	{
+		return instance;
+	}
 }

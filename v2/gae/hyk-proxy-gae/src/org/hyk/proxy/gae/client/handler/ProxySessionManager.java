@@ -6,6 +6,7 @@ package org.hyk.proxy.gae.client.handler;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.arch.common.Pair;
 import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.gae.client.handler.ProxySession;
@@ -17,23 +18,36 @@ import org.jboss.netty.channel.Channel;
  */
 public class ProxySessionManager
 {
+	private static ProxySessionManager instance = new ProxySessionManager();
+	
 	private Map<Integer, ProxySession> sessionTable = new HashMap<Integer, ProxySession>(); 
-	private ProxySession getProxySession(int sessionID)
+	
+	public static ProxySessionManager getInstance()
+	{
+		return instance;
+	}
+	
+	public void removeSession(ProxySession session)
+	{
+		sessionTable.remove(session.getSessionID());
+	}
+	
+	public ProxySession getProxySession(Integer sessionID)
 	{
 		synchronized (sessionTable)
         {
 	        return sessionTable.get(sessionID);
         }
 	}
-	private ProxySession createSession(Channel ch)
+	private ProxySession createSession(Integer id, Channel ch)
 	{
-		ProxySession session = getProxySession(ch.getId());
+		ProxySession session = getProxySession(id);
 		if(null == session)
 		{
-			session = new ProxySession(ch);
+			session = new ProxySession(id, ch);
 			synchronized (sessionTable)
             {
-				sessionTable.put(ch.getId(), session);
+				sessionTable.put(id, session);
             }
 		}
 		return session;
@@ -41,12 +55,13 @@ public class ProxySessionManager
 	
 	public ProxySession handleRequest(HTTPRequestEvent event)
 	{
-		Channel localChannel = (Channel) event.getAttachment();
-		Integer channelID = localChannel.getId();
-		ProxySession session = getProxySession(channelID);
+		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event.getAttachment();
+		Channel localChannel = attach.first;
+		Integer handleID = attach.second;
+		ProxySession session = getProxySession(handleID);
 		if(null == session)
 		{
-			session = createSession(localChannel);
+			session = createSession(handleID, localChannel);
 		}
 		session.handle(event);
 		return session;
@@ -54,9 +69,10 @@ public class ProxySessionManager
 	
 	public ProxySession handleChunk(HTTPChunkEvent event)
 	{
-		Channel localChannel = (Channel) event.getAttachment();
-		Integer channelID = localChannel.getId();
-		ProxySession session = getProxySession(channelID);
+		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event.getAttachment();
+		//Channel localChannel = attach.first;
+		Integer handleID = attach.second;
+		ProxySession session = getProxySession(handleID);
 		if(null != session)
 		{
 			session.handle(event);

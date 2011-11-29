@@ -1,153 +1,124 @@
-/*
- * Copyright 2004-2010 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
- */
 package org.arch.compress.lzf;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * An input stream to read from an LZF stream.
- * The data is automatically expanded.
- */
 public class LZFInputStream extends InputStream {
+	public static int EOF_FLAG = -1;
 
-    private final InputStream in;
-    private LZF decompress = new LZF();
-    private int pos;
-    private int bufferLength;
-    private byte[] inBuffer;
-    private byte[] buffer;
-    
-    /**
-     * Copied from org.h2.util.Utils --- Start
-     * 
-     * Create an array of bytes with the given size. If this is not possible
-     * because not enough memory is available, an OutOfMemoryError with the
-     * requested size in the message is thrown.
-     *
-     * @param len the number of bytes requested
-     * @return the byte array
-     * @throws OutOfMemoryError
-     */
-    
-    public static final byte[] EMPTY_BYTES = {};
-    
-    public static byte[] newBytes(int len) {
-        try {
-            if (len == 0) {
-                return EMPTY_BYTES;
-            }
-            return new byte[len];
-        } catch (OutOfMemoryError e) {
-            Error e2 = new OutOfMemoryError("Requested memory: " + len);
-            e2.initCause(e);
-            throw e2;
-        }
-    }
-    // org.h2.util.Utils.Java --- END
+	/**
+	 * stream to be decompressed
+	 * */
+	protected final InputStream inputStream;
 
-    
-    public LZFInputStream(InputStream in) throws IOException {
-        this.in = in;
-        if (readInt() != LZFOutputStream.MAGIC) {
-            throw new IOException("Not an LZFInputStream");
-        }
-    }
+	/**
+	 * Flag that indicates whether we force full reads (reading of as many bytes
+	 * as requested), or 'optimal' reads (up to as many as available, but at
+	 * least one). Default is false, meaning that 'optimal' read is used.
+	 */
+	protected boolean cfgFullReads = false;
 
-    private byte[] ensureSize(byte[] buff, int len) {
-        return buff == null || buff.length < len ? newBytes(len) : buff;
-    }
+	/* the current buffer of compressed bytes */
+	private final byte[] compressedBytes = new byte[LZFChunk.MAX_CHUNK_LEN];
 
-    private void fillBuffer() throws IOException {
-        if (buffer != null && pos < bufferLength) {
-            return;
-        }
-        int len = readInt();
-        if (decompress == null) {
-            // EOF
-            this.bufferLength = 0;
-        } else if (len < 0) {
-            len = -len;
-            buffer = ensureSize(buffer, len);
-            readFully(buffer, len);
-            this.bufferLength = len;
-        } else {
-            inBuffer = ensureSize(inBuffer, len);
-            int size = readInt();
-            readFully(inBuffer, len);
-            buffer = ensureSize(buffer, size);
-            decompress.expand(inBuffer, 0, len, buffer, 0, size);
-            this.bufferLength = size;
-        }
-        pos = 0;
-    }
+	/* the buffer of uncompressed bytes from which */
+	private final byte[] uncompressedBytes = new byte[LZFChunk.MAX_CHUNK_LEN];
 
-    private void readFully(byte[] buff, int len) throws IOException {
-        int off = 0;
-        while (len > 0) {
-            int l = in.read(buff, off, len);
-            len -= l;
-            off += l;
-        }
-    }
+	/*
+	 * The current position (next char to output) in the uncompressed bytes
+	 * buffer.
+	 */
+	private int bufferPosition = 0;
 
-    private int readInt() throws IOException {
-        int x = in.read();
-        if (x < 0) {
-            decompress = null;
-            return 0;
-        }
-        x = (x << 24) + (in.read() << 16) + (in.read() << 8) + in.read();
-        return x;
-    }
+	/* Length of the current uncompressed bytes buffer */
+	private int bufferLength = 0;
 
-    public int read() throws IOException {
-        fillBuffer();
-        if (pos >= bufferLength) {
-            return -1;
-        }
-        return buffer[pos++] & 255;
-    }
+	public LZFInputStream(final InputStream inputStream) throws IOException {
+		this(inputStream, false);
+	}
 
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
-    }
+	/**
+	 * @param inputStream
+	 *            Underlying input stream to use
+	 * @param fullReads
+	 *            Whether {@link #read(byte[])} should try to read exactly as
+	 *            many bytes as requested (true); or just however many happen to
+	 *            be available (false)
+	 */
+	public LZFInputStream(final InputStream inputStream, boolean fullReads)
+			throws IOException {
+		super();
+		this.inputStream = inputStream;
+		cfgFullReads = fullReads;
+	}
 
-    public int read(byte[] b, int off, int len) throws IOException {
-        if (len == 0) {
-            return 0;
-        }
-        int read = 0;
-        while (len > 0) {
-            int r = readBlock(b, off, len);
-            if (r < 0) {
-                break;
-            }
-            read += r;
-            off += r;
-            len -= r;
-        }
-        return read == 0 ? -1 : read;
-    }
+	@Override
+	public int read() throws IOException {
+		int returnValue = EOF_FLAG;
+		readyBuffer();
+		if (bufferPosition < bufferLength) {
+			returnValue = (uncompressedBytes[bufferPosition++] & 255);
+		}
+		return returnValue;
+	}
 
-    private int readBlock(byte[] b, int off, int len) throws IOException {
-        fillBuffer();
-        if (pos >= bufferLength) {
-            return -1;
-        }
-        int max = Math.min(len, bufferLength - pos);
-        max = Math.min(max, b.length - off);
-        System.arraycopy(buffer, pos, b, off, max);
-        pos += max;
-        return max;
-    }
+	public int read(final byte[] buffer) throws IOException {
+		return (read(buffer, 0, buffer.length));
 
-    public void close() throws IOException {
-        in.close();
-    }
+	}
 
+	public int read(final byte[] buffer, int offset, int length)
+			throws IOException {
+		if (length < 1) {
+			return 0;
+		}
+		readyBuffer();
+		if (bufferLength == -1) {
+			return -1;
+		}
+		// First let's read however much data we happen to have...
+		int chunkLength = Math.min(bufferLength - bufferPosition, length);
+		System.arraycopy(uncompressedBytes, bufferPosition, buffer, offset,
+				chunkLength);
+		bufferPosition += chunkLength;
+
+		if (chunkLength == length || !cfgFullReads) {
+			return chunkLength;
+		}
+		// Need more data, then
+		int totalRead = chunkLength;
+		do {
+			offset += chunkLength;
+			readyBuffer();
+			if (bufferLength == -1) {
+				break;
+			}
+			chunkLength = Math.min(bufferLength - bufferPosition,
+					(length - totalRead));
+			System.arraycopy(uncompressedBytes, bufferPosition, buffer, offset,
+					chunkLength);
+			bufferPosition += chunkLength;
+			totalRead += chunkLength;
+		} while (totalRead < length);
+
+		return totalRead;
+	}
+
+	public void close() throws IOException {
+		bufferPosition = bufferLength = 0;
+		inputStream.close();
+	}
+
+	/**
+	 * Fill the uncompressed bytes buffer by reading the underlying inputStream.
+	 * 
+	 * @throws IOException
+	 */
+	private final void readyBuffer() throws IOException {
+		if (bufferPosition >= bufferLength) {
+			bufferLength = LZFDecoder.decompressChunk(inputStream,
+					compressedBytes, uncompressedBytes);
+			bufferPosition = 0;
+		}
+	}
 }

@@ -12,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.arch.util.NetworkHelper;
-import org.hyk.proxy.core.config.BasicConfiguration;
 import org.hyk.proxy.core.config.CoreConfiguration;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -45,9 +44,9 @@ public class HttpLocalProxyServer
 
 	public HttpLocalProxyServer()
 	{
-		CoreConfiguration cfg = new CoreConfiguration();
-		String host = cfg.getListenHost();
-		int port = cfg.getListenPort();
+		CoreConfiguration cfg = CoreConfiguration.getInstance();
+		String host = cfg.getLocalProxyServerAddress().host;
+		int port = cfg.getLocalProxyServerAddress().port;
 		int threadpoolSize = cfg.getThreadPoolSize();
 		final ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(threadpoolSize, 0, 0);
 		if (NetworkHelper.isIPV6Address(host))

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configure>
+	<LocalServer host="localhost" port="48100" />
+
+	<!--The thread pool size of local server -->
+	<ThreadPoolSize>30</ThreadPoolSize>
+    
+    <!-- Can choose in plugins, default is GAE -->
+	<ProxyEventServiceFactory>GAE</ProxyEventServiceFactory>
+</Configure>

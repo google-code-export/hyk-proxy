@@ -9,7 +9,6 @@ import org.arch.event.EventHeader;
 import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPEventContants;
 import org.arch.event.http.HTTPRequestEvent;
-import org.hyk.proxy.gae.client.connection.http.HTTPConnectionManager;
 import org.jboss.netty.channel.Channel;
 
 /**
@@ -29,7 +28,6 @@ public class ClientProxyEventHandler implements EventHandler
 	{
 		sessionManager.handleChunk(event);
 	}
-	
 	
 	@Override
     public void onEvent(EventHeader header, Event event)

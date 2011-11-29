@@ -52,7 +52,7 @@ public class AdminServlet extends HttpServlet
 		UserService userService = UserServiceFactory.getUserService();
 		//User user = userService.getCurrentUser();
 		String sigouturl = userService.createLogoutURL("/") ;
-		String out = String.format(INDEX_PAGE, GAEPluginVersion.value, AccountServiceImpl.getRootUser().getPasswd(), sigouturl);
+		String out = String.format(INDEX_PAGE, GAEPluginVersion.value, AccountServiceHandler.getRootUser().getPasswd(), sigouturl);
 		resp.setStatus(200);
 		resp.setContentLength(out.length());
 		resp.getWriter().write(out);

@@ -1,101 +1,71 @@
-/*
- * Copyright 2004-2010 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
- */
 package org.arch.compress.lzf;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * An output stream to write an LZF stream.
- * The data is automatically compressed.
- */
 public class LZFOutputStream extends OutputStream {
+	private static int OUTPUT_BUFFER_SIZE = LZFChunk.MAX_CHUNK_LEN;
 
-	
-	public static final int IO_BUFFER_SIZE_COMPRESS = 128 * 1024;
-	
-    /**
-     * The file header of a LZF file.
-     */
-    static final int MAGIC = ('H' << 24) | ('2' << 16) | ('I' << 8) | 'S';
+	protected final OutputStream outputStream;
+	protected byte[] outputBuffer = new byte[OUTPUT_BUFFER_SIZE];
+	protected int position = 0;
 
-    private final OutputStream out;
-    private final LZF compress = new LZF();
-    private final byte[] buffer;
-    private int pos;
-    private byte[] outBuffer;
+	public LZFOutputStream(final OutputStream outputStream) {
+		this.outputStream = outputStream;
+	}
 
-    public LZFOutputStream(OutputStream out) throws IOException {
-        this.out = out;
-        int len = IO_BUFFER_SIZE_COMPRESS;
-        buffer = new byte[len];
-        ensureOutput(len);
-        writeInt(MAGIC);
-    }
+	@Override
+	public void write(final int singleByte) throws IOException {
+		if (position >= outputBuffer.length) {
+			writeCompressedBlock();
+		}
+		outputBuffer[position++] = (byte) singleByte;
+	}
 
-    private void ensureOutput(int len) {
-        // TODO calculate the maximum overhead (worst case) for the output
-        // buffer
-        int outputLen = (len < 100 ? len + 100 : len) * 2;
-        if (outBuffer == null || outBuffer.length < outputLen) {
-            outBuffer = new byte[outputLen];
-        }
-    }
+	@Override
+	public void write(final byte[] buffer, final int offset, final int length)
+			throws IOException {
+		int inputCursor = offset;
+		int remainingBytes = length;
+		while (remainingBytes > 0) {
+			if (position >= outputBuffer.length) {
+				writeCompressedBlock();
+			}
+			int chunkLength = (remainingBytes > (outputBuffer.length - position)) ? outputBuffer.length
+					- position
+					: remainingBytes;
+			System.arraycopy(buffer, inputCursor, outputBuffer, position,
+					chunkLength);
+			position += chunkLength;
+			remainingBytes -= chunkLength;
+			inputCursor += chunkLength;
+		}
+	}
 
-    public void write(int b) throws IOException {
-        if (pos >= buffer.length) {
-            flush();
-        }
-        buffer[pos++] = (byte) b;
-    }
+	@Override
+	public void flush() throws IOException {
+		writeCompressedBlock();
+		outputStream.flush();
+	}
 
-    private void compressAndWrite(byte[] buff, int len) throws IOException {
-        if (len > 0) {
-            ensureOutput(len);
-            int compressed = compress.compress(buff, len, outBuffer, 0);
-            if (compressed > len) {
-                writeInt(-len);
-                out.write(buff, 0, len);
-            } else {
-                writeInt(compressed);
-                writeInt(len);
-                out.write(outBuffer, 0, compressed);
-            }
-        }
-    }
+	@Override
+	public void close() throws IOException {
+		try {
+			flush();
+		} finally {
+			outputStream.close();
+		}
+	}
 
-    private void writeInt(int x) throws IOException {
-        out.write((byte) (x >> 24));
-        out.write((byte) (x >> 16));
-        out.write((byte) (x >> 8));
-        out.write((byte) x);
-    }
-
-    public void write(byte[] buff, int off, int len) throws IOException {
-        while (len > 0) {
-            int copy = Math.min(buffer.length - pos, len);
-            System.arraycopy(buff, off, buffer, pos, copy);
-            pos += copy;
-            if (pos >= buffer.length) {
-                flush();
-            }
-            off += copy;
-            len -= copy;
-        }
-    }
-
-    public void flush() throws IOException {
-        compressAndWrite(buffer, pos);
-        pos = 0;
-    }
-
-    public void close() throws IOException {
-        flush();
-        out.close();
-    }
-
+	/**
+	 * Compress and write the current block to the OutputStream
+	 */
+	private void writeCompressedBlock() throws IOException {
+		if (position > 0) {
+			final byte[] compressedBytes = LZFEncoder.encode(outputBuffer,
+					position);
+			outputStream.write(compressedBytes);
+			position = 0;
+		}
+	}
 }
