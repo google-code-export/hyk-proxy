@@ -18,7 +18,7 @@ import org.arch.event.EventVersion;
 @EventVersion(1)
 public class HTTPResponseEvent extends HTTPMessageEvent
 {
-	private int statusCode;
+	public int statusCode;
 
 	@Override
     protected boolean doDecode(Buffer buffer)

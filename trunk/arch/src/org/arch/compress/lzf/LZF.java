@@ -65,7 +65,7 @@ package org.arch.compress.lzf;
  * back-reference.
  * </p>
  */
-public final class CompressLZF implements Compressor {
+public final class LZF {
 
     /**
      * The number of entries in the hash table. The size is a trade-off between

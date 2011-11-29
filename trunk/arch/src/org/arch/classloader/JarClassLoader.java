@@ -9,14 +9,14 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class ArchClassLoader extends ClassLoader
+public class JarClassLoader extends ClassLoader
 {
 	private static final String FILE_SP = System.getProperty("file.separator");
 	
 	private List<ClassLoader> dependLoaders = new ArrayList<ClassLoader>();
 	private JarClassLoaderPath classPath;
 	
-	public ArchClassLoader(ClassLoader parent, JarClassLoaderPath path)
+	public JarClassLoader(ClassLoader parent, JarClassLoaderPath path)
 	{
 		super(parent == null ? ClassLoader.getSystemClassLoader() : parent);
 		this.classPath = path;

@@ -24,7 +24,7 @@ public class LZFOutputStream extends OutputStream {
     static final int MAGIC = ('H' << 24) | ('2' << 16) | ('I' << 8) | 'S';
 
     private final OutputStream out;
-    private final CompressLZF compress = new CompressLZF();
+    private final LZF compress = new LZF();
     private final byte[] buffer;
     private int pos;
     private byte[] outBuffer;

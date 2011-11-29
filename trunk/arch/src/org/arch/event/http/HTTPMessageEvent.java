@@ -19,23 +19,72 @@ import org.arch.event.Event;
 public abstract class HTTPMessageEvent extends Event
 {
 	public List<KeyValuePair<String, String>> headers = new LinkedList<KeyValuePair<String, String>>();
-	public byte[] content = new byte[0];
+	public Buffer content = new Buffer(0);
 
 	protected abstract boolean doDecode(Buffer buffer);
 
 	protected abstract boolean doEncode(Buffer buffer);
 
+	public int getCurrentContentLength()
+	{
+		return content.readableBytes();
+	}
 	
-	public String getHeader(String name)
+	public int getContentLength()
+	{
+		String lenheader = getHeader("Content-Length");
+		if(null != lenheader)
+		{
+			return Integer.parseInt(lenheader.trim());
+		}
+		return 0;
+	}
+	
+	public boolean containsHeader(String name)
+	{
+		return getHeaderPair(name) != null;
+	}
+	
+	private KeyValuePair<String, String> getHeaderPair(String name)
 	{
 		for(KeyValuePair<String, String> header:headers)
 		{
 			if(header.getName().equalsIgnoreCase(name))
 			{
-				return header.getValue();
+				return header;
 			}
 		}
 		return null;
+	}
+	
+	public String getHeader(String name)
+	{
+		KeyValuePair<String, String> header = getHeaderPair(name);
+		return null != header?header.getValue():null;
+	}
+	
+	public List<KeyValuePair<String, String>> getHeaders()
+	{
+		return headers;
+	}
+	
+	public void setHeader(String name, String value)
+	{
+		KeyValuePair<String, String> header = getHeaderPair(name);
+		if(null != header)
+		{
+			header.setValue(value);
+		}
+		else
+		{
+			addHeader(name, value);
+		}
+	}
+	
+	public void addHeader(String name, String value)
+	{
+		KeyValuePair<String, String> header = new KeyValuePair<String, String>(name, value);
+		headers.add(header);
 	}
 	
 	@Override
@@ -60,8 +109,10 @@ public abstract class HTTPMessageEvent extends Event
 			int contenlen = BufferHelper.readVarInt(buffer);
 			if (contenlen > 0)
 			{
-				content = new byte[contenlen];
-				buffer.read(content);
+				//content = new byte[contenlen];
+				content.ensureWritableBytes(contenlen);
+				content.write(buffer, contenlen);
+				//buffer.read(content);
 			}
 		}
 		catch (IOException e)
@@ -85,8 +136,10 @@ public abstract class HTTPMessageEvent extends Event
 			BufferHelper.writeVarString(buffer, kv.getName());
 			BufferHelper.writeVarString(buffer, kv.getValue());
 		}
-		BufferHelper.writeVarInt(buffer, content.length);
-		buffer.write(content);
+		BufferHelper.writeVarInt(buffer, content.readableBytes());
+		int idx = content.getReadIndex();
+		buffer.write(content, content.readableBytes());
+		content.setReadIndex(idx);
 		return false;
 	}
 }
