@@ -269,6 +269,7 @@ public class HTTPProxyConnection extends ProxyConnection
 		request.setHeader("Content-Length",
 		        String.valueOf(buffer.readableBytes()));
 		request.setContent(buffer);
+		waitingResponse = true;
 		clientChannel.write(request);
 		return true;
 	}
@@ -300,8 +301,22 @@ public class HTTPProxyConnection extends ProxyConnection
 	class HttpResponseHandler extends SimpleChannelUpstreamHandler
 	{
 		private boolean readingChunks = false;
+		private int responseContentLength = 0;
 		private Buffer resBuffer = new Buffer(0);
 
+		private void fillResponseBuffer(ChannelBuffer buffer)
+		{
+			int contentlen = buffer.readableBytes();
+			resBuffer.ensureWritableBytes(contentlen);
+			buffer.readBytes(resBuffer.getRawBuffer(), resBuffer.getWriteIndex(),contentlen);
+			resBuffer.advanceWriteIndex(contentlen);
+			if(responseContentLength <= resBuffer.readableBytes())
+			{
+				doRecv(resBuffer);
+				resBuffer.clear();
+			}
+		}
+		
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 		        throws Exception
@@ -346,38 +361,25 @@ public class HTTPProxyConnection extends ProxyConnection
 					return;
 				}
 
-				int bodyLen = (int) HttpHeaders.getContentLength(response);
-				if (response.getStatus().getCode() == 200 && bodyLen > 0)
+				responseContentLength = (int) HttpHeaders.getContentLength(response);
+				if (response.getStatus().getCode() == 200)
 				{
-					response.getContent();
-					if (response.isChunked())
+					if(response.isChunked())
 					{
 						readingChunks = true;
 						waitingResponse = true;
 					}
-				}
-				if (response.getStatus().getCode() == 200
-				        && response.isChunked())
-				{
-					readingChunks = true;
-					waitingResponse = true;
+					else
+					{
+						readingChunks = false;
+						waitingResponse = false;
+					}
+					ChannelBuffer content = response.getContent();
+					fillResponseBuffer(content);
 				}
 				else
 				{
-
-					if (response.getStatus().equals(HttpResponseStatus.OK)
-					        && bodyLen > 0)
-					{
-
-					}
-					else
-					{
-						if (logger.isDebugEnabled())
-						{
-							logger.debug("Recv message with no body or error rsponse"
-							        + response);
-						}
-					}
+					waitingResponse = false;       
 				}
 			}
 			else
@@ -386,11 +388,9 @@ public class HTTPProxyConnection extends ProxyConnection
 				if (chunk.isLast())
 				{
 					readingChunks = false;
+					waitingResponse = false;
 				}
-				else
-				{
-
-				}
+				fillResponseBuffer(chunk.getContent());
 			}
 		}
 	}

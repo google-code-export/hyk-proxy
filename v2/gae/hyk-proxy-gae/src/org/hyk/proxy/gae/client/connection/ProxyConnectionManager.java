@@ -6,7 +6,6 @@ package org.hyk.proxy.gae.client.connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -137,8 +136,4 @@ public class ProxyConnectionManager
 
 	}
 
-	public void sendEvent(Event event)
-	{
-
-	}
 }

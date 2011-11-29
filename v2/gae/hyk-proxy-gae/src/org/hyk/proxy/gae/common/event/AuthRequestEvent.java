@@ -7,13 +7,13 @@ import org.arch.buffer.Buffer;
 import org.arch.event.Event;
 import org.arch.event.EventType;
 import org.arch.event.EventVersion;
-import org.arch.event.http.HTTPEventContants;
+import org.hyk.proxy.gae.common.GAEConstants;
 
 /**
  * @author qiyingwang
  *
  */
-@EventType(HTTPEventContants.HTTP_CHUNK_EVENT_TYPE)
+@EventType(GAEConstants.AUTH_REQUEST_EVENT_TYPE)
 @EventVersion(1)
 public class AuthRequestEvent extends Event
 {

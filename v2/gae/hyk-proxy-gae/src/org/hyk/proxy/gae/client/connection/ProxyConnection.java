@@ -174,6 +174,16 @@ public abstract class ProxyConnection
 			setAuthToken((AuthResponseEvent) ev);
 			return;
 		}
+		else if(ev instanceof EventSegment)
+		{
+			EventSegment segment = (EventSegment) ev;
+			Buffer evntContent = GAEEventHelper.mergeEventSegment(segment);
+			if(null != evntContent)
+			{
+				doRecv(evntContent);
+			}
+			return;
+		}
 		ProxySession session = ProxySessionManager.getInstance().getProxySession(ev.getHash());
 		if(null != session)
 		{

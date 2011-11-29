@@ -12,7 +12,7 @@ import org.arch.buffer.BufferHelper;
  */
 @EventType(Event.RESERVED_SEGMENT_EVENT_TYPE)
 @EventVersion(1)
-public class EventSegment extends Event
+public class EventSegment extends Event implements Comparable<EventSegment>
 {
 	public int sequence;
 	public int total;
@@ -33,6 +33,20 @@ public class EventSegment extends Event
 	    BufferHelper.writeVarInt(buffer, content.readableBytes());
 	    buffer.write(content, content.readableBytes());
 	    return true;
+    }
+
+	@Override
+    public int compareTo(EventSegment o)
+    {
+	    if(sequence < o.sequence)
+	    {
+	    	return -1;
+	    }
+	    else if(sequence == o.sequence)
+	    {
+	    	return 0;
+	    }
+	    return 1;
     }
 
 	

@@ -19,4 +19,7 @@ public interface GAEConstants
 	public static final int FETCH_FAILED = -2;
 	public static final int RESPONSE_TOO_LARGE = -3;
 	public static final int RESPONSE_TIMEOUT = -4;
+	
+	public static final int AUTH_REQUEST_EVENT_TYPE = 2000;
+	public static final int AUTH_RESPONSE_EVENT_TYPE = 2001;
 }
