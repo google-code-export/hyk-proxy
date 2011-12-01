@@ -52,7 +52,7 @@ public class AppData
 				USR_PLUGINS_STATE.createNewFile();
 			}
 			FAKE_CERT_HOME = new File(appHome + filesp
-			        + "cert");
+			        + "conf");
 			APP_PLUGINS = new File(APP_HOME, "plugins");
 			if (!APP_PLUGINS.exists())
 			{

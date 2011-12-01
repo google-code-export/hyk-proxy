@@ -9,11 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.arch.event.Event;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.util.ListSelector;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
+import org.hyk.proxy.gae.client.config.GAEClientConfiguration.XmppAccount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +62,19 @@ public class ProxyConnectionManager
 		return true;
 	}
 	
+	private void addProxyConnection(List<ProxyConnection> connlist, ProxyConnection connection)
+	{
+		if(!connlist.isEmpty())
+		{
+			connection.setAuthToken(connlist.get(0).getAuthToken());
+		}
+		else
+		{
+			connection.auth();
+		}
+		connlist.add(connection);
+	}
+	
 	private ProxyConnection getClientConnection(GAEServerAuth auth)
 	{
 		ProxyConnection connection = null;
@@ -89,10 +102,23 @@ public class ProxyConnectionManager
 			case HTTPS:
 			{
 				connection = new HTTPProxyConnection(auth);	
+				addProxyConnection(connlist, connection);
 				break;
 			}
 			case XMPP:
 			{
+				for(XmppAccount account:GAEClientConfiguration.getInstance().getXmppAccounts())
+				{
+					try
+                    {
+	                    connection = new XMPPProxyConnection(auth, account);
+	                    addProxyConnection(connlist, connection);
+                    }
+                    catch (Exception e)
+                    {
+	                    logger.error("Failed to create XMPP proxy connection for jid:" + account.jid, e);
+                    }
+				}
 				break;
 			}
 			default:
@@ -100,18 +126,7 @@ public class ProxyConnectionManager
 				break;
 			}
 		}
-		if(null != connection)
-		{
-			if(!connlist.isEmpty())
-			{
-				connection.setAuthToken(connlist.get(0).getAuthToken());
-			}
-			else
-			{
-				connection.auth();
-			}
-			connlist.add(connection);
-		}
+		
 		return connection;
 	}
 
@@ -126,9 +141,10 @@ public class ProxyConnectionManager
 		}
 		else
 		{
-			auth = GAEClientConfiguration.getInstance().getGAEServerAuth(appid);
+			 auth = GAEClientConfiguration.getInstance().getGAEServerAuth(appid);
 		}
 		return getClientConnection(auth);
+		
 	}
 
 	public void routine()

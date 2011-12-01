@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.hyk.proxy.gae.common.GAEPluginVersion;
+import org.hyk.proxy.gae.server.handler.AccountServiceHandler;
 
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;

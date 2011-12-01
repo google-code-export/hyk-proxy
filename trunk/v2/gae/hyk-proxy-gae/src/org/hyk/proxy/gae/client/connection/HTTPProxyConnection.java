@@ -40,7 +40,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
@@ -68,12 +67,12 @@ public class HTTPProxyConnection extends ProxyConnection
 
 	public HTTPProxyConnection(GAEServerAuth auth)
 	{
-		// remoteAddress = address;
+		super(auth);
 		remoteAddress = new HttpServerAddress(auth.appid + ".appspot.com",
 		        GAEConstants.HTTP_INVOKE_PATH, GAEClientConfiguration
 		                .getInstance().getConnectionMode()
 		                .equals(ConnectionMode.HTTPS));
-		this.auth = auth;
+		
 	}
 
 	public boolean isReady()
@@ -312,6 +311,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			resBuffer.advanceWriteIndex(contentlen);
 			if(responseContentLength <= resBuffer.readableBytes())
 			{
+				waitingResponse = false;
 				doRecv(resBuffer);
 				resBuffer.clear();
 			}

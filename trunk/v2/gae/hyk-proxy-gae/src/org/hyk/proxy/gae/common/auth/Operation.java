@@ -14,5 +14,5 @@ package org.hyk.proxy.gae.common.auth;
  */
 public enum Operation
 {
-	ADD, DELETE
+	ADD, DELETE, MODIFY
 }

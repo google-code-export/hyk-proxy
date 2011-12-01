@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -52,6 +53,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
+import org.hyk.proxy.core.common.AppData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,7 @@ public class SslCertificateHelper
 
 	static PrivateKey caPriKey;
 	static X509Certificate caCert;
-	static Map<String, KeyStore> kstCache = new ConcurrentHashMap<String, KeyStore>();
+	static Map<String, KeyStore> kstCache = new WeakHashMap<String, KeyStore>();
 	public static final String KS_PASS = "hyk-proxy";
 	public static final String CA_ALIAS = "RootCAPriKey";
 	public static final String CLIENT_CERT_ALIAS = "FakeCertForClient";
@@ -253,29 +255,19 @@ public class SslCertificateHelper
 			return kstCache.get(host);
 		}
 		KeyStore ks = KeyStore.getInstance("JKS");
-		File kst_file = new File(AppData.GetFakeSSLCertHome(), host + ".kst");
-		if (kst_file.exists())
-		{
-			ks.load(new FileInputStream(kst_file), KS_PASS.toCharArray());
-			kstCache.put(host, ks);
-			return ks;
-		}
-		else
-		{
-			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			final SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-			random.setSeed(Long.toString(System.currentTimeMillis()).getBytes());
-			keyGen.initialize(2048, random);
-			final KeyPair keypair = keyGen.generateKeyPair();
-			// KeyPair pair = createRSAKeyPair();
-			X509Certificate cert = createClientCert(host, keypair.getPublic());
-			ks.load(null, null);
-			ks.setKeyEntry(CLIENT_CERT_ALIAS, keypair.getPrivate(),
-			        KS_PASS.toCharArray(), new Certificate[] { cert, caCert });
-			ks.store(new FileOutputStream(kst_file), KS_PASS.toCharArray());
-			kstCache.put(host, ks);
-			return ks;
-		}
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		final SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+		random.setSeed(Long.toString(System.currentTimeMillis()).getBytes());
+		keyGen.initialize(2048, random);
+		final KeyPair keypair = keyGen.generateKeyPair();
+		// KeyPair pair = createRSAKeyPair();
+		X509Certificate cert = createClientCert(host, keypair.getPublic());
+		ks.load(null, null);
+		ks.setKeyEntry(CLIENT_CERT_ALIAS, keypair.getPrivate(),
+		        KS_PASS.toCharArray(), new Certificate[] { cert, caCert });
+		//ks.store(new FileOutputStream(kst_file), KS_PASS.toCharArray());
+		kstCache.put(host, ks);
+		return ks;
 	}
 	
 	public static SSLContext getFakeSSLContext(String host, String port)

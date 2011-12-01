@@ -284,5 +284,12 @@ public class Buffer
 		}
 		return getWriteIndex() - writeCurPos;
 	}
+	
+	public byte[] toArray()
+	{
+		byte[] b = new byte[readableBytes()];
+		System.arraycopy(buffer, getReadIndex(), b, 0, readableBytes());
+		return b;
+	}
 
 }

@@ -3,14 +3,11 @@
  */
 package org.hyk.proxy.gae.server.handler;
 
-import java.io.IOException;
-
 import org.arch.event.Event;
 import org.arch.event.EventHandler;
 import org.arch.event.EventHeader;
 import org.arch.event.http.HTTPEventContants;
 import org.arch.event.http.HTTPRequestEvent;
-import org.hyk.proxy.gae.server.util.GAEServerHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +15,6 @@ import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
 import com.google.appengine.api.memcache.AsyncMemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 
@@ -30,10 +24,9 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
  */
 public class ServerProxyEventHandler implements EventHandler
 {
-	protected Logger logger = LoggerFactory.getLogger(getClass());;
+	protected Logger logger = LoggerFactory.getLogger(getClass());
 	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
-	protected CapabilitiesService service = CapabilitiesServiceFactory
-	        .getCapabilitiesService();
+	
 	protected AsyncMemcacheService asyncCache = MemcacheServiceFactory
 	        .getAsyncMemcacheService();
 	protected AccountServiceHandler accountHandler = new AccountServiceHandler();

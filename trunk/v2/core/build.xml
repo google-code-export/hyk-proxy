@@ -1,61 +1,101 @@
 <?xml version="1.0"?>
 
-<project name="core" default="dist">
+<project name="hyk-proxy-core" >
 	<property name="root" value="." />
 
-	<property name='dist_jar' value='core.jar' />
+	<property name="srcroot" value="${root}/src" />
+	<property name="releasedir" value="${root}/release" />
 	<property name="classes" value="${root}/build" />
-	<property name="distroot" value="${root}/dist" />
+	<property name="jar" value="hyk-proxy-core.jar" />
+	<property name="distroot" value="${root}/lib" />
 	<property name="docdir" value="${root}/doc" />
 	<property name="lib" value="${root}/lib" />
-	<property name="srcroot" value="${root}/src" />
-	<property name="testroot" value="${root}/test" />
-	<property name="junit_jar" value="${root}/lib/junit.jar" />
-	<property name="version" value="0.10.1" />
+	<property name="conf" value="${root}/conf" />
+	<property name="docs" value="${root}/docs" />
+	<property name="shell" value="${root}/shell" />
 	<property name="release" value="release" />
-	<property name="project_name" value="hyk-proxy-core" />
+	<property name="version" value="0.10.1" />
+	<property name="versionfile" value="org/hyk/proxy/core/common/Version.java" />
+	<property name="project_name" value="hyk-proxy" />
+	<property name="releasename" value="${project_name}-${version}"/>
 
 	<target name="prepare">
-	    <mkdir dir="${classes}"/>
-	    <mkdir dir="${distroot}"/>
+		<mkdir dir="${classes}" />
+		<mkdir dir="${distroot}" />
+		<!--
+		<copy todir="${srcroot}/com/hyk/proxy/framework/shell/gui">
+			<fileset dir="${root}/../hyk-proxy-gui/src/com/hyk/proxy/framework/shell/gui" includes="**/*.java"/>
+		</copy>
+		-->
+		<echo message="package org.hyk.proxy.core.common;
+			 public class Version
+			 {
+			   public static final String value = &quot;${version}&quot;;
+			 }" file="${srcroot}/${versionfile}" />
 	</target>
-	
+
+
 	<target name="compile" depends="prepare">
-	    <javac debug="on" target="1.5" source="1.5" srcdir="${srcroot}" destdir="${classes}">
-	    </javac>
+		<javac debug="on" destdir="${classes}">
+			<src path="${srcroot}" />
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		<copy todir="${classes}">
+			<fileset dir="${srcroot}">
+				<include name="**/*.png"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="${distroot}/${jar}" basedir="${classes}">
+			<manifest>
+				<attribute name="Version" value="${version}"/>
+				<attribute name="Class-Path" value="../conf  
+					arch.jar netty-3.2.7.Final.jar bcprov-jdk16-146.jar
+					slf4j-api-1.6.4.jar slf4j-jdk14-1.6.4.jar"/>
+			</manifest>
+		</jar>
+		<delete dir="${classes}"/>
 	</target>
 	
-    <target name="dist" depends="compile">
-    	<copy todir="${classes}">
-	    	<fileset dir="${srcroot}">
-	    		<include name="**/*.xml"/>
-	    	</fileset>
-    	</copy>
-	    <jar destfile="${distroot}/${dist_jar}" basedir="${classes}"/>
-	    <delete dir="${classes}"/>
-	</target>
-	
-	<target name="release" depends="dist">
-		<delete file="VERSION"/>
-		<touch file="VERSION"/>
-		<delete file="${project_name}-${version}.zip"/>
-	    <mkdir dir="${release}/${project_name}/"/>
-	    <copy todir="${release}/${project_name}">
-	    	<fileset dir="${root}">
-	    		<include name="dist**/*"/>
-	    		<include name="src/**/*"/>
-	    		<include name="test/**/*"/>
-	    		<include name="lib/**/*"/>
-	    		<include name="doc/**/*"/>
-	    		<include name="*.xml"/>
-	    		<include name="README"/>
-	    		<include name="CHANGELOG"/>
-	    		<include name="TODO"/>
-	    		<exclude name="**/*.jar"/>
-	    		<exclude name="**/core.jar"/>
-	    	</fileset>
-	    </copy>
-		<zip destfile="${project_name}-${version}.zip" basedir="${release}"/>
-	    <delete dir="${release}"/>
+	<target name="release" depends="jar">
+		<property name="binreleasedir" value="${releasedir}/${releasename}"/>
+		<mkdir dir="${binreleasedir}"/>
+		<mkdir dir="${binreleasedir}/plugins"/>
+		<mkdir dir="${binreleasedir}/log"/>
+		<copy todir="${binreleasedir}/lib">
+			<fileset dir="${lib}"/>
+		</copy>
+		<copy todir="${binreleasedir}/conf">
+			<fileset dir="${conf}"/>
+		</copy>
+		<!--
+		<copy todir="${binreleasedir}/docs">
+			<fileset dir="${docs}"/>
+		</copy>
+		-->
+		<copy todir="${binreleasedir}/bin">
+			<fileset dir="${shell}" />
+		</copy>
+		<!--
+		<copy todir="${binreleasedir}/plugins" file="../hyk-proxy-gae/hyk-proxy-gae-0.9.4.zip"/>
+		-->
+		<copy todir="${binreleasedir}" file="${root}/readme.txt" />
+		<copy todir="${binreleasedir}" file="${root}/changelog.txt" />
+		<copy todir="${binreleasedir}" file="${root}/licence.txt" />
+		<zip destfile="${releasename}.zip" basedir="${releasedir}"/>
+		<!--
+		<ant target="doLaunchEXE" />
+		<move file="start.exe" todir="${binreleasedir}/bin"/>
+		<move file="startgui.exe" todir="${binreleasedir}/bin"/>
+		<move file="admin.exe" todir="${binreleasedir}/bin"/>
+		<ant target="installer" />
+		-->
+		<delete dir="${releasedir}" />
 	</target>
 </project>

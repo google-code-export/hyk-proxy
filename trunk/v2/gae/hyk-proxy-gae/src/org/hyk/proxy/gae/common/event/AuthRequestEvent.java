@@ -3,7 +3,10 @@
  */
 package org.hyk.proxy.gae.common.event;
 
+import java.io.IOException;
+
 import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 import org.arch.event.Event;
 import org.arch.event.EventType;
 import org.arch.event.EventVersion;
@@ -23,15 +26,26 @@ public class AuthRequestEvent extends Event
 	@Override
     protected boolean onDecode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+		try
+        {
+	        appid = BufferHelper.readVarString(buffer);
+	        user = BufferHelper.readVarString(buffer);
+			passwd = BufferHelper.readVarString(buffer);
+        }
+        catch (IOException e)
+        {
+	        return false;
+        }
+	    return true;
     }
 
 	@Override
     protected boolean onEncode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+	    BufferHelper.writeVarString(buffer, appid);
+	    BufferHelper.writeVarString(buffer, user);
+	    BufferHelper.writeVarString(buffer, passwd);
+	    return true;
     }
 
 }

@@ -27,31 +27,32 @@ final class SnappyInternalUtils
 
     static {
         // Try to only load one implementation of Memory to assure the call sites are monomorphic (fast)
-        Memory memoryInstance = null;
-        try {
-            Class<? extends Memory> unsafeMemoryClass = SnappyInternalUtils.class.getClassLoader().loadClass("org.arch.compress.snappy.UnsafeMemory").asSubclass(Memory.class);
-            Memory unsafeMemory = unsafeMemoryClass.newInstance();
-            if (unsafeMemory.loadInt(new byte[4], 0) == 0) {
-                memoryInstance = unsafeMemory;
-            }
-        }
-        catch (Throwable ignored) {
-        }
-        if (memoryInstance == null) {
-            try {
-                Class<? extends Memory> slowMemoryClass = SnappyInternalUtils.class.getClassLoader().loadClass("org.arch.compress.snappy.SlowMemory").asSubclass(Memory.class);
-                Memory slowMemory = slowMemoryClass.newInstance();
-                if (slowMemory.loadInt(new byte[4], 0) == 0) {
-                    memoryInstance = slowMemory;
-                } else {
-                    throw new AssertionError("SlowMemory class is broken!");
-                }
-            }
-            catch (Throwable ignored) {
-                throw new AssertionError("Could not find SlowMemory class");
-            }
-        }
-        memory = memoryInstance;
+//        Memory memoryInstance = null;
+//        try {
+//            Class<? extends Memory> unsafeMemoryClass = SnappyInternalUtils.class.getClassLoader().loadClass("org.arch.compress.snappy.UnsafeMemory").asSubclass(Memory.class);
+//            Memory unsafeMemory = unsafeMemoryClass.newInstance();
+//            if (unsafeMemory.loadInt(new byte[4], 0) == 0) {
+//                memoryInstance = unsafeMemory;
+//            }
+//        }
+//        catch (Throwable ignored) {
+//        }
+//        if (memoryInstance == null) {
+//            try {
+//                Class<? extends Memory> slowMemoryClass = SnappyInternalUtils.class.getClassLoader().loadClass("org.arch.compress.snappy.SlowMemory").asSubclass(Memory.class);
+//                Memory slowMemory = slowMemoryClass.newInstance();
+//                if (slowMemory.loadInt(new byte[4], 0) == 0) {
+//                    memoryInstance = slowMemory;
+//                } else {
+//                    throw new AssertionError("SlowMemory class is broken!");
+//                }
+//            }
+//            catch (Throwable ignored) {
+//                throw new AssertionError("Could not find SlowMemory class");
+//            }
+//        }
+//        memory = memoryInstance;
+    	memory = new SlowMemory();
     }
 
     static final boolean HAS_UNSAFE = memory.fastAccessSupported();

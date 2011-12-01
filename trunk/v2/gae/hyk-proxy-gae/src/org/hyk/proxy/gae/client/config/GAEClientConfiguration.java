@@ -104,19 +104,19 @@ public class GAEClientConfiguration
 
 	public static class ProxyInfo
 	{
-		@XmlElement
+		@XmlAttribute
 		public String host;
-		@XmlElement
+		@XmlAttribute
 		public int port = 80;
-		@XmlElement
+		@XmlAttribute
 		public String user;
-		@XmlElement
+		@XmlAttribute
 		public String passwd;
 
-		@XmlElement
+		@XmlAttribute
 		public ProxyType type = ProxyType.HTTP;
 
-		@XmlElement
+		@XmlAttribute
 		public String nextHopGoogleServer;
 
 	}

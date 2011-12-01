@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.arch.common.Pair;
 import org.arch.event.http.HTTPChunkEvent;
+import org.arch.event.http.HTTPConnectionEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.gae.client.handler.ProxySession;
 import org.jboss.netty.channel.Channel;
@@ -49,6 +50,22 @@ public class ProxySessionManager
             {
 				sessionTable.put(id, session);
             }
+		}
+		return session;
+	}
+	
+	public ProxySession handleConnectionEvent(HTTPConnectionEvent event)
+	{
+		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event.getAttachment();
+		Channel localChannel = attach.first;
+		Integer handleID = attach.second;
+		ProxySession session = getProxySession(handleID);
+		if(null != session)
+		{
+			if(event.status == HTTPConnectionEvent.CLOSED)
+			{
+				session.close();
+			}
 		}
 		return session;
 	}

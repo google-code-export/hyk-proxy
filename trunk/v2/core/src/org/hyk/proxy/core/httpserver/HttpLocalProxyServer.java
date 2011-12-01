@@ -9,10 +9,9 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.arch.util.NetworkHelper;
-import org.hyk.proxy.core.config.CoreConfiguration;
+import org.hyk.proxy.core.config.SimpleSocketAddress;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -22,7 +21,6 @@ import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.jboss.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +40,12 @@ public class HttpLocalProxyServer
 	private Channel serverChannel;
 	private Executor bossExecutor = Executors.newCachedThreadPool();
 
-	public HttpLocalProxyServer()
+	public HttpLocalProxyServer(SimpleSocketAddress listenAddress,
+	        final ExecutorService workerExecutor)
 	{
-		CoreConfiguration cfg = CoreConfiguration.getInstance();
-		String host = cfg.getLocalProxyServerAddress().host;
-		int port = cfg.getLocalProxyServerAddress().port;
-		int threadpoolSize = cfg.getThreadPoolSize();
-		final ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(threadpoolSize, 0, 0);
+		String host = listenAddress.host;
+		int port = listenAddress.port;
+
 		if (NetworkHelper.isIPV6Address(host))
 		{
 			bootstrap = new ServerBootstrap(new OioServerSocketChannelFactory(
@@ -82,5 +79,5 @@ public class HttpLocalProxyServer
 	{
 		serverChannel.close();
 	}
-	
+
 }

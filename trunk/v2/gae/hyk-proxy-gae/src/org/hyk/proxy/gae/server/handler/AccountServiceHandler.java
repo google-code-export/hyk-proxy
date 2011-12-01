@@ -9,7 +9,6 @@
  */
 package org.hyk.proxy.gae.server.handler;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,22 +24,23 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.arch.util.RandomHelper;
+import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.auth.Group;
+import org.hyk.proxy.gae.common.auth.Operation;
 import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+import com.google.appengine.api.utils.SystemProperty;
 
 /**
  *
  */
 public class AccountServiceHandler
 {
-	protected transient Logger	logger = LoggerFactory.getLogger(getClass());
-
-	Group						group;
-	User						user;
+	protected transient Logger logger = LoggerFactory.getLogger(getClass());
 
 	public AccountServiceHandler()
 	{
@@ -51,23 +51,18 @@ public class AccountServiceHandler
 	{
 	}
 
-	public void setUserAndGroup(Group group, User user)
+	protected String assertRootAuth(User user)
 	{
-		this.group = group;
-		this.user = user;
-	}
-
-	protected String assertRootAuth()
-	{
-		if(!user.getEmail().equals(Constants.ROOT_NAME))
+		if (!user.getEmail().equals(GAEConstants.ROOT_NAME))
 		{
-			return Constants.AUTH_FAILED;
+			return GAEConstants.AUTH_FAILED;
 		}
 		return null;
 	}
 
 	protected void sendAccountMail(String to, String passwd, boolean isCreate)
 	{
+		String appid = SystemProperty.applicationId.get();
 		Properties props = new Properties();
 		Session session = Session.getDefaultInstance(props, null);
 
@@ -76,10 +71,11 @@ public class AccountServiceHandler
 			Message msg = new MimeMessage(session);
 			StringBuffer buffer = new StringBuffer();
 			buffer.append("Hi, ").append(to).append("\r\n\r\n");
-			if(isCreate)
+			if (isCreate)
 			{
-				buffer.append("You account on ").append(XmlConfig.getInstance().getAppId() + ".appspot.com").append(" has been created.").append(
-						"\r\n");
+
+				buffer.append("You account on ").append(appid + ".appspot.com")
+				        .append(" has been created.").append("\r\n");
 				buffer.append("    Username:").append(to).append("\r\n");
 				buffer.append("    Password:").append(passwd).append("\r\n");
 				msg.setSubject("Your account has been activated");
@@ -87,21 +83,24 @@ public class AccountServiceHandler
 			else
 			{
 				msg.setSubject("Your account has been deleted.");
-				buffer.append("You account on ").append(XmlConfig.getInstance().getAppId() + ".appspot.com").append(" has been deleted.").append(
-						"\r\n");
+				buffer.append("You account on ").append(appid + ".appspot.com")
+				        .append(" has been deleted.").append("\r\n");
 			}
 
-			buffer.append("Thanks again for registering, admin@" + XmlConfig.getInstance().getAppId() + ".appspot.com");
+			buffer.append("Thanks again for registering, admin@" + appid
+			        + ".appspot.com");
 			String msgBody = buffer.toString();
 
-			msg.setFrom(new InternetAddress("admin@" + XmlConfig.getInstance().getAppId() + ".appspotmail.com"));
-			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to, "Mr. User"));
+			msg.setFrom(new InternetAddress("admin@" + appid
+			        + ".appspotmail.com"));
+			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to,
+			        "Mr. User"));
 
 			// msg.set
 			msg.setText(msgBody);
 			Transport.send(msg);
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			logger.error("Failed to send mail to user:" + to, e);
 		}
@@ -109,12 +108,12 @@ public class AccountServiceHandler
 
 	protected static boolean createGroupIfNotExist(String groupName)
 	{
-		Group group = ServerUtils.getGroup(groupName);
-		if(null == group)
+		Group group = UserManagementService.getGroup(groupName);
+		if (null == group)
 		{
 			group = new Group();
 			group.setName(groupName);
-			ServerUtils.storeObject(group);
+			UserManagementService.saveGroup(group);
 			return false;
 		}
 		return true;
@@ -122,21 +121,21 @@ public class AccountServiceHandler
 
 	protected static boolean createUserIfNotExist(String email, String groupName)
 	{
-		User user = ServerUtils.getUser(email);
-		if(null == user)
+		User user = UserManagementService.getUserWithName(email);
+		if (null == user)
 		{
 			user = new User();
 			user.setEmail(email);
 			user.setGroup(groupName);
-			if(email.equals(Constants.ANONYMOUSE_NAME))
+			if (email.equals(GAEConstants.ANONYMOUSE_NAME))
 			{
-				user.setPasswd(Constants.ANONYMOUSE_NAME);
+				user.setPasswd(GAEConstants.ANONYMOUSE_NAME);
 			}
 			else
 			{
-				user.setPasswd(RandomUtil.generateRandomString(8));
+				user.setPasswd(RandomHelper.generateRandomString(10));
 			}
-			ServerUtils.storeObject(user);
+			UserManagementService.saveUser(user);
 		}
 		return true;
 	}
@@ -146,61 +145,62 @@ public class AccountServiceHandler
 	 */
 	public static void checkDefaultAccount()
 	{
-		createGroupIfNotExist(Constants.ROOT_GROUP_NAME);
-		createUserIfNotExist(Constants.ROOT_NAME, Constants.ROOT_GROUP_NAME);
-		createGroupIfNotExist(Constants.PUBLIC_GROUP_NAME);
-		createGroupIfNotExist(Constants.ANONYMOUSE_NAME);
-		createUserIfNotExist(Constants.ANONYMOUSE_NAME, Constants.ANONYMOUSE_GROUP_NAME);
+		createGroupIfNotExist(GAEConstants.ROOT_GROUP_NAME);
+		createUserIfNotExist(GAEConstants.ROOT_NAME,
+		        GAEConstants.ROOT_GROUP_NAME);
+		createGroupIfNotExist(GAEConstants.PUBLIC_GROUP_NAME);
+		createGroupIfNotExist(GAEConstants.ANONYMOUSE_NAME);
+		createUserIfNotExist(GAEConstants.ANONYMOUSE_NAME,
+		        GAEConstants.ANONYMOUSE_GROUP_NAME);
 
 	}
 
 	public static User getRootUser()
 	{
-		return ServerUtils.getUser(Constants.ROOT_NAME);
+		return UserManagementService.getUserWithName(GAEConstants.ROOT_NAME);
 	}
 
-	@Override
-	public String createGroup(String groupname)
+	public String createGroup(User user, String groupname)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
-		Group g = ServerUtils.getGroup(groupname);
-		if(null != g)
+		Group g = UserManagementService.getGroup(groupname);
+		if (null != g)
 		{
-			return Constants.GRP_EXIST;
+			return GAEConstants.GRP_EXIST;
 		}
 		g = new Group();
 		g.setName(groupname);
-		ServerUtils.storeObject(g);
+		UserManagementService.saveGroup(g);
 		// ServerUtils.cacheGroup(g);
 		return null;
 	}
 
-	@Override
-	public String createUser(String username, String groupname, String passwd)
+	public String createUser(User user, String username, String groupname,
+	        String passwd)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
 		try
 		{
-			Group g = ServerUtils.getGroup(groupname);
-			if(null == g)
+			Group g = UserManagementService.getGroup(groupname);
+			if (null == g)
 			{
-				return Constants.GRP_NOTFOUND;
+				return GAEConstants.GRP_NOTFOUND;
 			}
-			User u = ServerUtils.getUser(username);
-			if(null != u)
+			User u = UserManagementService.getUserWithName(username);
+			if (null != u)
 			{
-				return Constants.USER_EXIST;
+				return GAEConstants.USER_EXIST;
 			}
 			Pattern p = Pattern.compile(".+@.+\\.[a-z]+");
 			Matcher m = p.matcher(username);
 			boolean matchFound = m.matches();
-			if(!matchFound)
+			if (!matchFound)
 			{
 				return "Username MUST be a email address!";
 			}
@@ -208,11 +208,11 @@ public class AccountServiceHandler
 			u.setEmail(username);
 			u.setGroup(groupname);
 			u.setPasswd(passwd);
-			ServerUtils.storeObject(u);
+			UserManagementService.saveUser(u);
 			// ServerUtils.cacheUser(u);
 			sendAccountMail(username, passwd, true);
 		}
-		catch(Throwable e)
+		catch (Throwable e)
 		{
 			logger.error("Failed to create user.", e);
 			return "Failed to create user." + e.getMessage();
@@ -221,138 +221,139 @@ public class AccountServiceHandler
 		return null;
 	}
 
-	@Override
-	public String modifyPassword(String username, String oldPass, String newPass)
+	public String modifyPassword(User user, String username, String oldPass,
+	        String newPass)
 	{
-		if(user.getEmail().equals(Constants.ANONYMOUSE_NAME))
+		if (user.getEmail().equals(GAEConstants.ANONYMOUSE_NAME))
 		{
 			return "Can't modify anonymous user's password!";
 		}
-		if(user.getEmail().equals(Constants.ROOT_NAME) || user.getEmail().equals(username))
+		if (user.getEmail().equals(GAEConstants.ROOT_NAME)
+		        || user.getEmail().equals(username))
 		{
-			User modifyuser = ServerUtils.getUser(username);
-			if(null == modifyuser)
+			User modifyuser = UserManagementService.getUserWithName(username);
+			if (null == modifyuser)
 			{
-				return Constants.USER_NOTFOUND;
+				return GAEConstants.USER_NOTFOUND;
 			}
-			if(!user.getEmail().equals(Constants.ROOT_NAME))
+			if (!user.getEmail().equals(GAEConstants.ROOT_NAME))
 			{
-				if(!modifyuser.getPasswd().equals(oldPass))
+				if (!modifyuser.getPasswd().equals(oldPass))
 				{
-					return Constants.PASS_NOT_MATCH;
+					return GAEConstants.PASS_NOT_MATCH;
 				}
 			}
-			if(null == newPass)
+			if (null == newPass)
 			{
 				return "New password can't be empty!";
 			}
 			modifyuser.setPasswd(newPass);
-			ServerUtils.storeObject(modifyuser);
+			UserManagementService.saveUser(modifyuser);
 			return null;
 		}
-		return Constants.AUTH_FAILED;
+		return GAEConstants.AUTH_FAILED;
 	}
 
-	@Override
-	public List<Group> getGroupsInfo()
+	public String getGroupsInfo(User user, List<Group> grps)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			throw new AuthRuntimeException(assertRootAuth());
+			return assertRootAuth(user);
 		}
-		List<Group> groups = ServerUtils.getAllGroups();
-		return groups;
-
-	}
-
-	@Override
-	public List<User> getUsersInfo()
-	{
-		if(assertRootAuth() != null)
-		{
-			throw new AuthRuntimeException(assertRootAuth());
-		}
-
-		List<User> users = ServerUtils.getAllUsers();
-		return users;
-
-	}
-
-	@Override
-	public String deleteGroup(String groupname)
-	{
-		if(assertRootAuth() != null)
-		{
-			return assertRootAuth();
-		}
-
-		if(groupname.equals(Constants.ROOT_NAME) || groupname.equals(Constants.ANONYMOUSE_NAME) || groupname.equals(Constants.PUBLIC_GROUP_NAME))
-		{
-			return "Deletion not allowed!";
-		}
-
-		Group g = ServerUtils.getGroup(groupname);
-		if(null == g)
-		{
-			return Constants.GRP_NOTFOUND;
-		}
-		ServerUtils.deleteObject(g);
-
+		List<Group> groups = UserManagementService.getAllGroups();
+		grps.addAll(groups);
 		return null;
 
 	}
 
-	@Override
-	public String deleteUser(String username)
+	public String getUsersInfo(User user, List<User> users)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
 
-		if(username.equals(Constants.ROOT_NAME) || username.equals(Constants.ANONYMOUSE_NAME))
+		List<User> ret = UserManagementService.getAllUsers();
+		users.addAll(ret);
+		return null;
+
+	}
+
+	public String deleteGroup(User user, String groupname)
+	{
+		if (assertRootAuth(user) != null)
+		{
+			return assertRootAuth(user);
+		}
+
+		if (groupname.equals(GAEConstants.ROOT_NAME)
+		        || groupname.equals(GAEConstants.ANONYMOUSE_NAME)
+		        || groupname.equals(GAEConstants.PUBLIC_GROUP_NAME))
+		{
+			return "Deletion not allowed!";
+		}
+
+		Group g = UserManagementService.getGroup(groupname);
+		if (null == g)
+		{
+			return GAEConstants.GRP_NOTFOUND;
+		}
+		UserManagementService.deleteGroup(g);
+		return null;
+
+	}
+
+	public String deleteUser(User user, String username)
+	{
+		if (assertRootAuth(user) != null)
+		{
+			return assertRootAuth(user);
+		}
+
+		if (username.equals(GAEConstants.ROOT_NAME)
+		        || username.equals(GAEConstants.ANONYMOUSE_NAME))
 		{
 			return "Deletion not allowed!";
 		}
 		try
 		{
-			User u = ServerUtils.getUser(username);
-			if(null == u)
+			User u = UserManagementService.getUserWithName(username);
+			if (null == u)
 			{
-				return Constants.USER_NOTFOUND;
+				return GAEConstants.USER_NOTFOUND;
 			}
 			// ServerUtils.removeUserCache(u);
 			sendAccountMail(u.getEmail(), u.getPasswd(), false);
 			// pm.deletePersistent(u);
-			ServerUtils.deleteObject(u);
+			UserManagementService.deleteUser(u);
 			return null;
 		}
-		catch(Throwable e)
+		catch (Throwable e)
 		{
 			logger.error("Failed to delete user.", e);
 			return "Failed to delete user." + e.getMessage();
 		}
 	}
 
-	@Override
-	public String operationOnGroupBlackList(String groupname, String host, Operation operation)
+	public String operationOnGroupBlackList(User user, String groupname,
+	        String host, Operation operation)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
 
-		Group g = ServerUtils.getGroup(groupname);
-		if(null == g)
+		Group g = UserManagementService.getGroup(groupname);
+		if (null == g)
 		{
-			return Constants.GRP_NOTFOUND;
+			return GAEConstants.GRP_NOTFOUND;
 		}
 		Set<String> blacklist = g.getBlacklist();
-		if(null == blacklist)
+		if (null == blacklist)
 		{
 			blacklist = new HashSet<String>();
 		}
-		switch(operation)
+		switch (operation)
 		{
 			case ADD:
 			{
@@ -366,29 +367,29 @@ public class AccountServiceHandler
 			}
 		}
 		g.setBlacklist(blacklist);
-		ServerUtils.storeObject(g);
+		UserManagementService.saveGroup(g);
 		return null;
 	}
 
-	@Override
-	public String operationOnUserBlackList(String username, String host, Operation operation)
+	public String operationOnUserBlackList(User user, String username,
+	        String host, Operation operation)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
 
-		User u = ServerUtils.getUser(username);
-		if(null == u)
+		User u = UserManagementService.getUserWithName(username);
+		if (null == u)
 		{
-			return Constants.USER_NOTFOUND;
+			return GAEConstants.USER_NOTFOUND;
 		}
 		Set<String> blacklist = u.getBlacklist();
-		if(null == blacklist)
+		if (null == blacklist)
 		{
 			blacklist = new HashSet<String>();
 		}
-		switch(operation)
+		switch (operation)
 		{
 			case ADD:
 			{
@@ -402,35 +403,36 @@ public class AccountServiceHandler
 			}
 		}
 		u.setBlacklist(blacklist);
-		ServerUtils.storeObject(u);
+		UserManagementService.saveUser(u);
 		return null;
 
 	}
 
-	@Override
-	public String operationOnUserTraffic(String username, String host, int trafficRestriction)
+	public String operationOnUserTraffic(User user, String username,
+	        String host, int trafficRestriction)
 	{
-		if(assertRootAuth() != null)
+		if (assertRootAuth(user) != null)
 		{
-			return assertRootAuth();
+			return assertRootAuth(user);
 		}
-		User u = ServerUtils.getUser(username);
-		if(null == u)
+		User u = UserManagementService.getUserWithName(username);
+		if (null == u)
 		{
-			return Constants.USER_NOTFOUND;
+			return GAEConstants.USER_NOTFOUND;
 		}
 		try
 		{
-			Map<String, Integer> restrictionTable = u.getTrafficRestrictionTable();
-			if(null == restrictionTable)
+			Map<String, Integer> restrictionTable = u
+			        .getTrafficRestrictionTable();
+			if (null == restrictionTable)
 			{
 				restrictionTable = new HashMap<String, Integer>();
 				u.setTrafficRestrictionTable(restrictionTable);
 			}
 			restrictionTable.put(host, trafficRestriction);
-			ServerUtils.storeObject(u);
+			UserManagementService.saveUser(u);
 		}
-		catch(Throwable e)
+		catch (Throwable e)
 		{
 			logger.error("Failed to traffic.", e);
 			return "Failed to delete user." + e.getMessage();
