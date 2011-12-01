@@ -6,5 +6,6 @@
 	<ThreadPoolSize>30</ThreadPoolSize>
     
     <!-- Can choose in plugins, default is GAE -->
-	<ProxyEventServiceFactory>GAE</ProxyEventServiceFactory>
+	<ProxyEventHandler>GAE</ProxyEventHandler>
+	<PluginRepository></PluginRepository>
 </Configure>

@@ -9,21 +9,19 @@
  */
 package org.hyk.proxy.gae.common.auth;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.Id;
-
-import com.googlecode.objectify.annotation.Cached;
-import com.googlecode.objectify.annotation.Serialized;
+import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 
 /**
  *
  */
-@Cached
-public class User  implements Serializable
-{	
+public class User implements Serializable
+{
 	public String getEmail()
 	{
 		return email;
@@ -43,7 +41,7 @@ public class User  implements Serializable
 	{
 		this.group = group;
 	}
-	
+
 	public String getPasswd()
 	{
 		return passwd;
@@ -53,7 +51,7 @@ public class User  implements Serializable
 	{
 		this.passwd = passwd;
 	}
-	
+
 	public Set<String> getBlacklist()
 	{
 		return blacklist;
@@ -63,27 +61,62 @@ public class User  implements Serializable
 	{
 		this.blacklist = blacklist;
 	}
-	
+
 	public Map<String, Integer> getTrafficRestrictionTable()
 	{
 		return trafficRestrictionTable;
 	}
 
-	public void setTrafficRestrictionTable(Map<String, Integer> trafficRestrictionTable)
+	public void setTrafficRestrictionTable(
+	        Map<String, Integer> trafficRestrictionTable)
 	{
 		this.trafficRestrictionTable = trafficRestrictionTable;
 	}
 
-	@Id
+	public String getAuthToken()
+	{
+		return authToken;
+	}
+
+	public void setAuthToken(String authToken)
+	{
+		this.authToken = authToken;
+	}
+
 	private String email;
 
 	private String passwd;
 
 	private String group;
-	
+
+	private String authToken;
+
 	private Set<String> blacklist;
-	
-	@Serialized
+
 	private Map<String, Integer> trafficRestrictionTable;
+	
+	public void encode(Buffer buffer)
+	{
+		BufferHelper.writeVarString(buffer, email);
+		BufferHelper.writeVarString(buffer, passwd);
+		BufferHelper.writeVarString(buffer, group);
+		BufferHelper.writeVarString(buffer, authToken);
+	}
+	
+	public void decode(Buffer buffer)
+	{
+		try
+        {
+	        email = BufferHelper.readVarString(buffer);
+	        passwd = BufferHelper.readVarString(buffer);
+			group = BufferHelper.readVarString(buffer);
+			authToken = BufferHelper.readVarString(buffer);
+        }
+        catch (IOException e)
+        {
+	        
+        }
+		
+	}
 
 }

@@ -22,6 +22,10 @@ public interface Plugin
 	public void onUnload(PluginContext context) throws Exception;
 
 	public void onDeactive(PluginContext context) throws Exception;
+
+	public Runnable getAdminInterface();
+	
+	
 	
 
 }

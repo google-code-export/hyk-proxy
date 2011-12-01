@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.arch.buffer.Buffer;
+import org.arch.compress.fastlz.JFastLZ;
 import org.arch.compress.lzf.LZFDecoder;
 import org.arch.compress.lzf.LZFEncoder;
 import org.arch.compress.snappy.Snappy;
@@ -18,6 +18,8 @@ import org.arch.encrypt.SimpleEncrypt;
 import org.arch.event.Event;
 import org.arch.event.EventDispatcher;
 import org.arch.event.EventSegment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author qiyingwang
@@ -25,10 +27,16 @@ import org.arch.event.EventSegment;
  */
 public class GAEEventHelper
 {
-
-	public static Event parseEvent(Buffer buffer)
+	protected static Logger logger = LoggerFactory.getLogger(GAEEventHelper.class);
+	public static Event parseEvent(Buffer buffer) throws Exception
 	{
 		EventHeaderTags tags = new EventHeaderTags();
+		return parseEvent(buffer ,tags);
+	}
+
+	public static Event parseEvent(Buffer buffer, EventHeaderTags tags) throws Exception
+	{
+		//EventHeaderTags tags = new EventHeaderTags();
 		if (!EventHeaderTags.readHeaderTags(buffer, tags))
 		{
 			return null;
@@ -48,22 +56,54 @@ public class GAEEventHelper
 		}
 		switch (tags.compressor)
 		{
+			case FASTLZ:
+			{
+				byte[] raw = buffer.getRawBuffer();
+				int len = buffer.readableBytes()*10;
+				try
+                {
+					JFastLZ fastlz = new JFastLZ();
+					byte[] newbuf = new byte[len];
+					int decompressed = fastlz.fastlzDecompress(raw, buffer.getReadIndex(), buffer.readableBytes(), newbuf, 0, len);
+					buffer = Buffer.wrapReadableContent(newbuf, 0, decompressed);
+                }
+                catch (Exception e)
+                {
+                	logger.error("Failed to uncompress by SNAPPY.", e);
+	                return null;
+                }
+				break;
+			}
 			case SNAPPY:
 			{
 				byte[] raw = buffer.getRawBuffer();
-				int len = Snappy.getUncompressedLength(raw,
-				        buffer.getReadIndex());
-				byte[] newbuf = new byte[len];
-				int afterCompress = Snappy.uncompress(raw,
-				        buffer.getReadIndex(), buffer.readableBytes(), newbuf,
-				        0);
-				buffer = Buffer.wrapReadableContent(newbuf, 0, afterCompress);
+				try
+                {
+					byte[] newbuf = Snappy.uncompress(raw,
+					        buffer.getReadIndex(), buffer.readableBytes());
+					buffer = Buffer.wrapReadableContent(newbuf);
+                }
+                catch (Exception e)
+                {
+                	logger.error("Failed to uncompress by SNAPPY.", e);
+	                return null;
+                }
+				
 				break;
 			}
 			case LZF:
 			{
 				byte[] raw = buffer.getRawBuffer();
-				byte[] newbuf;
+				try
+                {
+	                byte[] newbuf = LZFDecoder.decode(raw, buffer.getReadIndex(), buffer.readableBytes());
+	                buffer = Buffer.wrapReadableContent(newbuf);
+                }
+                catch (Exception e)
+                {
+                	logger.error("Failed to uncompress by LZF.", e);
+	                return null;
+                }
 				break;
 			}
 			default:
@@ -82,11 +122,29 @@ public class GAEEventHelper
 		event.encode(content);
 		switch (tags.compressor)
 		{
-			case SNAPPY:
+			case FASTLZ:
 			{
-				int len = Snappy.maxCompressedLength(content.readableBytes());
-				byte[] newbuf = new byte[len];
 				byte[] raw = content.getRawBuffer();
+				byte[] newbuf = new byte[raw.length];
+				JFastLZ fastlz = new JFastLZ();
+				int afterCompress;
+                try
+                {
+	                afterCompress = fastlz.fastlzCompress(raw, content.getReadIndex(), content.readableBytes(), newbuf, 0, newbuf.length);
+                }
+                catch (IOException e)
+                {
+                	logger.error("Failed to compress by FastLZ.", e);
+	                return null;
+                }
+				content = Buffer.wrapReadableContent(newbuf, 0, afterCompress);
+				break;
+			}
+			case SNAPPY:
+			{	
+				byte[] raw = content.getRawBuffer();
+				byte[] newbuf = new byte[raw.length];
+				
 				int afterCompress = Snappy.compress(raw,
 				        content.getReadIndex(), content.readableBytes(),
 				        newbuf, 0);
@@ -103,12 +161,11 @@ public class GAEEventHelper
 					content = Buffer.wrapReadableContent(newbuf, 0,
 					        newbuf.length);
 				}
-				catch (IOException e)
+				catch (Exception e)
 				{
-
-					return null;
+					logger.error("Failed to compress by LZF.", e);
+	                return null;
 				}
-
 				break;
 			}
 			default:

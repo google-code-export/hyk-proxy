@@ -7,7 +7,12 @@ import java.io.IOException;
 
 import org.arch.event.Event;
 import org.arch.event.http.HTTPRequestEvent;
+import org.hyk.proxy.gae.common.EventHeaderTags;
+import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.hyk.proxy.gae.server.util.GAEServerHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
@@ -21,6 +26,7 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
  */
 public class FetchServiceHandler
 {
+	protected Logger logger = LoggerFactory.getLogger(getClass());
 	private AccountServiceHandler accountService;
 	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 	
@@ -34,6 +40,15 @@ public class FetchServiceHandler
 		Event ret = null;
 		try
 		{
+			Object[] attachment = (Object[]) req.getAttachment();
+			EventHeaderTags tags = (EventHeaderTags) attachment[0];
+			if(UserManagementService.userAuthServiceAvailable(tags.token))
+			{
+				User user = UserManagementService.getUserWithToken(tags.token);
+				
+			}
+			
+			
 			// if(!authByBlacklist(req))
 			// {
 			// return createErrorResponse("blacklist restriction");

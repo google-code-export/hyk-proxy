@@ -11,6 +11,8 @@ import java.util.Set;
 import org.arch.buffer.Buffer;
 import org.arch.common.Pair;
 import org.arch.event.Event;
+import org.arch.event.EventHandler;
+import org.arch.event.EventHeader;
 import org.arch.event.EventSegment;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
@@ -35,11 +37,17 @@ public abstract class ProxyConnection
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 	protected static GAEClientConfiguration cfg = GAEClientConfiguration
 	        .getInstance();
-	private List<Event> queuedEvents = new LinkedList<Event>();
+	private LinkedList<Event> queuedEvents = new LinkedList<Event>();
 	protected GAEServerAuth auth = null;
 	private String authToken = null;
 	private Object authTokenLock = new Object();
 	private Set<Integer> relevantSessions = new HashSet<Integer>();
+	private EventHandler outSessionHandler = null;
+	
+	protected ProxyConnection(GAEServerAuth auth)
+	{
+		this.auth = auth;
+	}
 	protected abstract boolean doSend(Buffer msgbuffer);
 	protected abstract int getMaxDataPackageSize();
 	protected void doClose()
@@ -47,6 +55,8 @@ public abstract class ProxyConnection
 		
 	}
 	public abstract boolean isReady();
+	
+	
 	
 	private void closeRelevantSessions()
 	{
@@ -116,6 +126,12 @@ public abstract class ProxyConnection
 	public void setAuthToken(String token)
 	{
 		authToken = token;
+	}
+	
+	public boolean send(Event event, EventHandler handler)
+	{
+		outSessionHandler = handler;
+		return send(event);
 	}
 	
 	public boolean send(Event event)
@@ -188,6 +204,24 @@ public abstract class ProxyConnection
 		if(null != session)
 		{
 			session.handleResponse(ev);
+		}
+		else
+		{
+			if(null != outSessionHandler)
+			{
+				EventHeader header = new EventHeader();
+				header.hash = ev.getHash();
+				//header.type = Event.getTypeVersion(ev.getClass())
+				outSessionHandler.onEvent(header, ev);
+			}
+		}
+		if(!queuedEvents.isEmpty())
+		{
+			if(isReady())
+			{
+				Event qe = queuedEvents.removeFirst();
+				send(qe);
+			}
 		}
 	}
 }

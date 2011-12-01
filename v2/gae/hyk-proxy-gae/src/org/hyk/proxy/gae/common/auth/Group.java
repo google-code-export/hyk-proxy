@@ -9,17 +9,17 @@
  */
 package org.hyk.proxy.gae.common.auth;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Set;
 
-import javax.persistence.Id;
+import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 
-import com.googlecode.objectify.annotation.Cached;
 
 /**
  *
  */
-@Cached
 public class Group implements Serializable
 {
 	public String getName()
@@ -42,9 +42,28 @@ public class Group implements Serializable
 		this.blacklist = blacklist;
 	}
 
-	@Id
 	private String name;
 
 	private Set<String> blacklist;
+	
+	public void encode(Buffer buffer)
+	{
+		BufferHelper.writeVarString(buffer, name);
+
+	}
+	
+	public void decode(Buffer buffer)
+	{
+		try
+        {
+			name = BufferHelper.readVarString(buffer);
+
+        }
+        catch (IOException e)
+        {
+	        
+        }
+		
+	}
 	
 }

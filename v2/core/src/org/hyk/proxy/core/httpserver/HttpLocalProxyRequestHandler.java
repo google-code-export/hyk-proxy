@@ -14,8 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.arch.common.KeyValuePair;
 import org.arch.common.Pair;
+import org.arch.event.Event;
 import org.arch.event.EventDispatcher;
 import org.arch.event.http.HTTPChunkEvent;
+import org.arch.event.http.HTTPConnectionEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -46,6 +48,22 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	public HttpLocalProxyRequestHandler()
 	{
 		id = seed.getAndIncrement();
+	}
+	
+	private boolean dispatchEvent(Event event)
+	{
+		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(localChannel, id);
+		event.setAttachment(attach);
+		try
+		{
+			EventDispatcher.getSingletonInstance().dispatch(event);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			logger.error("Failed to dispatch event.", ex);
+			return false;
+		}
 	}
 
 	private HTTPRequestEvent buildEvent(HttpRequest request)
@@ -87,33 +105,15 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 			event.content = new byte[content.readableBytes()];
 			content.readBytes(event.content);
 		}
-		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(e.getChannel(), id);
-		event.setAttachment(attach);
-		try
-		{
-			EventDispatcher.getSingletonInstance().dispatch(event);
-		}
-		catch (Exception ex)
-		{
-			// TODO Auto-generated catch block
-			logger.error("Failed to dispatch proxy request event.", ex);
-			close();
-		}
+		dispatchEvent(event);
 	}
 
 	private void handleHttpRequest(HttpRequest request, MessageEvent e)
 	{
-		try
+		HTTPRequestEvent event = buildEvent(request);
+		if(!dispatchEvent(event))
 		{
-			HTTPRequestEvent event = buildEvent(request);
-			Pair<Channel, Integer> attach = new Pair<Channel, Integer>(e.getChannel(), id);
-			event.setAttachment(attach);
-			EventDispatcher.getSingletonInstance().dispatch(event);
-		}
-		catch (Exception ex)
-		{
-			logger.error("Failed to dispatch proxy request event.", ex);
-			close();
+			localChannel.close();
 		}
 	}
 
@@ -139,6 +139,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	        throws Exception
 	{
 		super.channelClosed(ctx, e);
+		close();
 	}
 
 	@Override
@@ -146,12 +147,15 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	        throws Exception
 	{
 		logger.error("exceptionCaught.", e.getCause());
+		close();
 	}
 
 	public void close()
 	{
 		if (localChannel != null && localChannel.isConnected())
 		{
+			HTTPConnectionEvent event = new HTTPConnectionEvent(HTTPConnectionEvent.CLOSED);
+			dispatchEvent(event);
 			localChannel.close();
 			localChannel = null;
 		}

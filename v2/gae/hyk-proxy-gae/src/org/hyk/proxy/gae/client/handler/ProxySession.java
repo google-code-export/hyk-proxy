@@ -6,7 +6,6 @@ package org.hyk.proxy.gae.client.handler;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ProxySession
 {
-	protected Logger logger = LoggerFactory.getLogger(getClass());
+	protected static Logger logger = LoggerFactory.getLogger(ProxySession.class);
 	private ProxyConnectionManager connectionManager = ProxyConnectionManager
 	        .getInstance();
 	private ProxyConnection connection = null;
