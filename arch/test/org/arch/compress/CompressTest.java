@@ -7,9 +7,11 @@ import java.io.InputStream;
 
 import org.arch.compress.fastlz.JFastLZ;
 import org.arch.compress.fastlz.JFastLZLevel;
+import org.arch.compress.jsnappy.SnappyBuffer;
+import org.arch.compress.jsnappy.SnappyCompressor;
+import org.arch.compress.jsnappy.SnappyDecompressor;
 import org.arch.compress.lzf.LZFDecoder;
 import org.arch.compress.lzf.LZFEncoder;
-import org.arch.compress.snappy.Snappy;
 import org.junit.Test;
 
 public class CompressTest
@@ -18,7 +20,7 @@ public class CompressTest
 	@Test
 	public void testFastLZ() throws IOException
 	{
-		InputStream fis = getClass().getResourceAsStream("aggregate_redis_handler.cpp");
+		InputStream fis = getClass().getResourceAsStream("sina.htm");
 		byte[] buffer = new byte[1024*1024];
 		int len = fis.read(buffer);
 		byte[] cmp = new byte[len];
@@ -42,7 +44,7 @@ public class CompressTest
 	@Test
 	public void testLZF() throws IOException
 	{
-		InputStream fis = getClass().getResourceAsStream("aggregate_redis_handler.cpp");
+		InputStream fis = getClass().getResourceAsStream("sina.htm");
 		byte[] buffer = new byte[1024*1024];
 		int len = fis.read(buffer);
 		byte[] cmp = new byte[len];
@@ -59,10 +61,11 @@ public class CompressTest
 		assertArrayEquals(cmp, resume);
 	}
 
+	
 	@Test
 	public void testSnappy() throws IOException
 	{
-		InputStream fis = getClass().getResourceAsStream("aggregate_redis_handler.cpp");
+		InputStream fis = getClass().getResourceAsStream("sina.htm");
 		byte[] buffer = new byte[1024*1024];
 		int len = fis.read(buffer);
 		byte[] cmp = new byte[len];
@@ -70,14 +73,15 @@ public class CompressTest
 		System.arraycopy(buffer, 0, cmp, 0, len);
 		byte[] newbuf = new byte[len];
 		long start = System.currentTimeMillis();
-		int comresslen = Snappy.compress(buffer, 0, len, newbuf, 0);
+		SnappyBuffer afterCompress = SnappyCompressor.compress(cmp);
+		
 		long end = System.currentTimeMillis();
-		System.out.println("Snappy Compressed size:" + comresslen + " for uncompressed size:" + len+", cost " + (end - start) + "ms");
+		System.out.println("Snappy Compressed size:" + afterCompress.getLength() + " for uncompressed size:" + len+", cost " + (end - start) + "ms");
 		start = System.currentTimeMillis();
-		byte[] resume = Snappy.uncompress(newbuf, 0, comresslen);
+		SnappyBuffer resume = SnappyDecompressor.decompress(afterCompress);
 		end = System.currentTimeMillis();
 		System.out.println("Snappy Decompress cost " + (end - start) + "ms");
-		assertArrayEquals(cmp, resume);
+		assertArrayEquals(cmp, resume.toByteArray());
 		//Snappy.compress(uncompressed, uncompressedOffset, uncompressedLength, compressed, compressedOffset)
 	}
 

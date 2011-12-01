@@ -4,6 +4,10 @@
 package org.arch.buffer;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.arch.event.Event;
 
 /**
  * @author qiyingwang
@@ -28,11 +32,10 @@ public class BufferHelper
 			return -1;
 		}
 	}
-	
+
 	public static int writeBytes(Buffer buffer, String s)
 	{
-		if (null == s)
-			return 0;
+		if (null == s) return 0;
 		try
 		{
 			final byte[] bytes = s.getBytes("UTF-8");
@@ -252,7 +255,7 @@ public class BufferHelper
 
 	public static void writeVarString(Buffer buffer, String s)
 	{
-		writeVarInt(buffer, null != s?s.length():0);
+		writeVarInt(buffer, null != s ? s.length() : 0);
 		writeChars(buffer, s);
 	}
 
@@ -514,11 +517,11 @@ public class BufferHelper
 			return readRawLittleEndian64(buffer);
 		}
 	}
-	
+
 	public static String readVarString(Buffer buffer) throws IOException
 	{
 		int len = readVarInt(buffer);
-		if(len > 0)
+		if (len > 0)
 		{
 			byte[] buf = new byte[len];
 			readBytes(buffer, buf);
@@ -529,5 +532,93 @@ public class BufferHelper
 			return null;
 		}
 	}
-	
+
+	public static void writeObject(Buffer buffer, Object obj)
+	{
+		if (obj instanceof Event)
+		{
+			((Event) obj).encode(buffer);
+		}
+		else if (obj instanceof Integer)
+		{
+			writeVarInt(buffer, (Integer) obj);
+		}
+		else if (obj instanceof Long)
+		{
+			writeVarLong(buffer, (Long) obj);
+		}
+		else if (obj instanceof String)
+		{
+			writeVarString(buffer, (String) obj);
+		}
+		else if (obj instanceof List)
+		{
+			writeList(buffer, (List) obj);
+		}
+	}
+
+	public static void writeList(Buffer buffer, List list)
+	{
+		if (null == list)
+		{
+			writeVarInt(buffer, 0);
+			return;
+		}
+		for (Object obj : list)
+		{
+			writeObject(buffer, obj);
+		}
+	}
+
+	private static <T> T readObject(Buffer buffer, Class<T> clazz)
+	        throws IOException
+	{
+		if (clazz.equals(Integer.class))
+		{
+			Integer v = readVarInt(buffer);
+			return (T) v;
+		}
+		else if (clazz.equals(Long.class))
+		{
+			Long v = readVarLong(buffer);
+			return (T) v;
+		}
+		else if (clazz.equals(String.class))
+		{
+			String s = readVarString(buffer);
+			return (T) s;
+		}
+		else if (Event.class.isAssignableFrom(clazz))
+		{
+			Event obj;
+            try
+            {
+	            obj = (Event) clazz.newInstance();
+				obj.decode(buffer, false);
+				return (T) obj;
+            }
+            catch (Exception e)
+            {
+            	throw new IOException("Unsupported event class:" + clazz.getName());
+            }
+		}
+		else
+		{
+			throw new IOException("Unsupported class:" + clazz.getName());
+		}
+	}
+
+	public static <T> List<T> readList(Buffer buffer, Class<T> clazz)
+	        throws IOException
+	{
+		LinkedList<T> list = new LinkedList<T>();
+		int len = readVarInt(buffer);
+		for (int i = 0; i < len; i++)
+		{
+			T obj = readObject(buffer, clazz);
+			list.add(obj);
+		}
+		return list;
+	}
+
 }
