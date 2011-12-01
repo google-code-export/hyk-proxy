@@ -53,7 +53,7 @@ public class Events
 	        EventDispatcher.getSingletonInstance().register(HTTPRequestEvent.class, handler);
 	        EventDispatcher.getSingletonInstance().register(HTTPChunkEvent.class, handler);
 			EventDispatcher.getSingletonInstance().register(HTTPConnectionEvent.class, handler);
-			EventDispatcher.getSingletonInstance().register(EventSegment.class, handler);
+			
         }
         catch (Exception e)
         {
