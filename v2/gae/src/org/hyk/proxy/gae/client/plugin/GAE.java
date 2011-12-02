@@ -36,7 +36,7 @@ public class GAE implements Plugin
 		if(!ProxyConnectionManager.getInstance().init())
 		{
 			ProxyInfo info = GAEClientConfiguration.getInstance().getLocalProxy();
-			if(null == info || info.host == null)
+			if(null == info || info.host == null || info.host.indexOf("google") != -1)
 			{
 				
 			}

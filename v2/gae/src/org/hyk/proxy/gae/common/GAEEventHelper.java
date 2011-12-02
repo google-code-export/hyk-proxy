@@ -115,6 +115,40 @@ public class GAEEventHelper
 		}
 		return EventDispatcher.getSingletonInstance().parse(buffer);
 	}
+	
+	public static Buffer[] splitEventBuffer(Buffer msgbuffer, int hash, int splitsize, EventHeaderTags tags)
+	{
+		if(msgbuffer.readableBytes() > splitsize)
+		{
+			int total = msgbuffer.readableBytes()/splitsize;
+			if(msgbuffer.readableBytes()%splitsize != 0)
+			{
+				total++;
+			}
+			Buffer[] bufs = new Buffer[total];
+			int i = 0;
+			tags.compressor = CompressorType.NONE;
+			tags.encrypter = EncryptType.NONE;
+			while(msgbuffer.readable())
+			{
+				EventSegment segment = new EventSegment();
+				segment.setHash(hash);
+				segment.sequence = i; 
+				segment.total = total;
+				segment.content = new Buffer(splitsize);
+				segment.content.write(msgbuffer, splitsize);
+				i++;
+				Buffer buf = GAEEventHelper.encodeEvent(tags, segment);
+				segment.encode(buf);
+				bufs[i] = buf;
+			}
+			return bufs;
+		}
+		else
+		{
+			return new Buffer[]{msgbuffer};
+		}
+	}
 
 	public static Buffer encodeEvent(EventHeaderTags tags, Event event)
 	{
@@ -192,6 +226,11 @@ public class GAEEventHelper
 	}
 	
 	private static Map<Integer, ArrayList<EventSegment>> sessionBufferTable = new HashMap<Integer, ArrayList<EventSegment>>();
+	
+	public static void releaseSessionBuffer(Integer sessionID)
+	{
+		sessionBufferTable.remove(sessionID);
+	}
 	
 	public static Buffer mergeEventSegment(EventSegment segment)
 	{

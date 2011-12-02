@@ -8,12 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.arch.buffer.Buffer;
 import org.arch.buffer.BufferHelper;
+import org.arch.buffer.CodecObject;
 
 /**
  * @author qiyingwang
  *
  */
-public abstract class Event
+public abstract class Event implements CodecObject
 {
 	public static final int RESERVED_SEGMENT_EVENT_TYPE = 48100;
 	private static Map<Class, TypeVersion> typeVerTable = new ConcurrentHashMap<Class, TypeVersion>();
@@ -77,6 +78,11 @@ public abstract class Event
 		EventHeader header = new EventHeader(typever, hash);
 		header.encode(buffer);
 		return onEncode(buffer);
+	}
+	
+	public final boolean decode(Buffer buffer)
+	{
+		return decode(buffer, true);
 	}
 	
 	public final boolean decode(Buffer buffer, boolean hasHeader)

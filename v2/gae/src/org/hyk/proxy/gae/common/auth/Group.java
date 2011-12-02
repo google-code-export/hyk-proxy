@@ -15,12 +15,13 @@ import java.util.Set;
 
 import org.arch.buffer.Buffer;
 import org.arch.buffer.BufferHelper;
+import org.arch.buffer.CodecObject;
 
 
 /**
  *
  */
-public class Group implements Serializable
+public class Group implements CodecObject
 {
 	public String getName()
 	{
@@ -46,22 +47,25 @@ public class Group implements Serializable
 
 	private Set<String> blacklist;
 	
-	public void encode(Buffer buffer)
+	public boolean encode(Buffer buffer)
 	{
 		BufferHelper.writeVarString(buffer, name);
-
+		BufferHelper.writeSet(buffer, blacklist);
+		return true;
 	}
 	
-	public void decode(Buffer buffer)
+	public boolean decode(Buffer buffer)
 	{
 		try
         {
 			name = BufferHelper.readVarString(buffer);
+			blacklist = BufferHelper.readSet(buffer, String.class);
+			return true;
 
         }
         catch (IOException e)
         {
-	        
+	        return false;
         }
 		
 	}

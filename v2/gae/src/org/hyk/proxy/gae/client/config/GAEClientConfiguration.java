@@ -315,9 +315,12 @@ public class GAEClientConfiguration
 	}
 
 	private List<String> injectRangeHeaderSiteSet = new ArrayList<String>();
+	private List<String> injectRangeHeaderURLSet = new ArrayList<String>();
 	private String injectRangeHeaderSites;
+	private String injectRangeHeaderURLs;
 
-	@XmlElement(name = "InjectRangeHeaderSites")
+	@XmlElementWrapper(name = "GAE")
+	@XmlElement(name = "Sites")
 	void setInjectRangeHeaderSites(String injectRangeHeaderSites)
 	{
 		this.injectRangeHeaderSites = injectRangeHeaderSites;
@@ -327,10 +330,27 @@ public class GAEClientConfiguration
 			injectRangeHeaderSiteSet.add(s.trim());
 		}
 	}
+	
+	@XmlElementWrapper(name = "GAE")
+	@XmlElement(name = "URLs")
+	void setInjectRangeHeaderURLs(String injectRangeHeaderURLs)
+	{
+		this.injectRangeHeaderURLs = injectRangeHeaderURLs;
+		String[] urls = injectRangeHeaderURLs.split(";");
+		for (String s : urls)
+		{
+			injectRangeHeaderURLSet.add(s.trim());
+		}
+	}
 
 	String getInjectRangeHeaderSites()
 	{
 		return injectRangeHeaderSites;
+	}
+	
+	String getInjectRangeHeaderURLs()
+	{
+		return injectRangeHeaderURLs;
 	}
 
 	public boolean isInjectRangeHeaderSitesMatchHost(String host)
@@ -338,6 +358,18 @@ public class GAEClientConfiguration
 		for (String site : injectRangeHeaderSiteSet)
 		{
 			if (!site.isEmpty() && host.indexOf(site) != -1)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isInjectRangeHeaderURLsMatchURL(String url)
+	{
+		for (String s : injectRangeHeaderURLSet)
+		{
+			if (!s.isEmpty() && url.indexOf(s) != -1)
 			{
 				return true;
 			}

@@ -3,80 +3,134 @@
  */
 package org.hyk.proxy.gae.server.handler;
 
-import java.io.IOException;
+
+import java.net.MalformedURLException;
 
 import org.arch.event.Event;
 import org.arch.event.http.HTTPRequestEvent;
+import org.arch.event.http.HTTPResponseEvent;
+import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
+import org.hyk.proxy.gae.common.http.RangeHeaderValue;
 import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.hyk.proxy.gae.server.util.GAEServerHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.appengine.api.capabilities.CapabilitiesService;
+import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
+import com.google.appengine.api.capabilities.Capability;
+import com.google.appengine.api.capabilities.CapabilityStatus;
+import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.ResponseTooLargeException;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.apphosting.api.ApiProxy.OverQuotaException;
 
 /**
  * @author qiyingwang
- *
+ * 
  */
 public class FetchServiceHandler
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
-	protected URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
-	
+	private CapabilitiesService capabilities = CapabilitiesServiceFactory
+	        .getCapabilitiesService();
+	protected URLFetchService urlFetchService = URLFetchServiceFactory
+	        .getURLFetchService();
+
 	public FetchServiceHandler()
-    {
-    }
+	{
+	}
 	
+	private void fillErrorResponse(HTTPResponseEvent errorResponse, String cause)
+	{
+		String str = "You are not allowed to visit this site via proxy because %s.";
+		String ret = String.format(str, cause);
+		errorResponse.setHeader("Content-Type", "text/plain");
+		errorResponse.setHeader("Content-Length", "" + ret.length());
+		errorResponse.content.write(ret.getBytes());
+	}
+
 	public Event fetch(HTTPRequestEvent req)
 	{
 		Event ret = null;
+		HTTPResponseEvent errorResponse = new HTTPResponseEvent();
+		if(capabilities.getStatus(Capability.URL_FETCH).getStatus().equals(CapabilityStatus.DISABLED))
+		{
+			errorResponse.statusCode = 503;
+			fillErrorResponse(errorResponse, "URL Fetch service is no available in maintain time.");
+			return errorResponse;
+		}
+		Object[] attachment = (Object[]) req.getAttachment();
+		EventHeaderTags tags = (EventHeaderTags) attachment[0];
+		if (UserManagementService.userAuthServiceAvailable(tags.token))
+		{
+			User user = UserManagementService.getUserWithToken(tags.token);
+			if (null == user)
+			{		
+				errorResponse.statusCode = 401;
+				fillErrorResponse(errorResponse, "You are not a authorized user for this proxy server.");
+				return errorResponse;
+			}
+		}
+
+		HTTPRequest fetchReq = null;
 		try
 		{
-			Object[] attachment = (Object[]) req.getAttachment();
-			EventHeaderTags tags = (EventHeaderTags) attachment[0];
-			if(UserManagementService.userAuthServiceAvailable(tags.token))
+			fetchReq = GAEServerHelper.toHTTPRequest(req);
+		}
+		catch (MalformedURLException e)
+		{
+			errorResponse.statusCode = 400;
+			fillErrorResponse(errorResponse, "Invalid fetch url:" + req.url);
+			return errorResponse;
+		}
+		HTTPResponse fetchRes = null;
+		GAEServerConfiguration cfg = GAEServerHelper.getServerConfig();
+		int retry = cfg.getFetchRetryCount();
+		do
+		{
+			try
+            {
+	            fetchRes = urlFetchService.fetch(fetchReq);
+	            ret = GAEServerHelper.toHttpResponseExchange(fetchRes);
+            }
+			catch(OverQuotaException e)
 			{
-				User user = UserManagementService.getUserWithToken(tags.token);
-				
+				errorResponse.statusCode = 503;
+				fillErrorResponse(errorResponse, "Over daily quota limit.");
+				return errorResponse;
 			}
-			
-			
-			// if(!authByBlacklist(req))
-			// {
-			// return createErrorResponse("blacklist restriction");
-			// }
-			// if(!authByTrafficRestriction(req))
-			// {
-			// return createErrorResponse("your account:" + user.getEmail() +
-			// " has exceed the traffic limit today for the proxyed host:"
-			// + req.getHeaderValue("Host"));
-			// }
-			HTTPRequest fetchReq = GAEServerHelper.toHTTPRequest(req);
-			HTTPResponse fetchRes = urlFetchService.fetch(fetchReq);
-			ret = GAEServerHelper.toHttpResponseExchange(fetchRes);
-			// Store this value since the RPC framework would use this value to
-			// judge whole message compressing or not
-
+            catch (Exception e)
+            {
+            	retry--;
+            	if(!req.containsHeader("Range"))
+            	{
+            		HTTPHeader rangeHeader = new HTTPHeader("Range", new RangeHeaderValue(0, cfg.getRangeFetchLimit() - 1).toString());
+            		fetchReq.addHeader(rangeHeader);
+            	}
+            }	
 		}
-		catch (IOException e)
+		while (null != ret && retry > 0);
+		
+		if(null == fetchRes)
 		{
-			logger.error("Faile to fetch", e);
-			// ret = new HttpResponseExchange().setResponseTooLarge(true);
+			errorResponse.statusCode = 408;
+			fillErrorResponse(errorResponse, "Fetch timeout for url:" + req.url);
+			ret = errorResponse;
 		}
-		catch (ResponseTooLargeException e)
+		else
 		{
-			// ret = new HttpResponseExchange().setResponseTooLarge(true);
-		}
-		catch (Throwable e)
-		{
-			logger.error("Faile to fetch", e);
+			String contentType = ((HTTPResponseEvent)ret).getHeader("content-type");
+			if(null != contentType && cfg.isContentTypeInCompressFilter(contentType))
+			{
+				tags.compressor = CompressorType.NONE;
+			}
 		}
 		return ret;
 	}

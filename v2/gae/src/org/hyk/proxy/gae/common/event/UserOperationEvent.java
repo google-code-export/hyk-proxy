@@ -3,11 +3,15 @@
  */
 package org.hyk.proxy.gae.common.event;
 
+import java.io.IOException;
+
 import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 import org.arch.event.Event;
 import org.arch.event.EventType;
 import org.arch.event.EventVersion;
 import org.hyk.proxy.gae.common.GAEConstants;
+import org.hyk.proxy.gae.common.auth.Group;
 import org.hyk.proxy.gae.common.auth.Operation;
 import org.hyk.proxy.gae.common.auth.User;
 
@@ -24,14 +28,27 @@ public class UserOperationEvent extends Event
 	@Override
     protected boolean onDecode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
+		user = new User();
+		if(user.decode(buffer))
+		{
+			try
+            {
+	            opr = Operation.fromInt(BufferHelper.readVarInt(buffer));
+            }
+            catch (IOException e)
+            {
+	            return false;
+            }
+			return true;
+		}
 	    return false;
     }
 
 	@Override
     protected boolean onEncode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+		user.encode(buffer);
+		BufferHelper.writeVarInt(buffer, opr.getValue());
+		return true;
     }
 }

@@ -4,10 +4,10 @@
 package org.arch.buffer;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.arch.event.Event;
+import java.util.Set;
 
 /**
  * @author qiyingwang
@@ -535,9 +535,9 @@ public class BufferHelper
 
 	public static void writeObject(Buffer buffer, Object obj)
 	{
-		if (obj instanceof Event)
+		if (obj instanceof CodecObject)
 		{
-			((Event) obj).encode(buffer);
+			((CodecObject) obj).encode(buffer);
 		}
 		else if (obj instanceof Integer)
 		{
@@ -555,6 +555,10 @@ public class BufferHelper
 		{
 			writeList(buffer, (List) obj);
 		}
+		else if (obj instanceof Set)
+		{
+			writeSet(buffer, (Set) obj);
+		}
 	}
 
 	public static void writeList(Buffer buffer, List list)
@@ -565,6 +569,19 @@ public class BufferHelper
 			return;
 		}
 		for (Object obj : list)
+		{
+			writeObject(buffer, obj);
+		}
+	}
+	
+	public static void writeSet(Buffer buffer, Set set)
+	{
+		if (null == set)
+		{
+			writeVarInt(buffer, 0);
+			return;
+		}
+		for (Object obj : set)
 		{
 			writeObject(buffer, obj);
 		}
@@ -588,13 +605,18 @@ public class BufferHelper
 			String s = readVarString(buffer);
 			return (T) s;
 		}
-		else if (Event.class.isAssignableFrom(clazz))
+		else if (clazz.equals(String.class))
 		{
-			Event obj;
+			String s = readVarString(buffer);
+			return (T) s;
+		}
+		else if (CodecObject.class.isAssignableFrom(clazz))
+		{
+			CodecObject obj;
             try
             {
-	            obj = (Event) clazz.newInstance();
-				obj.decode(buffer, false);
+	            obj = (CodecObject) clazz.newInstance();
+				obj.decode(buffer);
 				return (T) obj;
             }
             catch (Exception e)
@@ -619,6 +641,19 @@ public class BufferHelper
 			list.add(obj);
 		}
 		return list;
+	}
+	
+	public static <T> Set<T> readSet(Buffer buffer, Class<T> clazz)
+	        throws IOException
+	{
+		Set<T> set = new HashSet<T>();
+		int len = readVarInt(buffer);
+		for (int i = 0; i < len; i++)
+		{
+			T obj = readObject(buffer, clazz);
+			set.add(obj);
+		}
+		return set;
 	}
 
 }

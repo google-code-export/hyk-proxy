@@ -7,15 +7,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import org.arch.buffer.Buffer;
 import org.arch.common.KeyValuePair;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.event.http.HTTPResponseEvent;
+import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 
 import com.google.appengine.api.urlfetch.FetchOptions;
 import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPMethod;
+import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 
 /**
@@ -64,5 +64,10 @@ public class GAEServerHelper
 			//exchange.setRedirectURL(url.toString());
 		}
 		return exchange;
+	}
+	
+	public static GAEServerConfiguration getServerConfig()
+	{
+		return null;
 	}
 }
