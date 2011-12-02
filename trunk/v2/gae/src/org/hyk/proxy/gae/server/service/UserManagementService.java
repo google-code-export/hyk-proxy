@@ -240,13 +240,13 @@ public class UserManagementService
 			return true;
 		}
 		CapabilityStatus status = capabilities.getStatus(Capability.MEMCACHE).getStatus();
-		if(status == CapabilityStatus.DISABLED)
+		if(status.equals(CapabilityStatus.DISABLED))
 		{
 			return false;
 		}
 		
 		status = capabilities.getStatus(Capability.DATASTORE).getStatus();
-		if(status == CapabilityStatus.DISABLED)
+		if(status.equals(CapabilityStatus.DISABLED))
 		{
 			return false;
 		}

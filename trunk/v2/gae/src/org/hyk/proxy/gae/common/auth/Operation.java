@@ -9,10 +9,30 @@
  */
 package org.hyk.proxy.gae.common.auth;
 
+import org.hyk.proxy.gae.common.CompressorType;
+
 /**
  *
  */
 public enum Operation
 {
-	ADD, DELETE, MODIFY
+	ADD(0), DELETE(1), MODIFY(2);
+	int value;
+
+	Operation(int v)
+	{
+		this.value = v;
+	}
+
+	public int getValue()
+	{
+		return value;
+	}
+
+	public static Operation fromInt(int v)
+	{
+		if (v > MODIFY.value)
+			return null;
+		return values()[v - 1];
+	}
 }

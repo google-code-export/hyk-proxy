@@ -3,7 +3,10 @@
  */
 package org.hyk.proxy.gae.common.event;
 
+import java.io.IOException;
+
 import org.arch.buffer.Buffer;
+import org.arch.buffer.BufferHelper;
 import org.arch.event.Event;
 import org.arch.event.EventType;
 import org.arch.event.EventVersion;
@@ -26,14 +29,27 @@ public class BlackListOperationEvent extends Event
 	@Override
     protected boolean onDecode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+		try
+		{
+			username = BufferHelper.readVarString(buffer);
+			groupname = BufferHelper.readVarString(buffer);
+			host = BufferHelper.readVarString(buffer);
+			opr = Operation.fromInt(BufferHelper.readVarInt(buffer));
+		}
+		catch (IOException e)
+		{
+			return false;
+		}
+		return true;
     }
 
 	@Override
     protected boolean onEncode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
-	    return false;
+		BufferHelper.writeVarString(buffer, username);
+		BufferHelper.writeVarString(buffer, groupname);
+		BufferHelper.writeVarString(buffer, host);
+		BufferHelper.writeVarInt(buffer, opr.getValue());
+	    return true;
     }
 }

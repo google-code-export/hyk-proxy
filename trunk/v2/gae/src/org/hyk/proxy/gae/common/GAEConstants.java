@@ -9,7 +9,7 @@ package org.hyk.proxy.gae.common;
  */
 public interface GAEConstants
 {
-	public static final String CLIENT_CONF_NAME = "gae.xml";
+	public static final String CLIENT_CONF_NAME = "gae-client.xml";
 	public static final String HTTP_INVOKE_PATH = "/invoke";
 	public static final String XMPP_CLIENT_NAME = "hyk-proxy-gae";
 	
@@ -30,6 +30,7 @@ public interface GAEConstants
 	public static final int GROUOP_LIST_RESPONSE_EVENT_TYPE = 2015;
 	public static final int BLACKLIST_OPERATION_EVENT_TYPE = 2016;
 	public static final int ADMIN_RESPONSE_EVENT_TYPE = 2020;
+	public static final int SERVER_CONFIG_REQUEST_EVENT_TYPE = 2050;
 	
 	public static final String ROOT_NAME = "root";
 	public static final String ROOT_GROUP_NAME = "root";

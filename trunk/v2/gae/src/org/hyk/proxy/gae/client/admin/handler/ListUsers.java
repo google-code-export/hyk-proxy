@@ -42,6 +42,7 @@ public class ListUsers implements CommandHandler
 		final String formater = "%12s%12s%12s%24s%24s";
 		String header = String.format(formater, "Username", "Password",
 		        "Group", "Blacklist");
+		GAEAdmin.outputln(header);
 		ListUserRequestEvent event = new ListUserRequestEvent();
 		EventHandler handler = new EventHandler()
 		{
@@ -59,8 +60,7 @@ public class ListUsers implements CommandHandler
 					{
 						String output = String.format(formater,
 						        line.getEmail(), line.getPasswd(),
-						        line.getGroup(), line.getBlacklist(),
-						        line.getTrafficRestrictionTable());
+						        line.getGroup(), line.getBlacklist());
 						GAEAdmin.outputln(output);
 					}
 				}

@@ -9,10 +9,8 @@
  */
 package org.hyk.proxy.gae.server.handler;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -24,6 +22,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.arch.event.Event;
 import org.arch.util.RandomHelper;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.auth.Group;
@@ -49,6 +48,11 @@ public class AccountServiceHandler
 
 	public void init()
 	{
+	}
+	
+	public Event handleEvent(int type, Event ev)
+	{
+		return null;
 	}
 
 	protected String assertRootAuth(User user)
@@ -408,35 +412,5 @@ public class AccountServiceHandler
 
 	}
 
-	public String operationOnUserTraffic(User user, String username,
-	        String host, int trafficRestriction)
-	{
-		if (assertRootAuth(user) != null)
-		{
-			return assertRootAuth(user);
-		}
-		User u = UserManagementService.getUserWithName(username);
-		if (null == u)
-		{
-			return GAEConstants.USER_NOTFOUND;
-		}
-		try
-		{
-			Map<String, Integer> restrictionTable = u
-			        .getTrafficRestrictionTable();
-			if (null == restrictionTable)
-			{
-				restrictionTable = new HashMap<String, Integer>();
-				u.setTrafficRestrictionTable(restrictionTable);
-			}
-			restrictionTable.put(host, trafficRestriction);
-			UserManagementService.saveUser(u);
-		}
-		catch (Throwable e)
-		{
-			logger.error("Failed to traffic.", e);
-			return "Failed to delete user." + e.getMessage();
-		}
-		return null;
-	}
+	
 }

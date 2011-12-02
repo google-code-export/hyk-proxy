@@ -1,0 +1,102 @@
+/**
+ * 
+ */
+package org.hyk.proxy.gae.common.config;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.arch.buffer.Buffer;
+import org.arch.buffer.CodecObject;
+
+/**
+ * @author qiyingwang
+ * 
+ */
+public class GAEServerConfiguration implements CodecObject
+{
+	private int fetchRetryCount = 3;
+	private int maxXMPPDataPackageSize = 40960;
+	private int rangeFetchLimit = 256 * 1024;
+
+	private Set<String> compressFilter = new HashSet<String>();
+
+	public GAEServerConfiguration()
+	{
+		compressFilter.add("audio");
+		compressFilter.add("video");
+		compressFilter.add("image");
+		compressFilter.add("/zip");
+		compressFilter.add("/x-gzip");
+		compressFilter.add("/x-zip-compressed");
+		compressFilter.add("/x-compress");
+		compressFilter.add("/x-compressed");
+	}
+
+	public boolean isContentTypeInCompressFilter(String type)
+	{
+		type = type.toLowerCase();
+		for (String filter : compressFilter)
+		{
+			if (type.indexOf(filter) != -1)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public Set<String> getCompressFilter()
+	{
+		return compressFilter;
+	}
+
+	public void setCompressFilter(Set<String> compressFilter)
+	{
+		this.compressFilter = compressFilter;
+	}
+
+	public int getRangeFetchLimit()
+	{
+		return rangeFetchLimit;
+	}
+
+	public void setRangeFetchLimit(int rangeFetchLimit)
+	{
+		this.rangeFetchLimit = rangeFetchLimit;
+	}
+
+	public int getMaxXMPPDataPackageSize()
+	{
+		return maxXMPPDataPackageSize;
+	}
+
+	public void setMaxXMPPDataPackageSize(int maxXMPPDataPackageSize)
+	{
+		this.maxXMPPDataPackageSize = maxXMPPDataPackageSize;
+	}
+
+	public int getFetchRetryCount()
+	{
+		return fetchRetryCount;
+	}
+
+	public void setFetchRetryCount(int fetchRetryCount)
+	{
+		this.fetchRetryCount = fetchRetryCount;
+	}
+
+	@Override
+    public boolean encode(Buffer buffer)
+    {
+	    // TODO Auto-generated method stub
+	    return false;
+    }
+
+	@Override
+    public boolean decode(Buffer buffer)
+    {
+	    // TODO Auto-generated method stub
+	    return false;
+    }
+}

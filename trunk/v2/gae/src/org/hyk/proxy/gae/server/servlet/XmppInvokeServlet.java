@@ -12,11 +12,17 @@ import org.arch.event.EventDispatcher;
 import org.arch.misc.crypto.base64.Base64;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEEventHelper;
+import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
+import org.hyk.proxy.gae.server.service.EventSendService;
+import org.hyk.proxy.gae.server.util.GAEServerHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.appengine.api.xmpp.JID;
 import com.google.appengine.api.xmpp.Message;
+import com.google.appengine.api.xmpp.MessageBuilder;
+import com.google.appengine.api.xmpp.MessageType;
+import com.google.appengine.api.xmpp.SendResponse;
 import com.google.appengine.api.xmpp.XMPPService;
 import com.google.appengine.api.xmpp.XMPPServiceFactory;
 
@@ -34,12 +40,42 @@ public class XmppInvokeServlet extends HttpServlet
 
 		try
 		{
-			JID jid = message.getFromJid();
+			final JID jid = message.getFromJid();
 			byte[] raw = Base64.decodeFast(message.getBody());
 			Buffer buffer = Buffer.wrapReadableContent(raw);
 			EventHeaderTags tags = new EventHeaderTags();
 			Event event = GAEEventHelper.parseEvent(buffer, tags);
-			event.setAttachment(new Object[] { tags, jid });
+			final GAEServerConfiguration cfg = GAEServerHelper.getServerConfig();
+			EventSendService sendService = new EventSendService()
+			{
+				public int getMaxDataPackageSize()
+				{
+					return cfg.getMaxXMPPDataPackageSize();
+				}
+
+				public void send(Buffer buf)
+				{
+					Message msg = new MessageBuilder()
+					        .withRecipientJids(jid)
+					        .withMessageType(MessageType.CHAT)
+					        .withBody(
+					                Base64.encodeToString(buf.getRawBuffer(),
+					                        buf.getReadIndex(),
+					                        buf.readableBytes(), false))
+					        .build();
+					{
+						int retry = 2;
+						while (SendResponse.Status.SUCCESS != xmpp
+						        .sendMessage(msg).getStatusMap().get(jid)
+						        && retry-- > 0)
+						{
+							logger.error("Failed to send response, try again!");
+						}
+					}
+				}
+
+			};
+			event.setAttachment(new Object[] { tags, sendService });
 			EventDispatcher.getSingletonInstance().dispatch(event);
 		}
 		catch (Throwable e)

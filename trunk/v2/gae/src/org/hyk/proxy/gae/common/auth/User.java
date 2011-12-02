@@ -16,11 +16,12 @@ import java.util.Set;
 
 import org.arch.buffer.Buffer;
 import org.arch.buffer.BufferHelper;
+import org.arch.buffer.CodecObject;
 
 /**
  *
  */
-public class User implements Serializable
+public class User implements CodecObject
 {
 	public String getEmail()
 	{
@@ -62,17 +63,6 @@ public class User implements Serializable
 		this.blacklist = blacklist;
 	}
 
-	public Map<String, Integer> getTrafficRestrictionTable()
-	{
-		return trafficRestrictionTable;
-	}
-
-	public void setTrafficRestrictionTable(
-	        Map<String, Integer> trafficRestrictionTable)
-	{
-		this.trafficRestrictionTable = trafficRestrictionTable;
-	}
-
 	public String getAuthToken()
 	{
 		return authToken;
@@ -93,17 +83,18 @@ public class User implements Serializable
 
 	private Set<String> blacklist;
 
-	private Map<String, Integer> trafficRestrictionTable;
 	
-	public void encode(Buffer buffer)
+	public boolean encode(Buffer buffer)
 	{
 		BufferHelper.writeVarString(buffer, email);
 		BufferHelper.writeVarString(buffer, passwd);
 		BufferHelper.writeVarString(buffer, group);
 		BufferHelper.writeVarString(buffer, authToken);
+		BufferHelper.writeSet(buffer, blacklist);
+		return true;
 	}
 	
-	public void decode(Buffer buffer)
+	public boolean decode(Buffer buffer)
 	{
 		try
         {
@@ -111,10 +102,12 @@ public class User implements Serializable
 	        passwd = BufferHelper.readVarString(buffer);
 			group = BufferHelper.readVarString(buffer);
 			authToken = BufferHelper.readVarString(buffer);
+			blacklist = BufferHelper.readSet(buffer, String.class);
+			return true;
         }
         catch (IOException e)
         {
-	        
+	        return false;
         }
 		
 	}

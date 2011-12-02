@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author qiyingwang
- *
+ * 
  */
 public abstract class ProxyConnection
 {
@@ -43,43 +43,46 @@ public abstract class ProxyConnection
 	private Object authTokenLock = new Object();
 	private Set<Integer> relevantSessions = new HashSet<Integer>();
 	private EventHandler outSessionHandler = null;
-	
+
 	protected ProxyConnection(GAEServerAuth auth)
 	{
 		this.auth = auth;
 	}
+
 	protected abstract boolean doSend(Buffer msgbuffer);
+
 	protected abstract int getMaxDataPackageSize();
+
 	protected void doClose()
 	{
-		
+
 	}
+
 	public abstract boolean isReady();
-	
-	
-	
+
 	private void closeRelevantSessions()
 	{
-		for(Integer sessionID:relevantSessions)
+		for (Integer sessionID : relevantSessions)
 		{
-			ProxySession session = ProxySessionManager.getInstance().getProxySession(sessionID);
-			if(null != session)
+			ProxySession session = ProxySessionManager.getInstance()
+			        .getProxySession(sessionID);
+			if (null != session)
 			{
 				session.close();
 			}
 		}
 		relevantSessions.clear();
 	}
-	
+
 	public void close()
 	{
 		doClose();
 		closeRelevantSessions();
 	}
-	
+
 	public boolean auth()
 	{
-		if(null != authToken)
+		if (null != authToken)
 		{
 			return true;
 		}
@@ -87,90 +90,78 @@ public abstract class ProxyConnection
 		event.appid = auth.appid;
 		event.user = auth.user;
 		event.passwd = auth.passwd;
-		if(!send(event))
+		if (!send(event))
 		{
 			return false;
 		}
 		synchronized (authTokenLock)
-        {
+		{
 			try
-            {
-	            authTokenLock.wait(60*1000); //1min
-            }
-            catch (InterruptedException e)
-            {
-	            return false;
-            }
-        }
+			{
+				authTokenLock.wait(60 * 1000); // 1min
+			}
+			catch (InterruptedException e)
+			{
+				return false;
+			}
+		}
 		return authToken != null && !authToken.isEmpty();
 	}
-	
+
 	public String getAuthToken()
 	{
 		return authToken;
 	}
-	
+
 	private void setAuthToken(AuthResponseEvent ev)
 	{
 		synchronized (authTokenLock)
-        {
+		{
 			setAuthToken(ev.token);
 			authTokenLock.notify();
-        }
-		if(null != ev.error)
+		}
+		if (null != ev.error)
 		{
-			logger.error("Failed to auth appid:" + ev.appid + " fore reason:" + ev.error);
+			logger.error("Failed to auth appid:" + ev.appid + " fore reason:"
+			        + ev.error);
 		}
 	}
-	
+
 	public void setAuthToken(String token)
 	{
 		authToken = token;
 	}
-	
+
 	public boolean send(Event event, EventHandler handler)
 	{
 		outSessionHandler = handler;
 		return send(event);
 	}
-	
+
 	public boolean send(Event event)
 	{
-		if(!isReady())
+		if (!isReady())
 		{
 			queuedEvents.add(event);
 			return true;
 		}
-		
+
 		EventHeaderTags tags = new EventHeaderTags();
 		tags.compressor = cfg.getCompressor();
 		tags.encrypter = cfg.getEncrypter();
 		tags.token = authToken;
-		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event.getAttachment();
+		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event
+		        .getAttachment();
 		event.setHash(attach.second);
 		relevantSessions.add(attach.second);
 		Buffer msgbuffer = GAEEventHelper.encodeEvent(tags, event);
-		if(msgbuffer.readableBytes() > getMaxDataPackageSize())
+		if (msgbuffer.readableBytes() > getMaxDataPackageSize())
 		{
-			int total = msgbuffer.readableBytes()/getMaxDataPackageSize();
-			if(msgbuffer.readableBytes()%getMaxDataPackageSize() != 0)
+			Buffer[] segments = GAEEventHelper.splitEventBuffer(msgbuffer,
+			        event.getHash(), getMaxDataPackageSize(), tags);
+			for (int i = 0; i < segments.length; i++)
 			{
-				total++;
-			}
-			int i = 0;
-			tags.compressor = CompressorType.NONE;
-			tags.encrypter = EncryptType.NONE;
-			while(msgbuffer.readable())
-			{
-				EventSegment segment = new EventSegment();
-				segment.sequence = i; 
-				segment.total = total;
-				segment.content = new Buffer(getMaxDataPackageSize());
-				segment.content.write(msgbuffer, getMaxDataPackageSize());
-				i++;
-				Buffer buf = GAEEventHelper.encodeEvent(tags, segment);
-				segment.encode(buf);
-				doSend(buf);
+				doSend(segments[i]);
 			}
 			return true;
 		}
@@ -178,55 +169,55 @@ public abstract class ProxyConnection
 		{
 			return doSend(msgbuffer);
 		}
-		
 	}
-	
+
 	protected void doRecv(Buffer content)
 	{
 		Event ev = null;
-        try
-        {
-	        ev = GAEEventHelper.parseEvent(content);
-        }
-        catch (Exception e)
-        {
-        	logger.error("Failed to parse event.");
-	        return;
-        }
+		try
+		{
+			ev = GAEEventHelper.parseEvent(content);
+		}
+		catch (Exception e)
+		{
+			logger.error("Failed to parse event.");
+			return;
+		}
 		relevantSessions.remove(ev.getHash());
-		if(ev instanceof AuthResponseEvent)
+		if (ev instanceof AuthResponseEvent)
 		{
 			setAuthToken((AuthResponseEvent) ev);
 			return;
 		}
-		else if(ev instanceof EventSegment)
+		else if (ev instanceof EventSegment)
 		{
 			EventSegment segment = (EventSegment) ev;
 			Buffer evntContent = GAEEventHelper.mergeEventSegment(segment);
-			if(null != evntContent)
+			if (null != evntContent)
 			{
 				doRecv(evntContent);
 			}
 			return;
 		}
-		ProxySession session = ProxySessionManager.getInstance().getProxySession(ev.getHash());
-		if(null != session)
+		ProxySession session = ProxySessionManager.getInstance()
+		        .getProxySession(ev.getHash());
+		if (null != session)
 		{
 			session.handleResponse(ev);
 		}
 		else
 		{
-			if(null != outSessionHandler)
+			if (null != outSessionHandler)
 			{
 				EventHeader header = new EventHeader();
 				header.hash = ev.getHash();
-				//header.type = Event.getTypeVersion(ev.getClass())
+				// header.type = Event.getTypeVersion(ev.getClass())
 				outSessionHandler.onEvent(header, ev);
 			}
 		}
-		if(!queuedEvents.isEmpty())
+		if (!queuedEvents.isEmpty())
 		{
-			if(isReady())
+			if (isReady())
 			{
 				Event qe = queuedEvents.removeFirst();
 				send(qe);

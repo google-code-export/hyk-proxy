@@ -20,10 +20,10 @@ import org.arch.event.Event;
 import org.arch.event.EventDispatcher;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEEventHelper;
+import org.hyk.proxy.gae.server.service.EventSendService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import com.hyk.proxy.gae.server.core.Launcher;
 
 /**
  *
@@ -33,7 +33,7 @@ public class HttpInvokeServlet extends HttpServlet
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+	public void doPost(HttpServletRequest req, final HttpServletResponse resp)
 	        throws IOException
 	{
 		try
@@ -47,7 +47,37 @@ public class HttpInvokeServlet extends HttpServlet
 				{
 					EventHeaderTags tags = new EventHeaderTags();
 					Event event = GAEEventHelper.parseEvent(content, tags);
-					event.setAttachment(new Object[] { tags, resp });
+					
+					EventSendService sendService = new EventSendService()
+					{
+                        public int getMaxDataPackageSize()
+                        {
+	                        return -1;
+                        }
+                        public void send(Buffer buf)
+                        {
+                    		if(logger.isDebugEnabled())
+                    		{
+                    			logger.debug("Send result back with body len:" + buf.readableBytes());
+                    		}
+      
+                    		resp.setStatus(200);
+                    		resp.setContentType("application/octet-stream");
+                    		resp.setContentLength(buf.readableBytes());
+                    		
+                    		try
+                            {
+	                            resp.getOutputStream().write(buf.getRawBuffer(), buf.getReadIndex(), buf.readableBytes());
+	                            resp.getOutputStream().flush();
+                            }
+                            catch (IOException e)
+                            {
+                            	logger.error("Failed to send HTTP response.", e);
+                            }
+                    		
+                        }
+					};
+					event.setAttachment(new Object[] { tags, sendService });
 					EventDispatcher.getSingletonInstance().dispatch(event);
 				}
 			}

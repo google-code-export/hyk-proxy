@@ -28,6 +28,7 @@ public class GAEEvents
 	        EventDispatcher.getSingletonInstance().register(ListUserResponseEvent.class, handler);
 	        EventDispatcher.getSingletonInstance().register(UserOperationEvent.class, handler);
 	        EventDispatcher.getSingletonInstance().register(EventSegment.class, handler);
+	        EventDispatcher.getSingletonInstance().register(ServerConfigRequestEvent.class, handler);
         }
         catch (Exception e)
         {

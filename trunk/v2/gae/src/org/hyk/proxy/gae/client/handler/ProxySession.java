@@ -24,6 +24,8 @@ import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.connection.ProxyConnection;
 import org.hyk.proxy.gae.client.connection.ProxyConnectionManager;
 import org.hyk.proxy.gae.common.GAEConstants;
+import org.hyk.proxy.gae.common.GAEEventHelper;
+import org.hyk.proxy.gae.common.event.GAEEvents;
 import org.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
 import org.hyk.proxy.gae.common.http.RangeHeaderValue;
 import org.hyk.proxy.gae.common.http.SetCookieHeaderValue;
@@ -526,6 +528,7 @@ public class ProxySession
 		// rangeUploadingEnable = false;
 		rangeFetchContents.clear();
 		ProxySessionManager.getInstance().removeSession(this);
+		GAEEventHelper.releaseSessionBuffer(sessionID);
 	}
 
 }
