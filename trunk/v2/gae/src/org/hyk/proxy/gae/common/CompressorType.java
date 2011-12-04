@@ -9,7 +9,7 @@ package org.hyk.proxy.gae.common;
  */
 public enum CompressorType
 {
-	NONE(0), SNAPPY(1), LZF(2), FASTLZ(3);
+	NONE(0), SNAPPY(1), LZF(2), FASTLZ(3), QUICKLZ(4);
 	
 	int value;
 	CompressorType(int v)
@@ -23,8 +23,8 @@ public enum CompressorType
 	
 	public static CompressorType fromInt(int v)
 	{
-		if(v > LZF.value) return null;
-		return values()[v - 1];
+		if(v > QUICKLZ.value) return null;
+		return values()[v];
 	}
 	
 }

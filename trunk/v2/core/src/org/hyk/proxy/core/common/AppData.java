@@ -40,6 +40,10 @@ public class AppData
 			String filesp = System.getProperty("file.separator");
 			String usrHome = System.getProperty("user.home");
 			String appHome = System.getProperty(Constants.APP_HOME);
+			if(null == appHome)
+			{
+				appHome = ".";
+			}
 			APP_HOME = new File(appHome);
 			APP_USER_HOME = new File(usrHome, ".hyk-proxy-v2");
 			if(!APP_USER_HOME.exists())

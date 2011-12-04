@@ -3,6 +3,9 @@
  */
 package org.arch.misc.logging;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -55,14 +58,22 @@ public class PatternJDKLoggingFormatter extends Formatter
 		// %L
 		arguments[0] = record.getLevel().toString();
 		arguments[1] = record.getMessage();
+		Throwable thrown = record.getThrown();
 		// sometimes the message is empty, but there is a throwable
-		if (arguments[1] == null || arguments[1].length() == 0)
+		if (thrown != null)
 		{
-			Throwable thrown = record.getThrown();
-			if (thrown != null)
+			final StringBuilder buffer = new StringBuilder();
+			buffer.append(record.getMessage()).append("\n");
+			PrintStream s = new PrintStream(new OutputStream()
 			{
-				arguments[1] = thrown.getMessage();
-			}
+				@Override
+				public void write(int b) throws IOException
+				{
+					buffer.append((char)b);	
+				}
+			});
+			thrown.printStackTrace(s);
+			arguments[1] = buffer.toString();
 		}
 		// %m
 		arguments[1] = record.getMessage();

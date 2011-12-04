@@ -14,7 +14,7 @@ import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEEventHelper;
 import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 import org.hyk.proxy.gae.server.service.EventSendService;
-import org.hyk.proxy.gae.server.util.GAEServerHelper;
+import org.hyk.proxy.gae.server.service.ServerConfigurationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class XmppInvokeServlet extends HttpServlet
 			Buffer buffer = Buffer.wrapReadableContent(raw);
 			EventHeaderTags tags = new EventHeaderTags();
 			Event event = GAEEventHelper.parseEvent(buffer, tags);
-			final GAEServerConfiguration cfg = GAEServerHelper.getServerConfig();
+			final GAEServerConfiguration cfg = ServerConfigurationService.getServerConfig();
 			EventSendService sendService = new EventSendService()
 			{
 				public int getMaxDataPackageSize()

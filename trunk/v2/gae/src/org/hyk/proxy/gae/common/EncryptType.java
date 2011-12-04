@@ -25,6 +25,6 @@ public enum EncryptType
 	public static EncryptType fromInt(int v)
 	{
 		if(v > SE1.value) return null;
-		return values()[v - 1];
+		return values()[v];
 	}
 }

@@ -16,10 +16,21 @@ import org.hyk.proxy.gae.common.GAEConstants;
  * @author qiyingwang
  * 
  */
-@EventType(GAEConstants.AUTH_REQUEST_EVENT_TYPE)
+@EventType(GAEConstants.AUTH_RESPONSE_EVENT_TYPE)
 @EventVersion(1)
 public class AuthResponseEvent extends Event
 {
+	public AuthResponseEvent()
+	{
+		
+	}
+	public AuthResponseEvent(String appid, String token, String error)
+    {
+	    this.appid = appid;
+	    this.token = token;
+	    this.error = error;
+    }
+
 	public String appid;
 	public String token;
 	public String error;

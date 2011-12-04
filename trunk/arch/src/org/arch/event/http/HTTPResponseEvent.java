@@ -40,5 +40,12 @@ public class HTTPResponseEvent extends HTTPMessageEvent
 		BufferHelper.writeVarInt(buffer, statusCode);
 	    return true;
     }
-	
+	@Override
+	public String toString()
+	{
+	    StringBuilder buffer = new StringBuilder();
+	    buffer.append(statusCode).append("\r\n");
+	    toString(buffer);
+	    return buffer.toString();
+	}
 }

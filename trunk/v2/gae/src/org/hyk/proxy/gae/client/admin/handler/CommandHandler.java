@@ -54,7 +54,7 @@ public interface CommandHandler
 			if(event instanceof AdminResponseEvent)
 			{
 				AdminResponseEvent ev = (AdminResponseEvent) event;
-				GAEAdmin.outputln(ev.response != null?ev.response:ev.errorCause); 
+				GAEAdmin.outputln(ev.errorCause != null?ev.errorCause:ev.response); 
 			}
         }
 		

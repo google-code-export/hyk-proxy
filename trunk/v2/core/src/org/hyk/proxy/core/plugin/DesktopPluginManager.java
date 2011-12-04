@@ -221,7 +221,7 @@ public class DesktopPluginManager implements PluginManager
 		home = new File(AppData.getPluginsHome().getAbsolutePath()
 		        + Constants.FILE_SP + dir);
 		String[] homedir = new String[] { home.getAbsolutePath(),
-		        home.getAbsolutePath() + Constants.FILE_SP + "etc" };
+		        home.getAbsolutePath() + Constants.FILE_SP + "conf" };
 		String libdir = home.getAbsolutePath() + Constants.FILE_SP + "lib";
 		List<String> jarFiles = new ArrayList<String>();
 		retrieveJarFiles(libdir, jarFiles);
@@ -241,6 +241,7 @@ public class DesktopPluginManager implements PluginManager
 			Unmarshaller unmarshaller = context.createUnmarshaller();
 			URL pluginResource = loader.getResource("/"
 			        + Constants.PLUGIN_DESC_FILE);
+			System.out.println(pluginResource.toString());
 			PluginDescription desc = (PluginDescription) unmarshaller
 			        .unmarshal(pluginResource);
 			pluginName = desc.name;
@@ -263,6 +264,7 @@ public class DesktopPluginManager implements PluginManager
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			logger.error("Failed to resolve plugin in dir:" + dir, e);
 			// trace.error("Resolve plugin:" + pluginName + "  ...   Failed");
 		}
@@ -302,6 +304,7 @@ public class DesktopPluginManager implements PluginManager
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			logger.error("Failed to load plugin.", e);
 			// trace.error("Load plugin:" + pluginName + " ...   Failed");
 			plugins.remove(pluginName);
@@ -329,10 +332,11 @@ public class DesktopPluginManager implements PluginManager
 				{
 					try
 					{
-						resolvePlugin(fname);
+						loadPlugin(resolvePlugin(fname));
 					}
 					catch (Exception e)
 					{
+						e.printStackTrace();
 						logger.error("Failed to resolve plugin in dir :"
 						        + fname, e);
 					}
@@ -367,6 +371,10 @@ public class DesktopPluginManager implements PluginManager
 		}
 		try
 		{
+			if(null == plugin.plugin)
+			{
+				System.out.println("##########");
+			}
 			plugin.plugin.onActive(plugin.context);
 			plugin.state = PluginState.ACTIVATED;
 			storePluginsActiveState(plugin, ActiveState.ACTIVE);
@@ -374,6 +382,7 @@ public class DesktopPluginManager implements PluginManager
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			logger.error("Failed to active plugin:" + plugin.desc.name, e);
 			// logger.error("Active plugin:" + plugin.desc.name +
 			// " ...   Failed");

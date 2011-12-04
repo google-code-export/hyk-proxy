@@ -6,7 +6,7 @@
 	<property name="srcroot" value="${root}/src" />
 	<property name="releasedir" value="${root}/release" />
 	<property name="classes" value="${root}/build" />
-	<property name="jar" value="hyk-proxy-core.jar" />
+	<property name="jar" value="core.jar" />
 	<property name="distroot" value="${root}/lib" />
 	<property name="docdir" value="${root}/doc" />
 	<property name="lib" value="${root}/lib" />

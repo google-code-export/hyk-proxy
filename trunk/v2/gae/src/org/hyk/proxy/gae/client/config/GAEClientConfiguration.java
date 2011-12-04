@@ -15,6 +15,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.net.ssl.SSLSocketFactory;
 import javax.xml.bind.JAXBContext;
@@ -59,7 +60,8 @@ public class GAEClientConfiguration
 		}
 		catch (Exception e)
 		{
-			logger.error("Failed to load default config file!", e);
+			e.printStackTrace();
+			logger.error("Failed to load gae-client config file!", e);
 		}
 	}
 
@@ -86,6 +88,7 @@ public class GAEClientConfiguration
 		ProxyType(String v)
 		{
 			value = v;
+			
 		}
 
 		public static ProxyType fromStr(String str)
@@ -107,7 +110,7 @@ public class GAEClientConfiguration
 		@XmlAttribute
 		public String host;
 		@XmlAttribute
-		public int port = 80;
+		public int port = 0;
 		@XmlAttribute
 		public String user;
 		@XmlAttribute
@@ -115,9 +118,6 @@ public class GAEClientConfiguration
 
 		@XmlAttribute
 		public ProxyType type = ProxyType.HTTP;
-
-		@XmlAttribute
-		public String nextHopGoogleServer;
 
 	}
 
@@ -207,13 +207,29 @@ public class GAEClientConfiguration
 
 	}
 
-	private List<GAEServerAuth> serverAuths = new LinkedList<GAEServerAuth>();
-
 	@XmlElementWrapper(name = "GAE")
 	@XmlElements(@XmlElement(name = "Server"))
+	private List<GAEServerAuth> serverAuths = new LinkedList<GAEServerAuth>();
+
 	public void setGAEServerAuths(List<GAEServerAuth> serverAuths)
 	{
 		this.serverAuths = serverAuths;
+	}
+	public List<GAEServerAuth> getGAEServerAuths()
+	{
+		return serverAuths;
+	}
+	
+	public GAEServerAuth getGAEServerAuth(String appid)
+	{
+		for(GAEServerAuth auth:serverAuths)
+		{
+			if(auth.appid.equals(appid))
+			{
+				return auth;
+			}
+		}
+		return null;
 	}
 
 	private List<XmppAccount> xmppAccounts;
@@ -230,23 +246,23 @@ public class GAEClientConfiguration
 		return xmppAccounts;
 	}
 
-	private ConnectionMode connectionMode;
+	private String connectionMode;
 
 	@XmlElement(name = "ConnectionMode")
-	void setConnectionMode(String mode)
+	public void setConnectionMode(String mode)
 	{
-		connectionMode = ConnectionMode.valueOf(mode);
+		connectionMode = mode;
 	}
-
-	public ConnectionMode getConnectionMode()
+    
+    
+	String getConnectionMode()
 	{
 		return connectionMode;
 	}
-
-	@XmlTransient
-	public void setConnectionMode(ConnectionMode mode)
+	
+	public ConnectionMode getConnectionModeType()
 	{
-		this.connectionMode = mode;
+		return ConnectionMode.valueOf(connectionMode.toUpperCase());
 	}
 
 	private int sessionTimeout;
@@ -262,31 +278,39 @@ public class GAEClientConfiguration
 		return sessionTimeout;
 	}
 
-	private CompressorType compressor;
+	private String compressor;
 
 	@XmlElement(name = "Compressor")
-	public void setCompressor(String compressor)
+	void setCompressor(String compressor)
 	{
-		this.compressor = CompressorType.valueOf(compressor.toUpperCase());
+		this.compressor = compressor;
 	}
-
-	public CompressorType getCompressor()
+	String getCompressor()
 	{
 		return compressor;
 	}
 
-	private EncryptType encrypter;
+	public CompressorType getCompressorType()
+	{
+		return CompressorType.valueOf(compressor.toUpperCase());
+	}
 
-	public EncryptType getEncrypter()
+	private String encrypter;
+
+	String getEncrypter()
 	{
 		return encrypter;
 	}
 
-	@XmlElement
-	public void setEncrypter(String httpUpStreamEncrypter)
+	@XmlElement(name="Encrypter")
+	void setEncrypter(String httpUpStreamEncrypter)
 	{
-		this.encrypter = EncryptType.valueOf(httpUpStreamEncrypter
-		        .toUpperCase());
+		this.encrypter = httpUpStreamEncrypter;
+	}
+	
+	public EncryptType getEncrypterType()
+	{
+		return EncryptType.valueOf(encrypter.toUpperCase());
 	}
 
 	private boolean simpleURLEnable;
@@ -314,13 +338,10 @@ public class GAEClientConfiguration
 		return connectionPoolSize;
 	}
 
-	private List<String> injectRangeHeaderSiteSet = new ArrayList<String>();
-	private List<String> injectRangeHeaderURLSet = new ArrayList<String>();
 	private String injectRangeHeaderSites;
-	private String injectRangeHeaderURLs;
-
-	@XmlElementWrapper(name = "GAE")
-	@XmlElement(name = "Sites")
+	private List<String> injectRangeHeaderSiteSet = new LinkedList<String>();
+	
+	@XmlElement(name = "InjectRangeHeaderSites")
 	void setInjectRangeHeaderSites(String injectRangeHeaderSites)
 	{
 		this.injectRangeHeaderSites = injectRangeHeaderSites;
@@ -331,27 +352,12 @@ public class GAEClientConfiguration
 		}
 	}
 	
-	@XmlElementWrapper(name = "GAE")
-	@XmlElement(name = "URLs")
-	void setInjectRangeHeaderURLs(String injectRangeHeaderURLs)
-	{
-		this.injectRangeHeaderURLs = injectRangeHeaderURLs;
-		String[] urls = injectRangeHeaderURLs.split(";");
-		for (String s : urls)
-		{
-			injectRangeHeaderURLSet.add(s.trim());
-		}
-	}
 
 	String getInjectRangeHeaderSites()
 	{
 		return injectRangeHeaderSites;
 	}
-	
-	String getInjectRangeHeaderURLs()
-	{
-		return injectRangeHeaderURLs;
-	}
+
 
 	public boolean isInjectRangeHeaderSitesMatchHost(String host)
 	{
@@ -365,17 +371,6 @@ public class GAEClientConfiguration
 		return false;
 	}
 	
-	public boolean isInjectRangeHeaderURLsMatchURL(String url)
-	{
-		for (String s : injectRangeHeaderURLSet)
-		{
-			if (!s.isEmpty() && url.indexOf(s) != -1)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
 
 	private int fetchLimitSize;
 
@@ -424,18 +419,20 @@ public class GAEClientConfiguration
 			{
 				localProxy.host = localProxy.host.trim();
 			}
-			if (null != localProxy.nextHopGoogleServer)
-			{
-				localProxy.nextHopGoogleServer = localProxy.nextHopGoogleServer
-				        .trim();
-				if (localProxy.nextHopGoogleServer.isEmpty())
-				{
-					localProxy.nextHopGoogleServer = null;
-				}
-			}
 			if (null == localProxy.host || localProxy.host.isEmpty())
 			{
 				localProxy = null;
+			}
+			if(localProxy.port == 0)
+			{
+				if(localProxy.type.equals(ProxyType.HTTP))
+				{
+					localProxy.port = 80;
+				}
+				else if(localProxy.type.equals(ProxyType.HTTPS))
+				{
+					localProxy.port = 443;
+				}
 			}
 		}
 		if (null != serverAuths)
@@ -463,7 +460,7 @@ public class GAEClientConfiguration
 			}
 		}
 
-		if (connectionMode.equals(ConnectionMode.XMPP))
+		if (getConnectionModeType().equals(ConnectionMode.XMPP))
 		{
 			for (int i = 0; i < xmppAccounts.size(); i++)
 			{
@@ -487,32 +484,13 @@ public class GAEClientConfiguration
 			        + ", at least one XMPP account needed.");
 		}
 
-		if (null == encrypter)
-		{
-			encrypter = EncryptType.NONE;
-		}
 		if (localProxy == null || localProxy.host.contains("google"))
 		{
 			simpleURLEnable = true;
 		}
 	}
 
-	public List<GAEServerAuth> getGAEServerAuths()
-	{
-		return serverAuths;
-	}
 	
-	public GAEServerAuth getGAEServerAuth(String appid)
-	{
-		for(GAEServerAuth auth:serverAuths)
-		{
-			if(auth.appid.equals(appid))
-			{
-				return auth;
-			}
-		}
-		return null;
-	}
 
 	@XmlElementWrapper(name = "AppIdBindings")
 	@XmlElements(@XmlElement(name = "Binding"))
@@ -558,8 +536,6 @@ public class GAEClientConfiguration
 		return instance;
 	}
 	
-	@XmlElementWrapper(name = "MappingHosts")
-	@XmlElements(@XmlElement(name = "Mapping"))
 	public void setMappingHosts(String src, String dst)
 	{
 		

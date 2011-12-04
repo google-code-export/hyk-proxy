@@ -43,7 +43,7 @@ public class EventDispatcher
 		EventHeader header = new EventHeader();
 		if (!header.decode(buffer))
 		{
-			throw new Exception("[Parse]Invalid event head.");
+			throw new Exception("[Parse]Invalid event head:" + buffer.readableBytes());
 		}
 		TypeVersion key = new TypeVersion();
 		key.type = header.type;
@@ -54,7 +54,14 @@ public class EventDispatcher
 			throw new Exception("[Parse]No event type:version(" + key.type
 			        + ":" + key.version + ") found in registry.");
 		}
-		return (Event) value.clazz.newInstance();
+		Event ev =  (Event) value.clazz.newInstance();
+		if(ev.decode(buffer, false))
+		{
+			ev.setHash(header.hash);
+			return ev;
+		}
+		throw new Exception("[Parse]Event type:version(" + key.type
+		        + ":" + key.version + ") decode failed.");	
 	}
 
 	private TypeVersion getTypeVersion(Class clazz) throws Exception
@@ -77,7 +84,7 @@ public class EventDispatcher
 			throw new Exception("No handler can handle this event");
 		}
 		EventHandler handler = value.handler;
-		if(null != handler)
+		if (null != handler)
 		{
 			EventHeader header = new EventHeader(key, event.getHash());
 			handler.onEvent(header, event);
@@ -105,12 +112,7 @@ public class EventDispatcher
 		if (handler != null && handler instanceof NamedEventHandler)
 		{
 			NamedEventHandler named = (NamedEventHandler) handler;
-			if (eventHandlerTable.containsKey(named.getName()))
-			{
-				throw new Exception("Duplicate event handler name:"
-				        + named.getName());
-			}
-			eventHandlerTable.put(named.getName(), named);
+			registerNamedEventHandler(named, true);
 		}
 	}
 
@@ -123,6 +125,26 @@ public class EventDispatcher
 	        throws Exception
 	{
 		register(clazz, handler, false);
+	}
+
+	private void registerNamedEventHandler(NamedEventHandler named,
+	        boolean replace) throws Exception
+	{
+		if (!replace)
+		{
+			if (eventHandlerTable.containsKey(named.getName()))
+			{
+				throw new Exception("Duplicate event handler name:"
+				        + named.getName());
+			}
+		}
+		eventHandlerTable.put(named.getName(), named);
+	}
+
+	public void registerNamedEventHandler(NamedEventHandler named)
+	        throws Exception
+	{
+		registerNamedEventHandler(named, false);
 	}
 
 	public NamedEventHandler getNamedEventHandler(String name)

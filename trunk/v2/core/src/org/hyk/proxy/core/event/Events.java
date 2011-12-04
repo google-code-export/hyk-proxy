@@ -13,6 +13,8 @@ import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPConnectionEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.core.config.CoreConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author qiyingwang
@@ -23,6 +25,7 @@ public class Events
 	
 	public static class NameDispatchEventHandler implements EventHandler
 	{
+		protected Logger logger = LoggerFactory.getLogger(getClass());
 		CoreConfiguration config;
 		public NameDispatchEventHandler(CoreConfiguration config)
 		{
@@ -39,7 +42,7 @@ public class Events
 	        }
 	        else
 	        {
-	        	
+	        	logger.error("No named event handler found with name:" + name);
 	        }
 	        
         }

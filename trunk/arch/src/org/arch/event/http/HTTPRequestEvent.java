@@ -40,4 +40,13 @@ public class HTTPRequestEvent extends HTTPMessageEvent
 	    return true;
     }
 	
+	@Override
+	public String toString()
+	{
+	    StringBuilder buffer = new StringBuilder();
+	    buffer.append(method).append(" ").append(url).append("\r\n");
+	    toString(buffer);
+	    return buffer.toString();
+	}
+	
 }

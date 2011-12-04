@@ -9,11 +9,11 @@ import java.net.MalformedURLException;
 import org.arch.event.Event;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.event.http.HTTPResponseEvent;
-import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.auth.User;
 import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 import org.hyk.proxy.gae.common.http.RangeHeaderValue;
+import org.hyk.proxy.gae.server.service.ServerConfigurationService;
 import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.hyk.proxy.gae.server.util.GAEServerHelper;
 import org.slf4j.Logger;
@@ -82,6 +82,7 @@ public class FetchServiceHandler
 		HTTPRequest fetchReq = null;
 		try
 		{
+			System.out.println("############Fetch url" + req.method +" " + req.url);
 			fetchReq = GAEServerHelper.toHTTPRequest(req);
 		}
 		catch (MalformedURLException e)
@@ -91,7 +92,7 @@ public class FetchServiceHandler
 			return errorResponse;
 		}
 		HTTPResponse fetchRes = null;
-		GAEServerConfiguration cfg = GAEServerHelper.getServerConfig();
+		GAEServerConfiguration cfg = ServerConfigurationService.getServerConfig();
 		int retry = cfg.getFetchRetryCount();
 		do
 		{
@@ -108,6 +109,7 @@ public class FetchServiceHandler
 			}
             catch (Exception e)
             {
+            	logger.error("Failed to fetch URL:" +req.url , e);
             	retry--;
             	if(!req.containsHeader("Range"))
             	{
@@ -116,21 +118,14 @@ public class FetchServiceHandler
             	}
             }	
 		}
-		while (null != ret && retry > 0);
+		while (null == ret && retry > 0);
 		
 		if(null == fetchRes)
 		{
 			errorResponse.statusCode = 408;
 			fillErrorResponse(errorResponse, "Fetch timeout for url:" + req.url);
+			System.out.println("############@@@@@@@@Timeout for url" + req.url);
 			ret = errorResponse;
-		}
-		else
-		{
-			String contentType = ((HTTPResponseEvent)ret).getHeader("content-type");
-			if(null != contentType && cfg.isContentTypeInCompressFilter(contentType))
-			{
-				tags.compressor = CompressorType.NONE;
-			}
 		}
 		return ret;
 	}

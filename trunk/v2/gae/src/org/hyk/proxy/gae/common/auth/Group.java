@@ -11,6 +11,7 @@ package org.hyk.proxy.gae.common.auth;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.arch.buffer.Buffer;
@@ -63,11 +64,48 @@ public class Group implements CodecObject
 			return true;
 
         }
-        catch (IOException e)
+        catch (Throwable e)
         {
 	        return false;
         }
 		
+	}
+
+	public String getBlacklistString()
+	{
+		StringBuilder buffer = new StringBuilder();
+		if (null != blacklist)
+		{
+			for (String s : blacklist)
+			{
+				s = s.trim();
+				if (!s.isEmpty())
+				{
+					buffer.append(s).append(";");
+				}
+
+			}
+		}
+
+		return buffer.toString();
+	}
+
+	public void setBlacklistString(String s)
+	{
+		blacklist = new HashSet<String>();
+		if(null == s)
+		{
+			return;
+		}
+		String[] ss = s.split(";");
+		for (String str : ss)
+		{
+			str = str.trim();
+			if (!str.isEmpty())
+			{
+				blacklist.add(str.trim());
+			}
+		}
 	}
 	
 }
