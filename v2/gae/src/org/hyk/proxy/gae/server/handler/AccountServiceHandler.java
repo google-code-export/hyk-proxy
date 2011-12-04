@@ -10,6 +10,7 @@
 package org.hyk.proxy.gae.server.handler;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -24,10 +25,19 @@ import javax.mail.internet.MimeMessage;
 
 import org.arch.event.Event;
 import org.arch.util.RandomHelper;
+import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.auth.Group;
 import org.hyk.proxy.gae.common.auth.Operation;
 import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.common.event.AdminResponseEvent;
+import org.hyk.proxy.gae.common.event.AuthRequestEvent;
+import org.hyk.proxy.gae.common.event.AuthResponseEvent;
+import org.hyk.proxy.gae.common.event.BlackListOperationEvent;
+import org.hyk.proxy.gae.common.event.GroupOperationEvent;
+import org.hyk.proxy.gae.common.event.ListGroupResponseEvent;
+import org.hyk.proxy.gae.common.event.ListUserResponseEvent;
+import org.hyk.proxy.gae.common.event.UserOperationEvent;
 import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,15 +53,150 @@ public class AccountServiceHandler
 
 	public AccountServiceHandler()
 	{
-		init();
+		checkDefaultAccount();
 	}
 
-	public void init()
+	private Event handleUserOperationEvent(UserOperationEvent ev)
 	{
+		Object[] attach = (Object[]) ev.getAttachment();
+		EventHeaderTags tags = (EventHeaderTags) attach[0];
+		User oprUser = UserManagementService.getUserWithToken(tags.token);
+		User user = ev.user;
+		String res = null;
+		switch (ev.opr)
+		{
+			case ADD:
+			{
+				res = createUser(oprUser, user.getEmail(), user.getGroup(),
+				        user.getPasswd());
+				break;
+			}
+			case DELETE:
+			{
+				res = deleteUser(oprUser, user.getEmail());
+				break;
+			}
+			case MODIFY:
+			{
+				res = modifyPassword(oprUser, user.getEmail(), user.getPasswd());
+				break;
+			}
+			default:
+			{
+				res = "Not supported!";
+				break;
+			}
+		}
+
+		return new AdminResponseEvent("Success", res, 0);
 	}
-	
+
+	private Event handleGroupOperationEvent(GroupOperationEvent ev)
+	{
+		Object[] attach = (Object[]) ev.getAttachment();
+		EventHeaderTags tags = (EventHeaderTags) attach[0];
+		User oprUser = UserManagementService.getUserWithToken(tags.token);
+		Group group = ev.grp;
+		String res = null;
+		switch (ev.opr)
+		{
+			case ADD:
+			{
+				res = createGroup(oprUser, group.getName());
+				break;
+			}
+			case DELETE:
+			{
+				res = deleteGroup(oprUser, group.getName());
+				break;
+			}
+			default:
+			{
+				res = "Not supported!";
+				break;
+			}
+		}
+
+		return new AdminResponseEvent("Success", res, 0);
+	}
+
+	private Event handleBlackListOperationEvent(BlackListOperationEvent ev)
+	{
+		Object[] attach = (Object[]) ev.getAttachment();
+		EventHeaderTags tags = (EventHeaderTags) attach[0];
+		User oprUser = UserManagementService.getUserWithToken(tags.token);
+		String res = null;
+		if(null != ev.username)
+		{
+			res = operationOnUserBlackList(oprUser, ev.username, ev.host, ev.opr);
+		}
+		else
+		{
+			res = operationOnGroupBlackList(oprUser, ev.groupname, ev.host, ev.opr);
+		}
+		return new AdminResponseEvent("Success", res, 0);
+	}
+
 	public Event handleEvent(int type, Event ev)
 	{
+		Object[] attach = (Object[]) ev.getAttachment();
+		EventHeaderTags tags = (EventHeaderTags) attach[0];
+		User oprUser = UserManagementService.getUserWithToken(tags.token);
+		switch (type)
+		{
+			case GAEConstants.AUTH_REQUEST_EVENT_TYPE:
+			{
+				AuthRequestEvent req = (AuthRequestEvent) ev;
+				System.out.println("@@@" + req.appid + "####" +req.user +"***"+req.passwd);
+				User user = UserManagementService.getUserWithName(req.user);
+				if(null != user && user.getPasswd().equals(req.passwd))
+				{
+					System.out.println("AuthToken is " + user.getAuthToken());
+					return new AuthResponseEvent(req.appid, user.getAuthToken(), null);
+				}
+				else
+				{
+					return new AuthResponseEvent(req.appid, null, "Invalid user/passwd.");
+				}
+			}
+			case GAEConstants.USER_OPERATION_EVENT_TYPE:
+			{
+				UserOperationEvent event = (UserOperationEvent) ev;
+				return handleUserOperationEvent(event);
+			}
+			case GAEConstants.GROUP_OPERATION_EVENT_TYPE:
+			{
+				GroupOperationEvent event = (GroupOperationEvent) ev;
+				return handleGroupOperationEvent(event);
+			}
+			case GAEConstants.USER_LIST_REQUEST_EVENT_TYPE:
+			{
+				ListUserResponseEvent res = new ListUserResponseEvent();
+				res.users = new LinkedList<User>();
+				String ret = getUsersInfo(oprUser, res.users);
+				if(ret != null)
+				{
+					return new AdminResponseEvent("Failed", ret, 0);
+				}
+				return res;
+			}
+			case GAEConstants.GROUOP_LIST_REQUEST_EVENT_TYPE:
+			{
+				ListGroupResponseEvent res = new ListGroupResponseEvent();
+				res.groups = new LinkedList<Group>();
+				String ret = getGroupsInfo(oprUser, res.groups);
+				if(ret != null)
+				{
+					return new AdminResponseEvent("Failed", ret, 0);
+				}
+				return res;
+			}
+			case GAEConstants.BLACKLIST_OPERATION_EVENT_TYPE:
+			{
+				BlackListOperationEvent event = (BlackListOperationEvent) ev;
+				return handleBlackListOperationEvent(event);
+			}
+		}
 		return null;
 	}
 
@@ -141,6 +286,20 @@ public class AccountServiceHandler
 			}
 			UserManagementService.saveUser(user);
 		}
+		else
+		{
+			if(user.getAuthToken() == null)
+			{
+				String token = null;
+				do
+				{
+					token = RandomHelper.generateRandomString(10);
+				}
+				while (UserManagementService.getUserWithToken(token) != null);
+				user.setAuthToken(token);
+				UserManagementService.saveUser(user);
+			}
+		}
 		return true;
 	}
 
@@ -212,6 +371,13 @@ public class AccountServiceHandler
 			u.setEmail(username);
 			u.setGroup(groupname);
 			u.setPasswd(passwd);
+			String token = null;
+			do
+			{
+				token = RandomHelper.generateRandomString(10);
+			}
+			while (UserManagementService.getUserWithToken(token) != null);
+			u.setAuthToken(token);
 			UserManagementService.saveUser(u);
 			// ServerUtils.cacheUser(u);
 			sendAccountMail(username, passwd, true);
@@ -225,8 +391,7 @@ public class AccountServiceHandler
 		return null;
 	}
 
-	public String modifyPassword(User user, String username, String oldPass,
-	        String newPass)
+	public String modifyPassword(User user, String username, String newPass)
 	{
 		if (user.getEmail().equals(GAEConstants.ANONYMOUSE_NAME))
 		{
@@ -239,13 +404,6 @@ public class AccountServiceHandler
 			if (null == modifyuser)
 			{
 				return GAEConstants.USER_NOTFOUND;
-			}
-			if (!user.getEmail().equals(GAEConstants.ROOT_NAME))
-			{
-				if (!modifyuser.getPasswd().equals(oldPass))
-				{
-					return GAEConstants.PASS_NOT_MATCH;
-				}
 			}
 			if (null == newPass)
 			{
@@ -412,5 +570,4 @@ public class AccountServiceHandler
 
 	}
 
-	
 }

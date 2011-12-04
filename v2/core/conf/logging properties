@@ -1,5 +1,5 @@
 .level=ALL 
-java.util.logging.FileHandler.pattern=%h/hyk-proxy.log
+java.util.logging.FileHandler.pattern=${HYK_HOME}/log/hyk-proxy.log
 java.util.logging.FileHandler.limit=1024000
 java.util.logging.FileHandler.count=2
 java.util.logging.FileHandler.formatter=org.arch.misc.logging.PatternJDKLoggingFormatter

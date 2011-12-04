@@ -14,7 +14,7 @@ import org.arch.event.EventDispatcher;
 import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.gae.common.event.AuthRequestEvent;
 import org.hyk.proxy.gae.common.event.GAEEvents;
-import org.hyk.proxy.gae.server.handler.ServerProxyEventHandler;
+import org.hyk.proxy.gae.server.handler.ServerEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +34,8 @@ public class Launcher extends HttpServlet{
 		
 		try
 		{	
-			ServerProxyEventHandler handler = new ServerProxyEventHandler();
-			GAEEvents.init(handler);
+			ServerEventHandler handler = new ServerEventHandler();
+			GAEEvents.init(handler,true);
 			if(logger.isInfoEnabled())
 			{
 				logger.info("hyk-proxy v2 GAE Server init success!");
@@ -46,7 +46,5 @@ public class Launcher extends HttpServlet{
 			logger.error("Error occured when init launch servlet!", e);
 			throw new ServletException(e);
 		}
-		
-		
 	}
 }

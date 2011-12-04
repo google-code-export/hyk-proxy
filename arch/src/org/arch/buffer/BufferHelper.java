@@ -4,6 +4,7 @@
 package org.arch.buffer;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,44 +16,7 @@ import java.util.Set;
  */
 public class BufferHelper
 {
-	public static int writeBytes(Buffer buffer, byte[] bs)
-	{
-		try
-		{
-			if (null == bs)
-			{
-				writeVarInt(buffer, 0);
-				return 1;
-			}
-			writeVarInt(buffer, bs.length);
-			return buffer.write(bs);
-		}
-		catch (Exception e)
-		{
-			return -1;
-		}
-	}
 
-	public static int writeBytes(Buffer buffer, String s)
-	{
-		if (null == s) return 0;
-		try
-		{
-			final byte[] bytes = s.getBytes("UTF-8");
-			writeVarInt(buffer, bytes.length);
-			return buffer.write(bytes);
-		}
-		catch (Exception e)
-		{
-			return -1;
-		}
-	}
-
-	public static void writeChars(Buffer buffer, String s)
-	{
-		// TODO Auto-generated method stub
-		writeBytes(buffer, s);
-	}
 
 	public static void writeByte(Buffer buffer, final byte value)
 	{
@@ -256,7 +220,17 @@ public class BufferHelper
 	public static void writeVarString(Buffer buffer, String s)
 	{
 		writeVarInt(buffer, null != s ? s.length() : 0);
-		writeChars(buffer, s);
+		if(null != s && !s.isEmpty())
+		{
+			try
+            {
+	            buffer.write(s.getBytes("UTF-8"));
+            }
+            catch (UnsupportedEncodingException e)
+            {
+	            //
+            }
+		}
 	}
 
 	// public static int readRawLittleEndian32(Buffer buffer)
@@ -525,7 +499,7 @@ public class BufferHelper
 		{
 			byte[] buf = new byte[len];
 			readBytes(buffer, buf);
-			return new String(buf);
+			return new String(buf,"UTF-8");
 		}
 		else
 		{
@@ -568,6 +542,7 @@ public class BufferHelper
 			writeVarInt(buffer, 0);
 			return;
 		}
+		writeVarInt(buffer,list.size());
 		for (Object obj : list)
 		{
 			writeObject(buffer, obj);
@@ -581,6 +556,7 @@ public class BufferHelper
 			writeVarInt(buffer, 0);
 			return;
 		}
+		writeVarInt(buffer,set.size());
 		for (Object obj : set)
 		{
 			writeObject(buffer, obj);

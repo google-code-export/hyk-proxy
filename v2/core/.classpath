@@ -7,6 +7,6 @@
 	<classpathentry kind="lib" path="lib/slf4j-jdk14-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk16-146.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/arch"/>
-	<classpathentry kind="lib" path="lib/netty-3.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.2.7.Final.jar" sourcepath="C:/Doc/Java/NIO/netty-3.2.3.Final/jar/netty-3.2.3.Final-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

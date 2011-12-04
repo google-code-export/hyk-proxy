@@ -23,6 +23,8 @@ public class ProxySessionManager
 	
 	private Map<Integer, ProxySession> sessionTable = new HashMap<Integer, ProxySession>(); 
 	
+	private ProxySessionManager(){}
+	
 	public static ProxySessionManager getInstance()
 	{
 		return instance;

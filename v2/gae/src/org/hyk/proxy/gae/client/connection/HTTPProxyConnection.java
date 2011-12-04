@@ -12,6 +12,8 @@ import javax.net.ssl.SSLEngine;
 
 import org.arch.buffer.Buffer;
 import org.arch.misc.crypto.base64.Base64;
+import org.arch.util.NetworkHelper;
+import org.hyk.proxy.core.util.SharedObjectHelper;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.ConnectionMode;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
@@ -31,6 +33,8 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.SocketChannel;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -61,7 +65,7 @@ public class HTTPProxyConnection extends ProxyConnection
 
 	private boolean waitingResponse = false;
 	private SocketChannel clientChannel = null;
-	
+
 	private HttpServerAddress remoteAddress = null;
 	private AtomicInteger sslProxyConnectionStatus = new AtomicInteger(0);
 
@@ -70,9 +74,9 @@ public class HTTPProxyConnection extends ProxyConnection
 		super(auth);
 		remoteAddress = new HttpServerAddress(auth.appid + ".appspot.com",
 		        GAEConstants.HTTP_INVOKE_PATH, GAEClientConfiguration
-		                .getInstance().getConnectionMode()
+		                .getInstance().getConnectionModeType()
 		                .equals(ConnectionMode.HTTPS));
-		
+
 	}
 
 	public boolean isReady()
@@ -108,35 +112,45 @@ public class HTTPProxyConnection extends ProxyConnection
 		// HttpChunkAggregator(maxMessageSize));
 		pipeline.addLast("encoder", new HttpRequestEncoder());
 		pipeline.addLast("handler", new HttpResponseHandler());
+		if(null == factory)
+		{
+			if (NetworkHelper.isIPV6Address(address.getHost()))
+			{
+				factory = new OioClientSocketChannelFactory(SharedObjectHelper.getGlobalThreadPool());
+			}
+			else
+			{
+				factory = new NioClientSocketChannelFactory(SharedObjectHelper.getGlobalThreadPool(),
+						SharedObjectHelper.getGlobalThreadPool());
+			}
+
+		}
 		SocketChannel channel = factory.newChannel(pipeline);
 		String connectHost;
 		int connectPort;
-		boolean sslProxyEnable = false;
+		boolean sslConnectionEnable = false;
 		if (null != cfg.getLocalProxy())
 		{
 			connectHost = cfg.getLocalProxy().host;
 			connectPort = cfg.getLocalProxy().port;
 			if (ProxyType.HTTPS.equals(cfg.getLocalProxy().type))
 			{
-				sslProxyEnable = true;
+				sslConnectionEnable = true;
 			}
 			// except g.cn/google.cn
-			if (null != cfg.getLocalProxy().nextHopGoogleServer)
-			{
-				sslProxyEnable = true;
-			}
 		}
 		else
 		{
 			connectHost = address.getHost();
 			connectPort = address.getPort();
-			sslProxyEnable = address.isSecure();
+			sslConnectionEnable = address.isSecure();
 		}
 		connectHost = cfg.getMappingHost(connectHost);
 		if (logger.isInfoEnabled())
 		{
 			logger.info("Connect remote proxy server " + connectHost + ":"
-			        + connectPort + " and sslProxyEnable:" + sslProxyEnable);
+			        + connectPort + " and sslProxyEnable:"
+			        + sslConnectionEnable);
 		}
 		ChannelFuture future = channel.connect(
 		        new InetSocketAddress(connectHost, connectPort))
@@ -148,13 +162,13 @@ public class HTTPProxyConnection extends ProxyConnection
 		}
 
 		ProxyInfo info = cfg.getLocalProxy();
-		if (null != info && null != info.nextHopGoogleServer
-		        && !info.host.contains("google."))
+		if (null != info && !info.host.contains("google"))
 		{
+			String httpsHost = null;
+			int httpsport = 443;
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
-			        HttpMethod.CONNECT, info.nextHopGoogleServer + ":443");
-			request.setHeader(HttpHeaders.Names.HOST, info.nextHopGoogleServer
-			        + ":443");
+			        HttpMethod.CONNECT, httpsHost + ":" + httpsport);
+			request.setHeader(HttpHeaders.Names.HOST, httpsHost + ":" + httpsport);
 			if (null != info.user)
 			{
 				String userpass = info.user + ":" + info.passwd;
@@ -169,7 +183,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			{
 				try
 				{
-					sslProxyConnectionStatus.wait();
+					sslProxyConnectionStatus.wait(60000);
 					if (sslProxyConnectionStatus.get() != CONNECT_RESPONSED)
 					{
 						return null;
@@ -186,7 +200,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			}
 		}
 
-		if (sslProxyEnable)
+		if (sslConnectionEnable)
 		{
 			try
 			{
@@ -220,7 +234,7 @@ public class HTTPProxyConnection extends ProxyConnection
 
 	protected boolean doSend(Buffer content)
 	{
-		if (cfg.getConnectionMode().equals(ConnectionMode.HTTPS))
+		if (cfg.getConnectionModeType().equals(ConnectionMode.HTTPS))
 		{
 			remoteAddress.trnasform2Https();
 		}
@@ -230,8 +244,6 @@ public class HTTPProxyConnection extends ProxyConnection
 			return false;
 		}
 		String url = remoteAddress.toPrintableString();
-		// This option is only active when there is no local proxy or just an
-		// anonymouse local proxy
 		if (cfg.isSimpleURLEnable())
 		{
 			if (null == cfg.getLocalProxy() || null == cfg.getLocalProxy().user)
@@ -270,6 +282,10 @@ public class HTTPProxyConnection extends ProxyConnection
 		request.setContent(buffer);
 		waitingResponse = true;
 		clientChannel.write(request);
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Send event via HTTP connection.");
+		}
 		return true;
 	}
 
@@ -307,21 +323,23 @@ public class HTTPProxyConnection extends ProxyConnection
 		{
 			int contentlen = buffer.readableBytes();
 			resBuffer.ensureWritableBytes(contentlen);
-			buffer.readBytes(resBuffer.getRawBuffer(), resBuffer.getWriteIndex(),contentlen);
+			buffer.readBytes(resBuffer.getRawBuffer(),
+			        resBuffer.getWriteIndex(), contentlen);
 			resBuffer.advanceWriteIndex(contentlen);
-			if(responseContentLength <= resBuffer.readableBytes())
+			if (responseContentLength <= resBuffer.readableBytes())
 			{
 				waitingResponse = false;
 				doRecv(resBuffer);
 				resBuffer.clear();
 			}
 		}
-		
+
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 		        throws Exception
 		{
 			e.getChannel().close();
+			e.getCause().printStackTrace();
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
 			updateSSLProxyConnectionStatus(DISCONNECTED);
 			waitingResponse = false;
@@ -343,6 +361,10 @@ public class HTTPProxyConnection extends ProxyConnection
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 		        throws Exception
 		{
+			if (logger.isDebugEnabled())
+			{
+				logger.debug("messageReceived.");
+			}
 			waitingResponse = false;
 			if (!readingChunks)
 			{
@@ -361,10 +383,11 @@ public class HTTPProxyConnection extends ProxyConnection
 					return;
 				}
 
-				responseContentLength = (int) HttpHeaders.getContentLength(response);
+				responseContentLength = (int) HttpHeaders
+				        .getContentLength(response);
 				if (response.getStatus().getCode() == 200)
 				{
-					if(response.isChunked())
+					if (response.isChunked())
 					{
 						readingChunks = true;
 						waitingResponse = true;
@@ -376,10 +399,11 @@ public class HTTPProxyConnection extends ProxyConnection
 					}
 					ChannelBuffer content = response.getContent();
 					fillResponseBuffer(content);
+					
 				}
 				else
 				{
-					waitingResponse = false;       
+					waitingResponse = false;
 				}
 			}
 			else

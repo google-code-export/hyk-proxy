@@ -3,7 +3,10 @@
  */
 package org.hyk.proxy.gae.client.handler;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +53,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ProxySession
 {
-	protected static Logger logger = LoggerFactory.getLogger(ProxySession.class);
+	protected static Logger logger = LoggerFactory
+	        .getLogger(ProxySession.class);
 	private ProxyConnectionManager connectionManager = ProxyConnectionManager
 	        .getInstance();
 	private ProxyConnection connection = null;
@@ -242,6 +246,7 @@ public class ProxySession
 			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(
 			        ev.content.getRawBuffer(), ev.content.getReadIndex(),
 			        ev.content.readableBytes());
+			response.setChunked(false);
 			response.setContent(bufer);
 		}
 		return response;
@@ -257,7 +262,10 @@ public class ProxySession
 		}
 		HttpResponse response = buildHttpResponse(ev);
 		localHTTPChannel.write(response);
-		// future.await();
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("Write response:" + response);
+		}
 		if (null != contentRange
 		        && contentRange.getLastBytePos() < (contentRange
 		                .getInstanceLength() - 1))
@@ -323,6 +331,10 @@ public class ProxySession
 	{
 		if (res instanceof HTTPResponseEvent)
 		{
+			if (logger.isDebugEnabled())
+			{
+				logger.debug("Handle received HTTP response event.");
+			}
 			switch (status)
 			{
 				case WAITING_NORMAL_RESPONSE:
@@ -342,6 +354,8 @@ public class ProxySession
 				}
 				default:
 				{
+					logger.error("Can not handle response event at state:"
+					        + status);
 					break;
 				}
 			}
@@ -424,6 +438,7 @@ public class ProxySession
 				        event.getHeader(HttpHeaders.Names.HOST));
 			}
 		}
+		
 		urlbuffer.append(event.url);
 		event.url = urlbuffer.toString();
 
@@ -479,8 +494,8 @@ public class ProxySession
 			adjustEvent(event);
 			if (isProxyRequestReady(event))
 			{
-				getClientConnection(event).send(event);
 				status = ProxySessionStatus.WAITING_NORMAL_RESPONSE;
+				getClientConnection(event).send(event);
 			}
 		}
 	}

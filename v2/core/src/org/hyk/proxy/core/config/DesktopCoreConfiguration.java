@@ -41,6 +41,7 @@ public class DesktopCoreConfiguration implements CoreConfiguration
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			logger.error("Failed to load default config file!", e);
 		}
 	}

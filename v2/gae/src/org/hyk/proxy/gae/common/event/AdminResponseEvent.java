@@ -20,6 +20,17 @@ import org.hyk.proxy.gae.common.GAEConstants;
 @EventVersion(1)
 public class AdminResponseEvent extends Event
 {
+	public AdminResponseEvent()
+	{
+	}
+
+	public AdminResponseEvent(String response, String errorCause, int errno)
+	{
+		this.response = response;
+		this.errorCause = errorCause;
+		this.errno = errno;
+	}
+
 	public String response;
 	public String errorCause;
 	public int errno;
@@ -28,16 +39,16 @@ public class AdminResponseEvent extends Event
 	protected boolean onDecode(Buffer buffer)
 	{
 		try
-        {
+		{
 			response = BufferHelper.readVarString(buffer);
 			errorCause = BufferHelper.readVarString(buffer);
 			errno = BufferHelper.readVarInt(buffer);
 			return true;
-        }
-        catch (IOException e)
-        {
-	        return false;
-        }
+		}
+		catch (IOException e)
+		{
+			return false;
+		}
 	}
 
 	@Override

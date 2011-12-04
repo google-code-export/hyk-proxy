@@ -58,9 +58,9 @@ public class SimpleEncrypt
 	
 	public void decrypt(byte[] value, int off, int len)
 	{		
-		for(int i = off; i<len; i++)
+		for(int i = 0; i<len; i++)
 		{
-			value[i] = decrypt(value[i]);
+			value[off+i] = decrypt(value[off+i]);
 		}
 	}
 
@@ -86,9 +86,9 @@ public class SimpleEncrypt
 	
 	public void encrypt(byte[] value, int off, int len)
 	{
-		for(int i = off; i<len; i++)
+		for(int i = 0; i<len; i++)
 		{
-			value[i] = encrypt(value[i]);
+			value[off+i] = encrypt(value[off+i]);
 		}
 	}
 

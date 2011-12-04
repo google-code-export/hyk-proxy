@@ -10,7 +10,6 @@ import java.util.List;
 import org.arch.common.KeyValuePair;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.event.http.HTTPResponseEvent;
-import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 
 import com.google.appengine.api.urlfetch.FetchOptions;
 import com.google.appengine.api.urlfetch.HTTPHeader;
@@ -51,11 +50,15 @@ public class GAEServerHelper
 		{
 			exchange.addHeader(header.getName(), header.getValue());
 		}
-		exchange.content.ensureWritableBytes(res.getContent().length);
-		exchange.content.write(res.getContent());
-		if (null != res.getContent())
+		if(null != res.getContent())
 		{
+			exchange.content.ensureWritableBytes(res.getContent().length);
+			exchange.content.write(res.getContent());
 			exchange.addHeader("content-length", "" + res.getContent().length);
+		}
+		else
+		{
+			exchange.addHeader("content-length", "0");
 		}
 
 		URL url = res.getFinalUrl();
@@ -64,10 +67,5 @@ public class GAEServerHelper
 			//exchange.setRedirectURL(url.toString());
 		}
 		return exchange;
-	}
-	
-	public static GAEServerConfiguration getServerConfig()
-	{
-		return null;
 	}
 }

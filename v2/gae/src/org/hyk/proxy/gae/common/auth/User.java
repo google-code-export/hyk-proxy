@@ -11,6 +11,7 @@ package org.hyk.proxy.gae.common.auth;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +59,43 @@ public class User implements CodecObject
 		return blacklist;
 	}
 
+	public String getBlacklistString()
+	{
+		StringBuilder buffer = new StringBuilder();
+		if (null != blacklist)
+		{
+			for (String s : blacklist)
+			{
+				s = s.trim();
+				if (!s.isEmpty())
+				{
+					buffer.append(s).append(";");
+				}
+
+			}
+		}
+
+		return buffer.toString();
+	}
+
+	public void setBlacklistString(String s)
+	{
+		blacklist = new HashSet<String>();
+		if(null == s)
+		{
+			return;
+		}
+		String[] ss = s.split(";");
+		for (String str : ss)
+		{
+			str = str.trim();
+			if (!str.isEmpty())
+			{
+				blacklist.add(str.trim());
+			}
+		}
+	}
+
 	public void setBlacklist(Set<String> blacklist)
 	{
 		this.blacklist = blacklist;
@@ -83,7 +121,6 @@ public class User implements CodecObject
 
 	private Set<String> blacklist;
 
-	
 	public boolean encode(Buffer buffer)
 	{
 		BufferHelper.writeVarString(buffer, email);
@@ -93,23 +130,23 @@ public class User implements CodecObject
 		BufferHelper.writeSet(buffer, blacklist);
 		return true;
 	}
-	
+
 	public boolean decode(Buffer buffer)
 	{
 		try
-        {
-	        email = BufferHelper.readVarString(buffer);
-	        passwd = BufferHelper.readVarString(buffer);
+		{
+			email = BufferHelper.readVarString(buffer);
+			passwd = BufferHelper.readVarString(buffer);
 			group = BufferHelper.readVarString(buffer);
 			authToken = BufferHelper.readVarString(buffer);
 			blacklist = BufferHelper.readSet(buffer, String.class);
 			return true;
-        }
-        catch (IOException e)
-        {
-	        return false;
-        }
-		
+		}
+		catch (Throwable e)
+		{
+			return false;
+		}
+
 	}
 
 }

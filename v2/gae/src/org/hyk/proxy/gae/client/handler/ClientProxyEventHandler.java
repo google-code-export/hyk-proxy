@@ -3,6 +3,7 @@
  */
 package org.hyk.proxy.gae.client.handler;
 
+import org.arch.common.Pair;
 import org.arch.event.Event;
 import org.arch.event.EventHandler;
 import org.arch.event.EventHeader;
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public class ClientProxyEventHandler implements NamedEventHandler
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
-	private ProxySessionManager sessionManager = new ProxySessionManager();
+	private ProxySessionManager sessionManager = ProxySessionManager.getInstance();
 	
 	private void handleRequest(HTTPRequestEvent event, Channel localChannel)
 	{
@@ -37,16 +38,17 @@ public class ClientProxyEventHandler implements NamedEventHandler
 	@Override
     public void onEvent(EventHeader header, Event event)
     {
+		Pair<Channel, Integer> attch = (Pair<Channel, Integer>) event.getAttachment();
 	    switch (header.type)
         {
 			case HTTPEventContants.HTTP_REQUEST_EVENT_TYPE:
 			{
-				handleRequest((HTTPRequestEvent) event, (Channel) event.getAttachment());
+				handleRequest((HTTPRequestEvent) event, attch.first);
 				break;
 			}
 			case HTTPEventContants.HTTP_CHUNK_EVENT_TYPE:
 			{
-				handleChunk((HTTPChunkEvent) event, (Channel) event.getAttachment());
+				handleChunk((HTTPChunkEvent) event, attch.first);
 				break;
 			}
 			case HTTPEventContants.HTTP_CONNECTION_EVENT_TYPE:

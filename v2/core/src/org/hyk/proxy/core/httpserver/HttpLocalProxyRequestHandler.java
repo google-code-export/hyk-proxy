@@ -22,6 +22,7 @@ import org.arch.event.http.HTTPRequestEvent;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -43,11 +44,15 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 
 	private Integer id;
 	
-	private static AtomicInteger seed = new AtomicInteger(0);
+	private static AtomicInteger seed = new AtomicInteger(1);
 	
 	public HttpLocalProxyRequestHandler()
 	{
 		id = seed.getAndIncrement();
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("HttpLocalProxyRequestHandler instance created with ID:" + id);
+		}
 	}
 	
 	private boolean dispatchEvent(Event event)

@@ -142,4 +142,13 @@ public abstract class HTTPMessageEvent extends Event
 		content.setReadIndex(idx);
 		return false;
 	}
+	
+	protected void toString(StringBuilder buffer)
+	{
+		for(KeyValuePair<String, String> header:headers)
+		{
+			buffer.append(header.getName()).append(":").append(header.getValue()).append("\r\n");
+		}
+		//buffer.append(new String(content.getRawBuffer(),content.getReadIndex(), content.readableBytes()));
+	}
 }

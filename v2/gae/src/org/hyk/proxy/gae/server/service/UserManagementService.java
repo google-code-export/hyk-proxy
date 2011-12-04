@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.arch.buffer.Buffer;
 import org.hyk.proxy.gae.common.auth.Group;
 import org.hyk.proxy.gae.common.auth.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
@@ -20,6 +22,8 @@ import com.google.appengine.api.datastore.AsyncDatastoreService;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
@@ -33,6 +37,8 @@ import com.google.appengine.api.memcache.MemcacheServiceFactory;
  */
 public class UserManagementService
 {
+	protected static Logger logger = LoggerFactory
+	        .getLogger(UserManagementService.class);
 	private static CapabilitiesService capabilities = CapabilitiesServiceFactory
 	        .getCapabilitiesService();
 	private static DatastoreService datastore = DatastoreServiceFactory
@@ -48,10 +54,11 @@ public class UserManagementService
 	public static void saveUser(User user)
 	{
 		Entity usrEntity = new Entity("User", user.getEmail());
-		usrEntity.setProperty("name", user.getEmail());
-		usrEntity.setProperty("passwd", user.getPasswd());
-		usrEntity.setProperty("group", user.getGroup());
-		usrEntity.setProperty("authtoken", user.getAuthToken());
+		usrEntity.setProperty("Name", user.getEmail());
+		usrEntity.setProperty("Passwd", user.getPasswd());
+		usrEntity.setProperty("Group", user.getGroup());
+		usrEntity.setProperty("AuthToken", user.getAuthToken());
+		usrEntity.setProperty("BlackList", user.getBlacklistString());
 		datastore.put(usrEntity);
 		Buffer buffer = new Buffer(128);
 		user.encode(buffer);
@@ -60,11 +67,6 @@ public class UserManagementService
 		asyncCache.put("User:" + user.getEmail(), content);
 		localMemCache.put("User:" + user.getAuthToken(), user);
 		localMemCache.put("User:" + user.getEmail(), user);
-	}
-
-	public static String verifyUser(String name, String passwd)
-	{
-		return null;
 	}
 
 	public static Group getGroup(String groupName)
@@ -80,38 +82,45 @@ public class UserManagementService
 		{
 			Buffer buf = Buffer.wrapReadableContent(content);
 			grp = new Group();
-			grp.decode(buf);
-			localMemCache.put(key, grp);
-			return grp;
+			if(grp.decode(buf))
+			{
+				localMemCache.put(key, grp);
+				return grp;
+			}
+			else
+			{
+				asyncCache.delete(key);
+			}
 		}
-		Query q = new Query("Group");
-		q.addFilter("name", Query.FilterOperator.EQUAL, groupName);
-		// q.addFilter("height", Query.FilterOperator.LESS_THAN,
-		// maxHeightParam);
 
-		// PreparedQuery contains the methods for fetching query results
-		// from the datastore
-		PreparedQuery pq = datastore.prepare(q);
-
-		for (Entity result : pq.asIterable())
+		Key groupKey = KeyFactory.createKey("Group", groupName);
+		try
 		{
+			Entity grpEntity = datastore.get(groupKey);
 			grp = new Group();
-			grp.setName((String) result.getKey().getName());
+			grp.setName(groupName);
+			grp.setBlacklistString((String) grpEntity.getProperty("BlackList"));
 			Buffer buffer = new Buffer(128);
 			grp.encode(buffer);
 			content = buffer.toArray();
 			asyncCache.put(key, content);
 			localMemCache.put(key, grp);
+			return grp;
 		}
-		return grp;
+		catch (EntityNotFoundException e)
+		{
+			logger.error("Failed to get group entity for name:" + groupName, e);
+			return null;
+		}
+
 	}
 
 	public static void saveGroup(Group group)
 	{
 		Entity usrEntity = new Entity("Group", group.getName());
-		usrEntity.setProperty("blacklist", "");
+		usrEntity.setProperty("BlackList", group.getBlacklistString());
 		datastore.put(usrEntity);
-		//datastore.
+		// datastore.
 		Buffer buffer = new Buffer(128);
 		group.encode(buffer);
 		byte[] content = buffer.toArray();
@@ -120,7 +129,7 @@ public class UserManagementService
 		localMemCache.put(key, group);
 	}
 
-	private static User getUser(String name)
+	private static User getUserFromCache(String name)
 	{
 		String key = "User:" + name;
 		User user = (User) localMemCache.get(key);
@@ -133,43 +142,80 @@ public class UserManagementService
 		{
 			Buffer buf = Buffer.wrapReadableContent(content);
 			user = new User();
-			user.decode(buf);
-			localMemCache.put(key, user);
-			return user;
+			if(user.decode(buf))
+			{
+				localMemCache.put(key, user);
+				return user;
+			}
+			else
+			{
+				asyncCache.delete(key);
+			}		
 		}
-		Query q = new Query("User");
-		q.addFilter("name", Query.FilterOperator.EQUAL, name);
-		// q.addFilter("height", Query.FilterOperator.LESS_THAN,
-		// maxHeightParam);
+		return null;
+	}
 
-		// PreparedQuery contains the methods for fetching query results
-		// from the datastore
-		PreparedQuery pq = datastore.prepare(q);
-
-		for (Entity result : pq.asIterable())
+	public static User getUserWithName(String email)
+	{
+		User user = getUserFromCache(email);
+		if (null == user)
 		{
-			user = new User();
-			user.setEmail((String) result.getKey().getName());
-			Buffer buffer = new Buffer(128);
-			user.encode(buffer);
-			content = buffer.toArray();
-			asyncCache.put(key, content);
-			localMemCache.put(key, user);
+			Key usrKey = KeyFactory.createKey("User", email);
+			try
+			{
+				Entity usrEntity = datastore.get(usrKey);
+				user = new User();
+				user.setEmail(email);
+				user.setPasswd((String) usrEntity.getProperty("Passwd"));
+				user.setAuthToken((String) usrEntity.getProperty("AuthToken"));
+				user.setGroup((String) usrEntity.getProperty("Group"));
+				user.setBlacklistString((String) usrEntity.getProperty("BlackList"));
+				Buffer buffer = new Buffer(128);
+				user.encode(buffer);
+				byte[] content = buffer.toArray();
+				String key = "User:" + email;
+				asyncCache.put(key, content);
+				localMemCache.put(key, user);
+			}
+			catch (EntityNotFoundException e)
+			{
+				logger.error("Failed to get user entity for name:" + email, e);
+				return null;
+			}
 		}
 		return user;
 	}
-	
-	public static User getUserWithName(String email)
-    {
-		return getUser(email);
-    }
+
 	public static User getUserWithToken(String token)
-    {
-		return getUser(token);
-    }
+	{
+		User user = getUserFromCache(token);
+		if (null == user)
+		{
+			Query q = new Query("User");
+			q.addFilter("AuthToken", Query.FilterOperator.EQUAL, token);
+			PreparedQuery pq = datastore.prepare(q);
+
+			for (Entity result : pq.asIterable())
+			{
+				user = new User();
+				user.setEmail((String) result.getProperty("Name"));
+				user.setPasswd((String) result.getProperty("Passwd"));
+				user.setAuthToken((String) result.getProperty("AuthToken"));
+				user.setGroup((String) result.getProperty("Group"));
+				user.setBlacklistString((String) result.getProperty("BlackList"));
+				Buffer buffer = new Buffer(128);
+				user.encode(buffer);
+				byte[] content = buffer.toArray();
+				String key = "User:" + token;
+				asyncCache.put(key, content);
+				localMemCache.put(key, user);
+			}
+		}
+		return user;
+	}
 
 	public static List<Group> getAllGroups()
-    {
+	{
 		List<Group> grps = new LinkedList<Group>();
 		Query q = new Query("Group");
 		PreparedQuery pq = datastore.prepare(q);
@@ -177,7 +223,8 @@ public class UserManagementService
 		for (Entity result : pq.asIterable())
 		{
 			Group grp = new Group();
-			grp.setName((String) result.getKey().getName());
+			grp.setName((String) result.getProperty("Name"));
+			grp.setBlacklistString((String) result.getProperty("BlackList"));
 			Buffer buffer = new Buffer(128);
 			grp.encode(buffer);
 			byte[] content = buffer.toArray();
@@ -187,10 +234,10 @@ public class UserManagementService
 			grps.add(grp);
 		}
 		return grps;
-    }
+	}
 
 	public static List<User> getAllUsers()
-    {
+	{
 		List<User> users = new LinkedList<User>();
 		Query q = new Query("User");
 		PreparedQuery pq = datastore.prepare(q);
@@ -198,7 +245,11 @@ public class UserManagementService
 		for (Entity result : pq.asIterable())
 		{
 			User user = new User();
-			user.setEmail((String) result.getKey().getName());
+			user.setEmail((String) result.getProperty("Name"));
+			user.setPasswd((String) result.getProperty("Passwd"));
+			user.setAuthToken((String) result.getProperty("AuthToken"));
+			user.setGroup((String) result.getProperty("Group"));
+			user.setBlacklistString((String) result.getProperty("BlackList"));
 			Buffer buffer = new Buffer(128);
 			user.encode(buffer);
 			byte[] content = buffer.toArray();
@@ -211,42 +262,43 @@ public class UserManagementService
 			users.add(user);
 		}
 		return users;
-    }
+	}
 
 	public static void deleteGroup(Group g)
-    {
+	{
 		datastore.delete(KeyFactory.createKey("Group", g.getName()));
-		String key = "Group:"+g.getName();
+		String key = "Group:" + g.getName();
 		localMemCache.remove(key);
 		asyncCache.delete(key);
-    }
+	}
 
 	public static void deleteUser(User u)
-    {
+	{
 		datastore.delete(KeyFactory.createKey("User", u.getEmail()));
-		String key = "User:"+u.getEmail();
-		String key1 = "User:"+u.getAuthToken();
+		String key = "User:" + u.getEmail();
+		String key1 = "User:" + u.getAuthToken();
 		localMemCache.remove(key);
 		asyncCache.delete(key);
 		localMemCache.remove(key1);
 		asyncCache.delete(key1);
-    }
-	
+	}
+
 	public static boolean userAuthServiceAvailable(String token)
 	{
 		String key = "User:" + token;
-		if(localMemCache.containsKey(key))
+		if (localMemCache.containsKey(key))
 		{
 			return true;
 		}
-		CapabilityStatus status = capabilities.getStatus(Capability.MEMCACHE).getStatus();
-		if(status.equals(CapabilityStatus.DISABLED))
+		CapabilityStatus status = capabilities.getStatus(Capability.MEMCACHE)
+		        .getStatus();
+		if (status.equals(CapabilityStatus.DISABLED))
 		{
 			return false;
 		}
-		
+
 		status = capabilities.getStatus(Capability.DATASTORE).getStatus();
-		if(status.equals(CapabilityStatus.DISABLED))
+		if (status.equals(CapabilityStatus.DISABLED))
 		{
 			return false;
 		}

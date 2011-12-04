@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin name="GAE" version="0.10.1">
+   <depend/>
+   <entryClass>org.hyk.proxy.gae.client.plugin.GAE</entryClass>   
+   <description>
+      Default plugin, powered by Google AppEngine.
+   </description>
+</plugin>

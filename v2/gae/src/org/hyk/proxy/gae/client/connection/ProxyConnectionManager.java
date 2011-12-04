@@ -38,7 +38,7 @@ public class ProxyConnectionManager
 	public boolean init()
 	{
 		List<GAEServerAuth> auths = new ArrayList<GAEClientConfiguration.GAEServerAuth>();
-		Collections.copy(auths, GAEClientConfiguration.getInstance().getGAEServerAuths());
+		auths.addAll(GAEClientConfiguration.getInstance().getGAEServerAuths());
 		for(GAEServerAuth auth:GAEClientConfiguration.getInstance().getGAEServerAuths())
 		{
 			ProxyConnection conn = getClientConnection(auth);
@@ -56,7 +56,7 @@ public class ProxyConnectionManager
 		if(logger.isInfoEnabled())
 		{
 			int size =  auths.size();
-			logger.info("Success to connect " + size + "GAE server" + (size > 1 ?"s":""));
+			logger.info("Success to connect " + size + " GAE server" + (size > 1 ?"s":""));
 		}
 		seletor = new ListSelector<GAEServerAuth>(auths);
 		return true;
@@ -96,7 +96,7 @@ public class ProxyConnectionManager
 			return connlist.get(0);
 		}
 		
-		switch (GAEClientConfiguration.getInstance().getConnectionMode())
+		switch (GAEClientConfiguration.getInstance().getConnectionModeType())
 		{
 			case HTTP:
 			case HTTPS:
@@ -144,7 +144,6 @@ public class ProxyConnectionManager
 			 auth = GAEClientConfiguration.getInstance().getGAEServerAuth(appid);
 		}
 		return getClientConnection(auth);
-		
 	}
 
 	public void routine()
