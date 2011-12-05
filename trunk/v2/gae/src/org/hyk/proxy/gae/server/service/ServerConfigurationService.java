@@ -13,9 +13,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.arch.buffer.Buffer;
+import org.arch.event.Event;
 import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EncryptType;
 import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
+import org.hyk.proxy.gae.common.event.AdminResponseEvent;
+import org.hyk.proxy.gae.common.event.ServerConfigEvent;
 
 import com.google.appengine.api.datastore.AsyncDatastoreService;
 import com.google.appengine.api.datastore.DatastoreService;
@@ -51,6 +54,7 @@ public class ServerConfigurationService
 		entity.setProperty("RangeFetchLimit", "" + cfg.getRangeFetchLimit());
 		entity.setProperty("Compressor", "" + cfg.getCompressor().toString());
 		entity.setProperty("Encrypter", "" + cfg.getEncrypter().toString());
+		//entity.setProperty("TrafficStatEnable", "" + cfg.isTrafficStatEnable());
 		Set<String> set = cfg.getCompressFilter();
 		StringBuilder buffer = new StringBuilder();
 		if(null != set)
@@ -75,7 +79,8 @@ public class ServerConfigurationService
 		cfg.setRangeFetchLimit(Integer.parseInt((String) entity.getProperty("RangeFetchLimit")));
 		cfg.setCompressor(CompressorType.valueOf((String) entity.getProperty("Compressor")));
 		cfg.setEncrypter(EncryptType.valueOf((String) entity.getProperty("Encrypter")));
-		String str = (String) entity.getProperty("Encrypter");
+		//cfg.setTrafficStatEnable(Boolean.parseBoolean((String) entity.getProperty("TrafficStatEnable")));
+		String str = (String) entity.getProperty("CompressFilter");
 		if(null != str)
 		{
 			String[] ss = str.split(";");
@@ -124,8 +129,35 @@ public class ServerConfigurationService
 		}
 		return cfg;
 	}
+	
+	public static Event handleServerConfig(ServerConfigEvent event)
+	{
+		switch (event.opreration)
+        {
+	        case ServerConfigEvent.GET_CONFIG_REQ:
+	        {   
+	        	GAEServerConfiguration cfg = getServerConfig();
+	        	ServerConfigEvent res = new ServerConfigEvent();
+	        	res.opreration = ServerConfigEvent.GET_CONFIG_RES;
+	        	res.cfg = cfg;
+		        return res;
+	        }
+	        case ServerConfigEvent.SET_CONFIG_REQ:
+	        {
+	        	saveServerConfig(event.cfg);
+	        	ServerConfigEvent res = new ServerConfigEvent();
+	        	res.opreration = ServerConfigEvent.SET_CONFIG_RES;
+	        	res.cfg = getServerConfig();
+		        return res;
+	        }
+	        default:
+	        {
+		        return new AdminResponseEvent("", "Unsupported config operation:" + event.opreration, 0);
+	        }
+        }
+	}
 
-	public static void saveServerConfig(GAEServerConfiguration cfg)
+	private static void saveServerConfig(GAEServerConfiguration cfg)
 	{
 		ServerConfigurationService.cfg = cfg;
 		Buffer buf = new Buffer(256);

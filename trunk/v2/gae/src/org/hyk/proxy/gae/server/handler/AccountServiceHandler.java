@@ -42,6 +42,10 @@ import org.hyk.proxy.gae.server.service.UserManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.appengine.api.capabilities.CapabilitiesService;
+import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
+import com.google.appengine.api.capabilities.Capability;
+import com.google.appengine.api.capabilities.CapabilityStatus;
 import com.google.appengine.api.utils.SystemProperty;
 
 /**
@@ -49,7 +53,9 @@ import com.google.appengine.api.utils.SystemProperty;
  */
 public class AccountServiceHandler
 {
-	protected transient Logger logger = LoggerFactory.getLogger(getClass());
+	protected static Logger logger = LoggerFactory.getLogger(AccountServiceHandler.class);
+	private static CapabilitiesService capabilities = CapabilitiesServiceFactory
+	        .getCapabilitiesService();
 
 	public AccountServiceHandler()
 	{
@@ -126,13 +132,15 @@ public class AccountServiceHandler
 		EventHeaderTags tags = (EventHeaderTags) attach[0];
 		User oprUser = UserManagementService.getUserWithToken(tags.token);
 		String res = null;
-		if(null != ev.username)
+		if (null != ev.username)
 		{
-			res = operationOnUserBlackList(oprUser, ev.username, ev.host, ev.opr);
+			res = operationOnUserBlackList(oprUser, ev.username, ev.host,
+			        ev.opr);
 		}
 		else
 		{
-			res = operationOnGroupBlackList(oprUser, ev.groupname, ev.host, ev.opr);
+			res = operationOnGroupBlackList(oprUser, ev.groupname, ev.host,
+			        ev.opr);
 		}
 		return new AdminResponseEvent("Success", res, 0);
 	}
@@ -148,13 +156,15 @@ public class AccountServiceHandler
 			{
 				AuthRequestEvent req = (AuthRequestEvent) ev;
 				User user = UserManagementService.getUserWithName(req.user);
-				if(null != user && user.getPasswd().equals(req.passwd))
+				if (null != user && user.getPasswd().equals(req.passwd))
 				{
-					return new AuthResponseEvent(req.appid, user.getAuthToken(), null);
+					return new AuthResponseEvent(req.appid,
+					        user.getAuthToken(), null);
 				}
 				else
 				{
-					return new AuthResponseEvent(req.appid, null, "Invalid user/passwd.");
+					return new AuthResponseEvent(req.appid, null,
+					        "Invalid user/passwd.");
 				}
 			}
 			case GAEConstants.USER_OPERATION_EVENT_TYPE:
@@ -172,7 +182,7 @@ public class AccountServiceHandler
 				ListUserResponseEvent res = new ListUserResponseEvent();
 				res.users = new LinkedList<User>();
 				String ret = getUsersInfo(oprUser, res.users);
-				if(ret != null)
+				if (ret != null)
 				{
 					return new AdminResponseEvent("Failed", ret, 0);
 				}
@@ -183,7 +193,7 @@ public class AccountServiceHandler
 				ListGroupResponseEvent res = new ListGroupResponseEvent();
 				res.groups = new LinkedList<Group>();
 				String ret = getGroupsInfo(oprUser, res.groups);
-				if(ret != null)
+				if (ret != null)
 				{
 					return new AdminResponseEvent("Failed", ret, 0);
 				}
@@ -265,7 +275,7 @@ public class AccountServiceHandler
 		}
 		return true;
 	}
-	
+
 	private static String generateAuthToken()
 	{
 		String token = null;
@@ -298,7 +308,7 @@ public class AccountServiceHandler
 		}
 		else
 		{
-			if(user.getAuthToken() == null)
+			if (user.getAuthToken() == null)
 			{
 				user.setAuthToken(generateAuthToken());
 				UserManagementService.saveUser(user);
@@ -312,6 +322,12 @@ public class AccountServiceHandler
 	 */
 	public static void checkDefaultAccount()
 	{
+		if(capabilities.getStatus(Capability.MEMCACHE).getStatus().equals(CapabilityStatus.DISABLED)
+				|| capabilities.getStatus(Capability.DATASTORE).getStatus().equals(CapabilityStatus.DISABLED))
+		{
+			logger.error("Just return since memcach/datastrore is not available.");
+			return ;
+		}
 		createGroupIfNotExist(GAEConstants.ROOT_GROUP_NAME);
 		createUserIfNotExist(GAEConstants.ROOT_NAME,
 		        GAEConstants.ROOT_GROUP_NAME);

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -19,6 +20,7 @@ import org.arch.event.http.HTTPChunkEvent;
 import org.arch.event.http.HTTPErrorEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.arch.event.http.HTTPResponseEvent;
+import org.hyk.proxy.core.util.SharedObjectHelper;
 import org.hyk.proxy.core.util.SslCertificateHelper;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.connection.ProxyConnection;
@@ -64,6 +66,7 @@ public class ProxySession
 
 	private Map<Long, Buffer> rangeFetchContents = new HashMap<Long, Buffer>();
 	private long waitingWriteStreamPos = -1;
+	private long waitingFetchStreamPos = 0;
 	private Buffer uploadBuffer = new Buffer(0);
 
 	public ProxySession(Integer id, Channel localChannel)
@@ -99,27 +102,26 @@ public class ProxySession
 		return connectionManager.getClientConnection(event);
 	}
 
-	private boolean rangeFetch(RangeHeaderValue range,
-	        ContentRangeHeaderValue contentRange, int wokerNum)
+	private synchronized boolean rangeFetch(RangeHeaderValue originRange, long limitSize, int wokerNum)
 	{
 		int fetchSizeLimit = GAEClientConfiguration.getInstance()
 		        .getFetchLimitSize();
 		int concurrentWorkerNum = wokerNum < 0 ? GAEClientConfiguration
 		        .getInstance().getConcurrentRangeFetchWorker() : wokerNum;
 		status = ProxySessionStatus.WAITING_MULTI_RANGE_RESPONSE;
-		long start = contentRange.getLastBytePos();
+		long start = waitingFetchStreamPos;
 		long limit = 0;
-		if (null != range)
+		if (null != originRange)
 		{
-			limit = range.getLastBytePos();
+			limit = originRange.getLastBytePos();
 		}
 		else
 		{
-			limit = contentRange.getInstanceLength() - 1;
+			limit = limitSize - 1;
 		}
 		for (int i = 0; i < concurrentWorkerNum; i++)
 		{
-			long begin = start + 1;
+			long begin = start;
 			if (begin >= limit)
 			{
 				break;
@@ -129,7 +131,7 @@ public class ProxySession
 			{
 				end = limit;
 			}
-			start = end;
+			start = end + 1;
 			RangeHeaderValue headerValue = new RangeHeaderValue(begin, end);
 			HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
 			newEvent.setHeader(HttpHeaders.Names.RANGE, headerValue.toString());
@@ -138,6 +140,7 @@ public class ProxySession
 			{
 				waitingWriteStreamPos = begin;
 			}
+			waitingFetchStreamPos = start;
 		}
 		if (waitingWriteStreamPos >= limit)
 		{
@@ -166,7 +169,7 @@ public class ProxySession
 			localHTTPChannel.write(buf);
 			waitingWriteStreamPos = contentRange.getLastBytePos() + 1;
 		}
-		rangeFetch(range, contentRange, 1);
+		rangeFetch(range, contentRange.getInstanceLength(), 1);
 	}
 
 	private HttpResponse buildHttpResponse(HTTPResponseEvent ev)
@@ -278,8 +281,9 @@ public class ProxySession
 					return;
 				}
 			}
+			waitingFetchStreamPos = contentRange.getLastBytePos() + 1;
 			status = ProxySessionStatus.WAITING_MULTI_RANGE_RESPONSE;
-			rangeFetch(range, contentRange, -1);
+			rangeFetch(range, contentRange.getInstanceLength(), -1);
 		}
 		else
 		{
@@ -434,7 +438,7 @@ public class ProxySession
 				        event.getHeader(HttpHeaders.Names.HOST));
 			}
 		}
-		
+
 		urlbuffer.append(event.url);
 		event.url = urlbuffer.toString();
 
@@ -540,6 +544,30 @@ public class ProxySession
 		rangeFetchContents.clear();
 		ProxySessionManager.getInstance().removeSession(this);
 		GAEEventHelper.releaseSessionBuffer(sessionID);
+		switch (status)
+		{
+			case WAITING_NORMAL_RESPONSE:
+			{
+				if (null != localHTTPChannel)
+				{
+					localHTTPChannel.write(new DefaultHttpResponse(
+					        HttpVersion.HTTP_1_1,
+					        HttpResponseStatus.REQUEST_TIMEOUT));
+					logger.error("Send fake 408 to browser since session closed while no response sent.");
+				}
+				break;
+			}
+			case WAITING_MULTI_RANGE_RESPONSE:
+			{
+				if (null != localHTTPChannel)
+				{
+					localHTTPChannel.close();
+				}
+				break;
+			}
+			default:
+				break;
+		}
 	}
 
 }

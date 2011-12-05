@@ -36,7 +36,7 @@ public interface GAEConstants
 	public static final int GROUOP_LIST_RESPONSE_EVENT_TYPE = 2015;
 	public static final int BLACKLIST_OPERATION_EVENT_TYPE = 2016;
 	public static final int ADMIN_RESPONSE_EVENT_TYPE = 2020;
-	public static final int SERVER_CONFIG_REQUEST_EVENT_TYPE = 2050;
+	public static final int SERVER_CONFIG_EVENT_TYPE = 2050;
 	
 	public static final String USER_ENTITY_NAME = "ProxyUser";
 	public static final String GROUP_ENTITY_NAME = "ProxyGroup";

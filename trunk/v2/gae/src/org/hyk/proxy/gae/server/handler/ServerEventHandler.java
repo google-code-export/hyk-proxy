@@ -22,7 +22,7 @@ import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 import org.hyk.proxy.gae.common.event.AdminResponseEvent;
 import org.hyk.proxy.gae.common.event.CompressEvent;
 import org.hyk.proxy.gae.common.event.EncryptEvent;
-import org.hyk.proxy.gae.common.event.ServerConfigRequestEvent;
+import org.hyk.proxy.gae.common.event.ServerConfigEvent;
 import org.hyk.proxy.gae.server.service.EventSendService;
 import org.hyk.proxy.gae.server.service.ServerConfigurationService;
 import org.slf4j.Logger;
@@ -129,11 +129,10 @@ public class ServerEventHandler implements EventHandler
 				response = handleRecvEvent(tags, ((EncryptEvent) event).ev);
 				break;
 			}
-			case GAEConstants.SERVER_CONFIG_REQUEST_EVENT_TYPE:
+			case GAEConstants.SERVER_CONFIG_EVENT_TYPE:
 			{
-				ServerConfigRequestEvent ev = (ServerConfigRequestEvent) event;
-				ServerConfigurationService.saveServerConfig(ev.cfg);
-				response = new AdminResponseEvent("Sucess", null, 0);
+				ServerConfigEvent ev = (ServerConfigEvent) event;
+				response = ServerConfigurationService.handleServerConfig(ev);
 				break;
 			}
 			default:
