@@ -81,6 +81,7 @@ public class ChangePasswd implements CommandHandler
 					User user = new User();
 					user.setEmail(modifyUser);
 					user.setPasswd(newpass);
+					event.user = user;
 					AdminResponseEventHandler.syncSendEvent(connection, event);
 				}
 
@@ -89,6 +90,7 @@ public class ChangePasswd implements CommandHandler
 		}
 		catch (Exception exp)
 		{
+			exp.printStackTrace();
 			System.out.println("Error:" + exp.getMessage());
 		}
 

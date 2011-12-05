@@ -33,6 +33,6 @@ public enum Operation
 	{
 		if (v > MODIFY.value)
 			return null;
-		return values()[v - 1];
+		return values()[v];
 	}
 }

@@ -144,24 +144,5 @@ public class SimpleEncrypt
 		encrypt(array, buf.getReadIndex(), buf.readableBytes());
 		return buf;
 	}
-	
-//	public static void main(String[] args)
-//	{
-//		SimpleSecurityService service = new SimpleSecurityService();
-//		
-//		byte[] test = "REMOTE_SERVICE_MANAGER".getBytes();
-//		System.out.println(Arrays.toString(test));
-//		ByteBuffer buf = ByteBuffer.allocate(4+test.length);
-//		buf.putInt(1);
-//		buf.put(service.encrypt(test));
-//		buf.flip();
-//		System.out.println(Arrays.toString(test));
-//		buf.getInt();
-//		service.decrypt(buf);
-//		System.arraycopy(buf.array(), 4, test, 0, test.length);
-//		System.out.println(Arrays.toString(test));
-//		//System.out.println(Arrays.toString(service.encrypt(test)));
-//		//System.out.println(Arrays.toString(service.decrypt(test)));
-//	}
 
 }

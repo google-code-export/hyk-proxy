@@ -72,6 +72,7 @@ public class AddUser implements CommandHandler
 					User user = new User();
 					user.setEmail(usernameargs[0]);
 					user.setGroup(group);
+					event.user = user;
 					AdminResponseEventHandler.syncSendEvent(connection, event);
 				}
 				

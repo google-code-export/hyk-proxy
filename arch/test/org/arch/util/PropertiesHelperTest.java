@@ -2,6 +2,7 @@ package org.arch.util;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import org.junit.Test;
@@ -10,13 +11,13 @@ public class PropertiesHelperTest
 {
 
 	@Test
-	public void testReplaceSystemProperties()
+	public void testReplaceSystemProperties() throws IOException
 	{
 		Properties props = new Properties();
-		System.setProperty("HYK_HOME", "FGHFH");
-		props.put("key", "XXXX${HYK_HOME}/yyyy");
+		props.load(PropertiesHelperTest.class.getResourceAsStream("logging properties"));
+		System.setProperty("HYK_PROXY_HOME", "#####");
 		int ret = PropertiesHelper.replaceSystemProperties(props);
-		assertEquals("XXXXFGHFH/yyyy", props.getProperty("key"));
+		assertEquals("#####/log/hyk-proxy.log", props.getProperty("java.util.logging.FileHandler.pattern"));
 		assertEquals(1, ret);
 	}
 

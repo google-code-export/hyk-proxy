@@ -10,6 +10,7 @@
 package org.hyk.proxy.gae.client.admin;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -27,9 +28,16 @@ import org.hyk.proxy.gae.client.admin.handler.Exit;
 import org.hyk.proxy.gae.client.admin.handler.Help;
 import org.hyk.proxy.gae.client.admin.handler.ListGroups;
 import org.hyk.proxy.gae.client.admin.handler.ListUsers;
+import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
+import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
 import org.hyk.proxy.gae.client.connection.ProxyConnection;
+import org.hyk.proxy.gae.client.connection.ProxyConnectionManager;
+import org.hyk.proxy.gae.client.plugin.GAE;
+import org.hyk.proxy.gae.common.CompressorType;
+import org.hyk.proxy.gae.common.EncryptType;
 import org.hyk.proxy.gae.common.GAEPluginVersion;
 import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.common.event.GAEEvents;
 
 /**
  *
@@ -105,9 +113,20 @@ public class GAEAdmin implements Runnable
 			String user = System.console().readLine();
 			output("password:");
 			String passwd = new String(System.console().readPassword());
+			GAEEvents.init(null, false);
+			GAEServerAuth auth = new GAEServerAuth();
+			auth.appid = appid;
+			auth.user = user.trim();
+			auth.passwd = passwd.trim();
+			GAEClientConfiguration.getInstance().setGAEServerAuths(Arrays.asList(auth));
+			GAEClientConfiguration.getInstance().setCompressorType(CompressorType.NONE);
+			GAEClientConfiguration.getInstance().setEncrypterType(EncryptType.NONE);
+			if(!GAE.initProxyConnections(Arrays.asList(auth)))
+			{
+				GAEAdmin.exit("");
+			}
 
-			Executor executor = Executors.newCachedThreadPool();
-
+			connection = ProxyConnectionManager.getInstance().getClientConnection(null);
 			this.userInfo = new User();
 			userInfo.setEmail(user);
 			userInfo.setPasswd(passwd);

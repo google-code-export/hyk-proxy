@@ -47,4 +47,10 @@ public class EventHeader
         }
 		return true;
 	}
+	
+	@Override
+	public String toString()
+	{
+	    return "" + type + ":" + version + ":" + hash;
+	}
 }

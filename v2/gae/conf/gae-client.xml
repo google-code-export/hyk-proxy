@@ -35,9 +35,7 @@
 
 	<!-- If you want use hyk-proxy througth a proxy, config this item -->
 	<LocalProxy type="HTTP" host="localhost" port="8888"/>
-	<HttpsProxyChains enable="false">
-	   <Proxy host="www.google.com.hk"/>
-	</HttpsProxyChains>
+	<GoogleProxyChain enable="false" host="www.google.com.hk"/>
 
 	<AppIdBindings>
 		<!--

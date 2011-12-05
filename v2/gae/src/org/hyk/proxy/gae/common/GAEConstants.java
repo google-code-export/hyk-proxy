@@ -12,6 +12,9 @@ public interface GAEConstants
 	public static final String CLIENT_CONF_NAME = "gae-client.xml";
 	public static final String HTTP_INVOKE_PATH = "/invoke";
 	public static final String XMPP_CLIENT_NAME = "hyk-proxy-gae";
+	public static final String RESERVED_GOOGLECN_HOST_MAPPING = "GoogleCN";
+	public static final String RESERVED_GOOGLEHTTPS_HOST_MAPPING = "GoogleHttps";
+	public static final String PREFERED_GOOGLE_PROXY = "PreferedGoogleProxy";
 	
 	public static final int APPENGINE_HTTP_BODY_LIMIT = 2000000; //2MB
 	public static final int APPENGINE_XMPP_BODY_LIMIT = 4096; //4KB
@@ -35,6 +38,8 @@ public interface GAEConstants
 	public static final int ADMIN_RESPONSE_EVENT_TYPE = 2020;
 	public static final int SERVER_CONFIG_REQUEST_EVENT_TYPE = 2050;
 	
+	public static final String USER_ENTITY_NAME = "ProxyUser";
+	public static final String GROUP_ENTITY_NAME = "ProxyGroup";
 	public static final String ROOT_NAME = "root";
 	public static final String ROOT_GROUP_NAME = "root";
 

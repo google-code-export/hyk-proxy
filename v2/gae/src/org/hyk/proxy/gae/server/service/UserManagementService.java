@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.arch.buffer.Buffer;
+import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.auth.Group;
 import org.hyk.proxy.gae.common.auth.User;
 import org.slf4j.Logger;
@@ -53,7 +54,8 @@ public class UserManagementService
 
 	public static void saveUser(User user)
 	{
-		Entity usrEntity = new Entity("User", user.getEmail());
+		Entity usrEntity = new Entity(GAEConstants.USER_ENTITY_NAME,
+		        user.getEmail());
 		usrEntity.setProperty("Name", user.getEmail());
 		usrEntity.setProperty("Passwd", user.getPasswd());
 		usrEntity.setProperty("Group", user.getGroup());
@@ -63,15 +65,21 @@ public class UserManagementService
 		Buffer buffer = new Buffer(128);
 		user.encode(buffer);
 		byte[] content = buffer.toArray();
-		asyncCache.put("User:" + user.getAuthToken(), content);
-		asyncCache.put("User:" + user.getEmail(), content);
-		localMemCache.put("User:" + user.getAuthToken(), user);
-		localMemCache.put("User:" + user.getEmail(), user);
+		asyncCache.put(
+		        GAEConstants.USER_ENTITY_NAME + ":" + user.getAuthToken(),
+		        content);
+		asyncCache.put(GAEConstants.USER_ENTITY_NAME + ":" + user.getEmail(),
+		        content);
+		localMemCache
+		        .put(GAEConstants.USER_ENTITY_NAME + ":" + user.getAuthToken(),
+		                user);
+		localMemCache.put(
+		        GAEConstants.USER_ENTITY_NAME + ":" + user.getEmail(), user);
 	}
 
 	public static Group getGroup(String groupName)
 	{
-		String key = "Group:" + groupName;
+		String key = GAEConstants.GROUP_ENTITY_NAME + ":" + groupName;
 		Group grp = (Group) localMemCache.get(key);
 		if (null != grp)
 		{
@@ -82,7 +90,7 @@ public class UserManagementService
 		{
 			Buffer buf = Buffer.wrapReadableContent(content);
 			grp = new Group();
-			if(grp.decode(buf))
+			if (grp.decode(buf))
 			{
 				localMemCache.put(key, grp);
 				return grp;
@@ -93,7 +101,8 @@ public class UserManagementService
 			}
 		}
 
-		Key groupKey = KeyFactory.createKey("Group", groupName);
+		Key groupKey = KeyFactory.createKey(GAEConstants.GROUP_ENTITY_NAME,
+		        groupName);
 		try
 		{
 			Entity grpEntity = datastore.get(groupKey);
@@ -117,21 +126,23 @@ public class UserManagementService
 
 	public static void saveGroup(Group group)
 	{
-		Entity usrEntity = new Entity("Group", group.getName());
+		Entity usrEntity = new Entity(GAEConstants.GROUP_ENTITY_NAME,
+		        group.getName());
+		usrEntity.setProperty("Name", group.getName());
 		usrEntity.setProperty("BlackList", group.getBlacklistString());
 		datastore.put(usrEntity);
 		// datastore.
 		Buffer buffer = new Buffer(128);
 		group.encode(buffer);
 		byte[] content = buffer.toArray();
-		String key = "Group:" + group.getName();
+		String key = GAEConstants.GROUP_ENTITY_NAME + ":" + group.getName();
 		asyncCache.put(key, content);
 		localMemCache.put(key, group);
 	}
 
 	private static User getUserFromCache(String name)
 	{
-		String key = "User:" + name;
+		String key = GAEConstants.USER_ENTITY_NAME + ":" + name;
 		User user = (User) localMemCache.get(key);
 		if (null != user)
 		{
@@ -142,7 +153,7 @@ public class UserManagementService
 		{
 			Buffer buf = Buffer.wrapReadableContent(content);
 			user = new User();
-			if(user.decode(buf))
+			if (user.decode(buf))
 			{
 				localMemCache.put(key, user);
 				return user;
@@ -150,7 +161,7 @@ public class UserManagementService
 			else
 			{
 				asyncCache.delete(key);
-			}		
+			}
 		}
 		return null;
 	}
@@ -160,7 +171,8 @@ public class UserManagementService
 		User user = getUserFromCache(email);
 		if (null == user)
 		{
-			Key usrKey = KeyFactory.createKey("User", email);
+			Key usrKey = KeyFactory.createKey(GAEConstants.USER_ENTITY_NAME,
+			        email);
 			try
 			{
 				Entity usrEntity = datastore.get(usrKey);
@@ -169,11 +181,12 @@ public class UserManagementService
 				user.setPasswd((String) usrEntity.getProperty("Passwd"));
 				user.setAuthToken((String) usrEntity.getProperty("AuthToken"));
 				user.setGroup((String) usrEntity.getProperty("Group"));
-				user.setBlacklistString((String) usrEntity.getProperty("BlackList"));
+				user.setBlacklistString((String) usrEntity
+				        .getProperty("BlackList"));
 				Buffer buffer = new Buffer(128);
 				user.encode(buffer);
 				byte[] content = buffer.toArray();
-				String key = "User:" + email;
+				String key = GAEConstants.USER_ENTITY_NAME + ":" + email;
 				asyncCache.put(key, content);
 				localMemCache.put(key, user);
 			}
@@ -191,7 +204,7 @@ public class UserManagementService
 		User user = getUserFromCache(token);
 		if (null == user)
 		{
-			Query q = new Query("User");
+			Query q = new Query(GAEConstants.USER_ENTITY_NAME);
 			q.addFilter("AuthToken", Query.FilterOperator.EQUAL, token);
 			PreparedQuery pq = datastore.prepare(q);
 
@@ -202,11 +215,12 @@ public class UserManagementService
 				user.setPasswd((String) result.getProperty("Passwd"));
 				user.setAuthToken((String) result.getProperty("AuthToken"));
 				user.setGroup((String) result.getProperty("Group"));
-				user.setBlacklistString((String) result.getProperty("BlackList"));
+				user.setBlacklistString((String) result
+				        .getProperty("BlackList"));
 				Buffer buffer = new Buffer(128);
 				user.encode(buffer);
 				byte[] content = buffer.toArray();
-				String key = "User:" + token;
+				String key = GAEConstants.USER_ENTITY_NAME + ":" + token;
 				asyncCache.put(key, content);
 				localMemCache.put(key, user);
 			}
@@ -217,18 +231,26 @@ public class UserManagementService
 	public static List<Group> getAllGroups()
 	{
 		List<Group> grps = new LinkedList<Group>();
-		Query q = new Query("Group");
+		Query q = new Query(GAEConstants.GROUP_ENTITY_NAME);
 		PreparedQuery pq = datastore.prepare(q);
 
 		for (Entity result : pq.asIterable())
 		{
 			Group grp = new Group();
-			grp.setName((String) result.getProperty("Name"));
+			if(null != result.getProperty("Name"))
+			{
+				grp.setName((String) result.getProperty("Name"));
+			}
+			else
+			{
+				grp.setName(result.getKey().getName());
+			}
+			
 			grp.setBlacklistString((String) result.getProperty("BlackList"));
 			Buffer buffer = new Buffer(128);
 			grp.encode(buffer);
 			byte[] content = buffer.toArray();
-			String key = "Group:" + grp.getName();
+			String key = GAEConstants.GROUP_ENTITY_NAME + ":" + grp.getName();
 			asyncCache.put(key, content);
 			localMemCache.put(key, grp);
 			grps.add(grp);
@@ -239,7 +261,7 @@ public class UserManagementService
 	public static List<User> getAllUsers()
 	{
 		List<User> users = new LinkedList<User>();
-		Query q = new Query("User");
+		Query q = new Query(GAEConstants.USER_ENTITY_NAME);
 		PreparedQuery pq = datastore.prepare(q);
 
 		for (Entity result : pq.asIterable())
@@ -253,8 +275,9 @@ public class UserManagementService
 			Buffer buffer = new Buffer(128);
 			user.encode(buffer);
 			byte[] content = buffer.toArray();
-			String key = "User:" + user.getEmail();
-			String key1 = "User:" + user.getAuthToken();
+			String key = GAEConstants.USER_ENTITY_NAME + ":" + user.getEmail();
+			String key1 = GAEConstants.USER_ENTITY_NAME + ":"
+			        + user.getAuthToken();
 			asyncCache.put(key, content);
 			asyncCache.put(key1, content);
 			localMemCache.put(key, user);
@@ -266,7 +289,8 @@ public class UserManagementService
 
 	public static void deleteGroup(Group g)
 	{
-		datastore.delete(KeyFactory.createKey("Group", g.getName()));
+		datastore.delete(KeyFactory.createKey(GAEConstants.GROUP_ENTITY_NAME,
+		        g.getName()));
 		String key = "Group:" + g.getName();
 		localMemCache.remove(key);
 		asyncCache.delete(key);
@@ -274,7 +298,8 @@ public class UserManagementService
 
 	public static void deleteUser(User u)
 	{
-		datastore.delete(KeyFactory.createKey("User", u.getEmail()));
+		datastore.delete(KeyFactory.createKey(GAEConstants.USER_ENTITY_NAME,
+		        u.getEmail()));
 		String key = "User:" + u.getEmail();
 		String key1 = "User:" + u.getAuthToken();
 		localMemCache.remove(key);
@@ -285,7 +310,7 @@ public class UserManagementService
 
 	public static boolean userAuthServiceAvailable(String token)
 	{
-		String key = "User:" + token;
+		String key = GAEConstants.USER_ENTITY_NAME + ":" + token;
 		if (localMemCache.containsKey(key))
 		{
 			return true;

@@ -4,7 +4,7 @@
 package org.hyk.proxy.gae.client.connection;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +34,11 @@ public class ProxyConnectionManager
 	{
 		return instance;
 	}
-
-	public boolean init()
+	
+	public boolean init(List<GAEServerAuth> gaeAuths)
 	{
 		List<GAEServerAuth> auths = new ArrayList<GAEClientConfiguration.GAEServerAuth>();
-		auths.addAll(GAEClientConfiguration.getInstance().getGAEServerAuths());
+		auths.addAll(gaeAuths);
 		for(GAEServerAuth auth:GAEClientConfiguration.getInstance().getGAEServerAuths())
 		{
 			ProxyConnection conn = getClientConnection(auth);
@@ -60,6 +60,14 @@ public class ProxyConnectionManager
 		}
 		seletor = new ListSelector<GAEServerAuth>(auths);
 		return true;
+	}
+	public boolean init(GAEServerAuth auth)
+	{
+		return init(Arrays.asList(auth));
+	}
+	public boolean init()
+	{
+		return init(GAEClientConfiguration.getInstance().getGAEServerAuths());
 	}
 	
 	private void addProxyConnection(List<ProxyConnection> connlist, ProxyConnection connection)
@@ -132,8 +140,8 @@ public class ProxyConnectionManager
 
 	public ProxyConnection getClientConnection(HTTPRequestEvent event)
 	{
-		String appid = GAEClientConfiguration.getInstance()
-		        .getBindingAppId(event.getHeader("Host"));
+		String appid = null != event?GAEClientConfiguration.getInstance()
+		        .getBindingAppId(event.getHeader("Host")):null;
 		GAEServerAuth auth = null;
 		if (null == appid)
 		{

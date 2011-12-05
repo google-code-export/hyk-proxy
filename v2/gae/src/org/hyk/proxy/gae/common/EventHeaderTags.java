@@ -22,13 +22,11 @@ public class EventHeaderTags
 	{
 		if(buffer.readableBytes() < 8)
 		{
-			System.out.println("#######" + buffer.readableBytes());
 			return false;
 		}
 		short magic = BufferHelper.readFixInt16(buffer, true);
 		if(magic != magicNumber)
 		{
-			System.out.println("#######" + magic);
 			return false;
 		}
 		try

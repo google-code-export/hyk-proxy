@@ -148,8 +148,6 @@ public class ServerEventHandler implements EventHandler
 	@Override
 	public void onEvent(EventHeader header, Event event)
 	{
-		System.out.println("############Received event with hash"
-		        + event.getHash());
 		Object[] attach = (Object[]) event.getAttachment();
 		EventHeaderTags tags = (EventHeaderTags) attach[0];
 		EventSendService sendService = (EventSendService) attach[1];
@@ -174,8 +172,6 @@ public class ServerEventHandler implements EventHandler
 			compress.setHash(event.getHash());
 			EncryptEvent enc = new EncryptEvent(cfg.getEncrypter(), compress);
 			enc.setHash(event.getHash());
-			System.out.println("############Send out event with hash"
-			        + event.getHash());
 			Buffer buf = GAEEventHelper.encodeEvent(tags, enc);
 			if (sendService.getMaxDataPackageSize() > 0
 			        && buf.readableBytes() > sendService
@@ -196,7 +192,7 @@ public class ServerEventHandler implements EventHandler
 		}
 		else
 		{
-			logger.error("Failed to handle event:" + event.getHash());
+			logger.error("Failed to handle event[" + header.toString()+"]");
 		}
 	}
 
