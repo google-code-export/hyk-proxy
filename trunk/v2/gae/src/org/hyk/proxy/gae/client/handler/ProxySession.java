@@ -3,10 +3,7 @@
  */
 package org.hyk.proxy.gae.client.handler;
 
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +25,6 @@ import org.hyk.proxy.gae.client.connection.ProxyConnection;
 import org.hyk.proxy.gae.client.connection.ProxyConnectionManager;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.GAEEventHelper;
-import org.hyk.proxy.gae.common.event.GAEEvents;
 import org.hyk.proxy.gae.common.http.ContentRangeHeaderValue;
 import org.hyk.proxy.gae.common.http.RangeHeaderValue;
 import org.hyk.proxy.gae.common.http.SetCookieHeaderValue;

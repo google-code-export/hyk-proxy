@@ -5,6 +5,7 @@ package org.hyk.proxy.gae.client.connection;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
@@ -13,12 +14,14 @@ import javax.net.ssl.SSLEngine;
 import org.arch.buffer.Buffer;
 import org.arch.misc.crypto.base64.Base64;
 import org.arch.util.NetworkHelper;
+import org.hyk.proxy.core.config.SimpleSocketAddress;
 import org.hyk.proxy.core.util.SharedObjectHelper;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.ConnectionMode;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.ProxyInfo;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.ProxyType;
+import org.hyk.proxy.gae.client.util.HostsHelper;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.http.HttpServerAddress;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -45,6 +48,7 @@ import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +118,13 @@ public class HTTPProxyConnection extends ProxyConnection
 		pipeline.addLast("handler", new HttpResponseHandler());
 		if(null == factory)
 		{
+			if(null == SharedObjectHelper.getGlobalThreadPool())
+			{
+				ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
+				        20, 0, 0);
+				SharedObjectHelper.setGlobalThreadPool(workerExecutor);
+				
+			}
 			if (NetworkHelper.isIPV6Address(address.getHost()))
 			{
 				factory = new OioClientSocketChannelFactory(SharedObjectHelper.getGlobalThreadPool());
@@ -145,7 +156,8 @@ public class HTTPProxyConnection extends ProxyConnection
 			connectPort = address.getPort();
 			sslConnectionEnable = address.isSecure();
 		}
-		connectHost = cfg.getMappingHost(connectHost);
+		//connectHost = cfg.getMappingHost(connectHost);
+		connectHost = HostsHelper.getMappingHost(connectHost);
 		if (logger.isInfoEnabled())
 		{
 			logger.info("Connect remote proxy server " + connectHost + ":"
@@ -162,10 +174,17 @@ public class HTTPProxyConnection extends ProxyConnection
 		}
 
 		ProxyInfo info = cfg.getLocalProxy();
-		if (null != info && !info.host.contains("google"))
+		if (null != info && null != cfg.getGoogleProxyChain())
 		{
-			String httpsHost = null;
-			int httpsport = 443;
+			SimpleSocketAddress chainAddress = cfg.getGoogleProxyChain();
+			
+			String httpsHost = chainAddress.host;
+			httpsHost = HostsHelper.getMappingHost(httpsHost);
+			int httpsport = chainAddress.port;
+			if(logger.isDebugEnabled())
+			{
+				logger.debug("Connect google chain proxy " + httpsHost + ":" + httpsport);
+			}
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
 			        HttpMethod.CONNECT, httpsHost + ":" + httpsport);
 			request.setHeader(HttpHeaders.Names.HOST, httpsHost + ":" + httpsport);
@@ -191,7 +210,7 @@ public class HTTPProxyConnection extends ProxyConnection
 				}
 				catch (InterruptedException e)
 				{
-
+					//
 				}
 				finally
 				{
@@ -339,7 +358,7 @@ public class HTTPProxyConnection extends ProxyConnection
 		        throws Exception
 		{
 			e.getChannel().close();
-			e.getCause().printStackTrace();
+			//e.getCause().printStackTrace();
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
 			updateSSLProxyConnectionStatus(DISCONNECTED);
 			waitingResponse = false;

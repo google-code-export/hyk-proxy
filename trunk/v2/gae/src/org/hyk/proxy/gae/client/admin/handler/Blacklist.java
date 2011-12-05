@@ -95,7 +95,6 @@ public class Blacklist implements CommandHandler
 						printHelp("Argument host must start with '+' or '-'.");
 						return;
 					}
-					String result = null;
 					BlackListOperationEvent event = new BlackListOperationEvent();
 					event.opr = opr;
 					event.host = host;

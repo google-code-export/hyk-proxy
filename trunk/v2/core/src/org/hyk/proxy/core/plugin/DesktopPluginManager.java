@@ -241,7 +241,6 @@ public class DesktopPluginManager implements PluginManager
 			Unmarshaller unmarshaller = context.createUnmarshaller();
 			URL pluginResource = loader.getResource("/"
 			        + Constants.PLUGIN_DESC_FILE);
-			System.out.println(pluginResource.toString());
 			PluginDescription desc = (PluginDescription) unmarshaller
 			        .unmarshal(pluginResource);
 			pluginName = desc.name;
@@ -371,10 +370,6 @@ public class DesktopPluginManager implements PluginManager
 		}
 		try
 		{
-			if(null == plugin.plugin)
-			{
-				System.out.println("##########");
-			}
 			plugin.plugin.onActive(plugin.context);
 			plugin.state = PluginState.ACTIVATED;
 			storePluginsActiveState(plugin, ActiveState.ACTIVE);
@@ -382,7 +377,6 @@ public class DesktopPluginManager implements PluginManager
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
 			logger.error("Failed to active plugin:" + plugin.desc.name, e);
 			// logger.error("Active plugin:" + plugin.desc.name +
 			// " ...   Failed");

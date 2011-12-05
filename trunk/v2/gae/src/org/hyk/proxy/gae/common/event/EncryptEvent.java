@@ -66,7 +66,6 @@ public class EncryptEvent extends Event
 					break;
 				}
 			}
-			System.out.println("########" + type + ":" + content.readableBytes());
 			ev = EventDispatcher.getSingletonInstance().parse(content);
 			return true;
 		}

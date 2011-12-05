@@ -82,7 +82,6 @@ public class FetchServiceHandler
 		HTTPRequest fetchReq = null;
 		try
 		{
-			System.out.println("############Fetch url" + req.method +" " + req.url);
 			fetchReq = GAEServerHelper.toHTTPRequest(req);
 		}
 		catch (MalformedURLException e)

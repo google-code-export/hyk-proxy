@@ -73,10 +73,11 @@ public class PatternJDKLoggingFormatter extends Formatter
 				}
 			});
 			thrown.printStackTrace(s);
+			//thrown.printStackTrace();
 			arguments[1] = buffer.toString();
 		}
 		// %m
-		arguments[1] = record.getMessage();
+		//arguments[1] = record.getMessage();
 		// %M
 		if (record.getSourceMethodName() != null)
 		{

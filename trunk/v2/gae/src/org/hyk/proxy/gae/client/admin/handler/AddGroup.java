@@ -69,6 +69,7 @@ public class AddGroup implements CommandHandler
 		}
 		catch(Exception exp)
 		{
+			exp.printStackTrace();
 			System.out.println("Error:" + exp.getMessage());
 		}
 	}

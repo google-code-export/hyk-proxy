@@ -21,10 +21,10 @@ public class PropertiesHelper
 		{
 			String value = (String) entry.getValue();
 			int index = value.indexOf("${");
-			if(index > 0)
+			if(index >= 0)
 			{
 				int end = value.indexOf("}", index);
-				if(end > 0)
+				if(end >= 0)
 				{
 					String env_key = value.substring(index + 2,end);
 					String replace = value.substring(index ,end+1);

@@ -39,7 +39,7 @@ public class ListUsers implements CommandHandler
 	@Override
 	public void execute(String[] args)
 	{
-		final String formater = "%12s%12s%12s%24s%24s";
+		final String formater = "%12s%12s%12s%24s";
 		String header = String.format(formater, "Username", "Password",
 		        "Group", "Blacklist");
 		GAEAdmin.outputln(header);
@@ -49,10 +49,6 @@ public class ListUsers implements CommandHandler
 			@Override
 			public void onEvent(EventHeader header, Event event)
 			{
-				synchronized (this)
-				{
-					this.notify();
-				}
 				if (header.type == GAEConstants.USER_LIST_RESPONSE_EVENT_TYPE)
 				{
 					ListUserResponseEvent res = (ListUserResponseEvent) event;
@@ -69,6 +65,10 @@ public class ListUsers implements CommandHandler
 					AdminResponseEvent ev = (AdminResponseEvent) event;
 					GAEAdmin.outputln(ev.response != null ? ev.response
 					        : ev.errorCause);
+				}
+				synchronized (this)
+				{
+					this.notify();
 				}
 			}
 		};

@@ -60,9 +60,10 @@ public class DeleteUser  implements CommandHandler
 					GAEAdmin.outputln("Argument username required!");
 				}
 				UserOperationEvent event = new UserOperationEvent();
-				event.opr = Operation.ADD;
+				event.opr = Operation.DELETE;
 				User user = new User();
 				user.setEmail(usernameargs[0]);
+				event.user = user;
 				AdminResponseEventHandler.syncSendEvent(connection, event);
 			}
 		}

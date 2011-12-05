@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.hyk.proxy.core.config.SimpleSocketAddress;
 import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EncryptType;
 import org.hyk.proxy.gae.common.GAEConstants;
@@ -294,6 +295,10 @@ public class GAEClientConfiguration
 	{
 		return CompressorType.valueOf(compressor.toUpperCase());
 	}
+	public void setCompressorType(CompressorType type)
+	{
+		compressor = type.toString();
+	}
 
 	private String encrypter;
 
@@ -311,6 +316,10 @@ public class GAEClientConfiguration
 	public EncryptType getEncrypterType()
 	{
 		return EncryptType.valueOf(encrypter.toUpperCase());
+	}
+	public void setEncrypterType(EncryptType type)
+	{
+		this.encrypter = type.toString();
 	}
 
 	private boolean simpleURLEnable;
@@ -491,7 +500,27 @@ public class GAEClientConfiguration
 	}
 
 	
-
+	static class GoogleProxyChain
+	{
+		@XmlAttribute
+		boolean enable;
+		@XmlAttribute
+		String host;
+		@XmlAttribute
+		int port = 443;
+	}
+	@XmlElement(name="GoogleProxyChain")
+	private GoogleProxyChain googleProxyChain;
+	
+	public SimpleSocketAddress getGoogleProxyChain()
+	{
+		if(null != googleProxyChain && googleProxyChain.enable)
+		{
+			return new SimpleSocketAddress(googleProxyChain.host, googleProxyChain.port);
+		}
+		return null;
+	}
+	
 	@XmlElementWrapper(name = "AppIdBindings")
 	@XmlElements(@XmlElement(name = "Binding"))
 	private List<AppIdBinding> appIdBindings;
@@ -536,15 +565,6 @@ public class GAEClientConfiguration
 		return instance;
 	}
 	
-	public void setMappingHosts(String src, String dst)
-	{
-		
-	}
-	
-	public String getMappingHost(String src)
-	{
-		return src;
-	}
 
 	public void save() throws Exception
 	{

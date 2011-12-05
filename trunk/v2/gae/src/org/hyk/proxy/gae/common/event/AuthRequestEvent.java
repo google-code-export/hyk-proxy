@@ -29,8 +29,6 @@ public class AuthRequestEvent extends Event
     {
 		try
         {
-			System.out.println("####"+buffer.readableBytes());
-			System.out.println("####"+Arrays.toString(buffer.toArray()));
 	        appid = BufferHelper.readVarString(buffer);
 	        user = BufferHelper.readVarString(buffer);
 			passwd = BufferHelper.readVarString(buffer);
@@ -48,11 +46,6 @@ public class AuthRequestEvent extends Event
 	    BufferHelper.writeVarString(buffer, appid);
 	    BufferHelper.writeVarString(buffer, user);
 	    BufferHelper.writeVarString(buffer, passwd);
-	    Buffer buf = new Buffer();
-	    BufferHelper.writeVarString(buf, appid);
-	    BufferHelper.writeVarString(buf, user);
-	    BufferHelper.writeVarString(buf, passwd);
-	    System.out.println("####"+Arrays.toString(buffer.toArray()));
 	    return true;
     }
 

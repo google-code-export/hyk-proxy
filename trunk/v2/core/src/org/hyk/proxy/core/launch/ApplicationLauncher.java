@@ -9,10 +9,16 @@
  */
 package org.hyk.proxy.core.launch;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringReader;
 import java.util.Properties;
+import java.util.logging.LogManager;
 
 import org.arch.util.PropertiesHelper;
 import org.hyk.proxy.core.common.Constants;
@@ -26,26 +32,32 @@ import org.hyk.proxy.core.trace.TUITrace;
  */
 public class ApplicationLauncher
 {
-	private static void initLoggerConfig() throws IOException
+	public static class JDKLoggingConfig
 	{
-		String home = System.getProperty(Constants.APP_HOME);
-		if (null == home)
+		public JDKLoggingConfig() throws Exception
 		{
-			home = ".";
+			String home = System.getProperty(Constants.APP_HOME);
+			if (null == home)
+			{
+				home = ".";
+			}
+			String loggingCfgFile = home + "/conf/logging properties";
+			FileInputStream fis = new FileInputStream(loggingCfgFile);
+			Properties props = new Properties();
+			props.load(fis);
+			fis.close();
+			PropertiesHelper.replaceSystemProperties(props);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			props.store(bos, "");
+			bos.close();
+			LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(bos.toByteArray()));
 		}
-		String loggingCfgFile = home + "/conf/logging properties";
-		FileInputStream fis = new FileInputStream(loggingCfgFile);
-		Properties props = new Properties();
-		props.load(fis);
-		fis.close();
-		if (PropertiesHelper.replaceSystemProperties(props) > 0)
-		{
-			FileOutputStream fos = new FileOutputStream(loggingCfgFile);
-			props.store(fos, "");
-			fos.close();
-		}
-
-		System.setProperty("java.util.logging.config.file", loggingCfgFile);
+	}
+	
+	public static void initLoggerConfig() throws IOException
+	{
+		System.setProperty("java.util.logging.config.class", JDKLoggingConfig.class.getName());
+		//System.setProperty("java.util.logging.config.file", loggingCfgFile);
 	}
 
 	public static void main(String[] args) throws IOException

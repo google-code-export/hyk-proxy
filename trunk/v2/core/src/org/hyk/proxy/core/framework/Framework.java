@@ -89,7 +89,7 @@ public class Framework
 					cfg.getLocalProxyServerAddress(),
 			        SharedObjectHelper.getGlobalThreadPool());
 
-			SharedObjectHelper.getTrace().info("Local HTTP Server Running...\nat "
+			SharedObjectHelper.getTrace().info("Local HTTP(S) Server Running...\nat "
 			        + cfg.getLocalProxyServerAddress());
 			isStarted = true;
 			return true;

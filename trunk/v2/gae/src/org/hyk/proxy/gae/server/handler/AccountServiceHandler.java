@@ -147,11 +147,9 @@ public class AccountServiceHandler
 			case GAEConstants.AUTH_REQUEST_EVENT_TYPE:
 			{
 				AuthRequestEvent req = (AuthRequestEvent) ev;
-				System.out.println("@@@" + req.appid + "####" +req.user +"***"+req.passwd);
 				User user = UserManagementService.getUserWithName(req.user);
 				if(null != user && user.getPasswd().equals(req.passwd))
 				{
-					System.out.println("AuthToken is " + user.getAuthToken());
 					return new AuthResponseEvent(req.appid, user.getAuthToken(), null);
 				}
 				else
@@ -267,6 +265,17 @@ public class AccountServiceHandler
 		}
 		return true;
 	}
+	
+	private static String generateAuthToken()
+	{
+		String token = null;
+		do
+		{
+			token = RandomHelper.generateRandomString(10);
+		}
+		while (UserManagementService.getUserWithToken(token) != null);
+		return token;
+	}
 
 	protected static boolean createUserIfNotExist(String email, String groupName)
 	{
@@ -284,19 +293,14 @@ public class AccountServiceHandler
 			{
 				user.setPasswd(RandomHelper.generateRandomString(10));
 			}
+			user.setAuthToken(generateAuthToken());
 			UserManagementService.saveUser(user);
 		}
 		else
 		{
 			if(user.getAuthToken() == null)
 			{
-				String token = null;
-				do
-				{
-					token = RandomHelper.generateRandomString(10);
-				}
-				while (UserManagementService.getUserWithToken(token) != null);
-				user.setAuthToken(token);
+				user.setAuthToken(generateAuthToken());
 				UserManagementService.saveUser(user);
 			}
 		}

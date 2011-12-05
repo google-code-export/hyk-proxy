@@ -9,8 +9,10 @@
  */
 package org.arch.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -18,7 +20,7 @@ import java.util.List;
  */
 public class ListSelector<T>
 {
-	protected List<T>		list;
+	protected ArrayList<T>		list;
 	protected int						cursor;
 
 	public ListSelector(List<T> list)
@@ -32,7 +34,7 @@ public class ListSelector<T>
 		{
 			Collections.shuffle(list);
 		}
-		this.list = list;
+		this.list = new ArrayList<T>(list);
 	}
 	
 	public synchronized T select()
@@ -46,6 +48,20 @@ public class ListSelector<T>
 			cursor = 0;
 		}
 		return list.get(cursor++);
+	}
+	
+	public synchronized T randomSelect()
+	{
+		if(list.isEmpty())
+		{
+			return null;
+		}
+		if(1 == list.size())
+		{
+			return list.get(0);
+		}
+		Random random = new Random();
+		return list.get(random.nextInt(list.size()));
 	}
 	
 	public synchronized void remove(T obj)

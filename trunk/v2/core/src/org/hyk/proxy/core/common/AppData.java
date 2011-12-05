@@ -26,6 +26,7 @@ public class AppData
 	private static File APP_HOME = null;
 	private static File APP_USER_HOME = null;
 	private static File USR_PLUGINS_STATE = null;
+	private static File PREFERNCE = null;
 
 	private static File FAKE_CERT_HOME = null;
 	static
@@ -49,6 +50,11 @@ public class AppData
 			if(!APP_USER_HOME.exists())
 			{
 				APP_USER_HOME.mkdir();
+			}
+			PREFERNCE = new File(APP_USER_HOME, ".prefer");
+			if(!PREFERNCE.exists())
+			{
+				PREFERNCE.createNewFile();
 			}
 			USR_PLUGINS_STATE = new File(APP_USER_HOME, ".plugins");
 			if(!USR_PLUGINS_STATE.exists())
@@ -96,4 +102,8 @@ public class AppData
 		return USR_PLUGINS_STATE;
 	}
 
+	public static File getPreference()
+	{
+		return PREFERNCE;
+	}
 }

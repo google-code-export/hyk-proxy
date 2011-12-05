@@ -10,11 +10,13 @@
 package org.hyk.proxy.core.admin;
 
 import java.io.Console;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.hyk.proxy.core.common.Version;
+import org.hyk.proxy.core.launch.ApplicationLauncher;
 import org.hyk.proxy.core.plugin.DesktopPluginManager;
 import org.hyk.proxy.core.plugin.DesktopPluginManager.InstalledPlugin;
 
@@ -26,9 +28,11 @@ public class Admin
 
 	/**
 	 * @param args
+	 * @throws IOException 
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
+		ApplicationLauncher.initLoggerConfig();
 		DesktopPluginManager pm = DesktopPluginManager.getInstance();
 		pm.loadPlugins();
 		Collection<InstalledPlugin> plugins = pm.getAllInstalledPlugins();

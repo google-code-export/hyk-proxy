@@ -168,6 +168,10 @@ public abstract class ProxyConnection
 				logger.debug(event.toString());
 			}
 		}
+		if(null == attach)
+		{
+			attach = new Pair<Channel, Integer>(null, -1);
+		}
 
 		EventHeaderTags tags = new EventHeaderTags();
 		// tags.compressor = cfg.getCompressor();
@@ -252,6 +256,12 @@ public abstract class ProxyConnection
 				}
 				break;
 			}
+			case GAEConstants.ADMIN_RESPONSE_EVENT_TYPE:
+			case GAEConstants.GROUOP_LIST_RESPONSE_EVENT_TYPE:
+			case GAEConstants.USER_LIST_RESPONSE_EVENT_TYPE:
+			{
+				break;
+			}
 			default:
 			{
 				logger.error("Unsupported event type:" + type
@@ -272,6 +282,8 @@ public abstract class ProxyConnection
 			if (null != outSessionHandler)
 			{
 				EventHeader header = new EventHeader();
+				header.type = Event.getTypeVersion(ev.getClass()).type;
+				header.version = Event.getTypeVersion(ev.getClass()).version;
 				header.hash = ev.getHash();
 				// header.type = Event.getTypeVersion(ev.getClass())
 				outSessionHandler.onEvent(header, ev);
@@ -292,7 +304,7 @@ public abstract class ProxyConnection
 		}
 		catch (Exception e)
 		{
-			logger.error("Failed to parse event.");
+			logger.error("Failed to parse event.", e);
 			return;
 		}
 		handleRecvEvent(ev);
