@@ -46,6 +46,18 @@ public class GAEServerConfiguration implements CodecObject
 	private EncryptType encrypter = EncryptType.SE1;
 
 	private Set<String> compressFilter = new HashSet<String>();
+	
+//	private boolean trafficStatEnable = false;
+//
+//	public boolean isTrafficStatEnable()
+//    {
+//    	return trafficStatEnable;
+//    }
+//
+//	public void setTrafficStatEnable(boolean trafficStatEnable)
+//    {
+//    	this.trafficStatEnable = trafficStatEnable;
+//    }
 
 	public GAEServerConfiguration()
 	{

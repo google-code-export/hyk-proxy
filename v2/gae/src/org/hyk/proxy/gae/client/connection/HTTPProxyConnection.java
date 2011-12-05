@@ -362,6 +362,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
 			updateSSLProxyConnectionStatus(DISCONNECTED);
 			waitingResponse = false;
+			close();
 		}
 
 		@Override
@@ -374,6 +375,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			}
 			updateSSLProxyConnectionStatus(DISCONNECTED);
 			waitingResponse = false;
+			close();
 		}
 
 		@Override
@@ -418,7 +420,6 @@ public class HTTPProxyConnection extends ProxyConnection
 					}
 					ChannelBuffer content = response.getContent();
 					fillResponseBuffer(content);
-					
 				}
 				else
 				{

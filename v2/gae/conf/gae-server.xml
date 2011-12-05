@@ -16,5 +16,4 @@
 	<MaxXMPPDataPackageSize>40960</MaxXMPPDataPackageSize>
 	<FetchRetryCount>3</FetchRetryCount>
 	<RangeFetchLimit>262144</RangeFetchLimit>
-
 </Configure>

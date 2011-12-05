@@ -41,6 +41,8 @@ public class GAEEvents
 			        CompressEvent.class, handler);
 			EventDispatcher.getSingletonInstance().register(EncryptEvent.class,
 			        handler);
+			EventDispatcher.getSingletonInstance().register(
+			        ServerConfigEvent.class, handler);
 			if (isServer)
 			{
 				EventDispatcher.getSingletonInstance().register(
@@ -58,8 +60,7 @@ public class GAEEvents
 				        ListUserRequestEvent.class, handler);
 				EventDispatcher.getSingletonInstance().register(
 				        UserOperationEvent.class, handler);
-				EventDispatcher.getSingletonInstance().register(
-				        ServerConfigRequestEvent.class, handler);
+
 			}
 
 		}
