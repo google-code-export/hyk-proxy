@@ -1,0 +1,46 @@
+hyk-proxy-spac Changelog
+===================
+
+Changes in version 0.4.1 (2011.7.17)
+-------------------------------------------
+** Bug
+   * Fix: Default script's syntax 
+
+** Improvement
+   * Add proxy script  function 'onInit'
+   * Add operator '!' support
+   
+** Task
+   * NA
+
+Changes in version 0.4.0 (2011.5.14)
+-------------------------------------------
+** Bug
+   * Remove domain name in url for proxy request
+
+** Improvement
+   * Add support for forwarding to socks proxy
+   * Add script engine function 'system', 'log'
+   * Add proxy script  function 'onRoutine'
+   
+** Task
+   * NA
+
+Changes in version 0.3.0 (2010.9.11) (for hyk-proxy 0.9.0)
+-------------------------------------------
+** Bug
+   * NA
+
+** Improvement
+   * Refactor for hyk-proxy 0.9.0
+   * Auto choose "DIRECT proxy" for private IP
+   
+** Task
+   * NA
+
+   
+version 0.2.0 (2010.6.31)
+-------------
+Initial version (for hyk-proxy 0.8.6)
+
+

@@ -34,7 +34,7 @@
 	<ConcurrentRangeFetchWorker>3</ConcurrentRangeFetchWorker>
 
 	<!-- If you want use hyk-proxy througth a proxy, config this item -->
-	<LocalProxy type="HTTPS" host="10.6.18.168" port="8080"/>
+	<LocalProxy type="HTTPS" host="" port="8080"/>
 	<GoogleProxyChain enable="true" host="GoogleHttps"/>
 
 	<AppIdBindings>
