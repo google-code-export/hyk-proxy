@@ -15,5 +15,5 @@
 	</inbound-services>
 	
 	<ssl-enabled>true</ssl-enabled>
-	
+	<threadsafe>true</threadsafe>
 </appengine-web-app>
