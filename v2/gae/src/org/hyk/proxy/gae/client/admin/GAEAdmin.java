@@ -22,6 +22,7 @@ import org.hyk.proxy.gae.client.admin.handler.Blacklist;
 import org.hyk.proxy.gae.client.admin.handler.ChangePasswd;
 import org.hyk.proxy.gae.client.admin.handler.ClearScreen;
 import org.hyk.proxy.gae.client.admin.handler.CommandHandler;
+import org.hyk.proxy.gae.client.admin.handler.ConfigServer;
 import org.hyk.proxy.gae.client.admin.handler.DeleteGroup;
 import org.hyk.proxy.gae.client.admin.handler.DeleteUser;
 import org.hyk.proxy.gae.client.admin.handler.Exit;
@@ -98,6 +99,7 @@ public class GAEAdmin implements Runnable
 		handlers.put(DeleteUser.COMMAND, new DeleteUser(connection));
 		handlers.put(DeleteGroup.COMMAND, new DeleteGroup(connection));
 		handlers.put(Blacklist.COMMAND, new Blacklist(connection));
+		handlers.put(ConfigServer.COMMAND, new ConfigServer(connection));
 //		handlers.put(Traffic.COMMAND, new Traffic());
 //		handlers.put(Stat.COMMAND, new Stat(userInfo));
 		handlers.put(Help.COMMAND, new Help());

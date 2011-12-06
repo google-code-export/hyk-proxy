@@ -126,7 +126,7 @@ public class CompressEvent extends Event
 					}
 					catch (Exception e)
 					{
-						logger.error("Failed to uncompress by LZF.", e);
+						logger.error("Failed to uncompress by " + type, e);
 						return false;
 					}
 					break;

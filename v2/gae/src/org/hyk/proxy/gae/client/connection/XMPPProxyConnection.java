@@ -47,7 +47,8 @@ public class XMPPProxyConnection extends ProxyConnection implements
 	{
 		super(auth);
 		this.address = new XmppAddress(account.jid);
-		this.serverAddress = new XmppAddress(auth.appid + "@appspot.com");
+		String appid = auth.backendEnable?(GAEConstants.BACKEND_INSTANCE_NAME + "." +auth.appid):auth.appid;
+		this.serverAddress = new XmppAddress(appid + "@appspot.com");
 		ConnectionConfiguration connConfig = account.connectionConfig;
 		if (rawConnectionTable.containsKey(account.jid))
 		{

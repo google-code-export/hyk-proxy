@@ -38,6 +38,7 @@ public class IndexServlet extends HttpServlet
 			int len = is.read(buffer);
 			String format = new String(buffer, 0, len);
 			INDEX_PAGE = String.format(format, GAEPluginVersion.value, GAEPluginVersion.value);
+			is.close();
 		}
 		catch(IOException e)
 		{

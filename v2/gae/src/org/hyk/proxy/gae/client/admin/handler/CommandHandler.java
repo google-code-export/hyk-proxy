@@ -15,6 +15,7 @@ import org.arch.event.EventHeader;
 import org.hyk.proxy.gae.client.admin.GAEAdmin;
 import org.hyk.proxy.gae.client.connection.ProxyConnection;
 import org.hyk.proxy.gae.common.event.AdminResponseEvent;
+import org.hyk.proxy.gae.common.event.ServerConfigEvent;
 
 /**
  *
@@ -55,6 +56,11 @@ public interface CommandHandler
 			{
 				AdminResponseEvent ev = (AdminResponseEvent) event;
 				GAEAdmin.outputln(ev.errorCause != null?ev.errorCause:ev.response); 
+			}
+			else if(event instanceof ServerConfigEvent)
+			{
+				ServerConfigEvent ev = (ServerConfigEvent) event;
+				ev.cfg.print(System.out);
 			}
         }
 		

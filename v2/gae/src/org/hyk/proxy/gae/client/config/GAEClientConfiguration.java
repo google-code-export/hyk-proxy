@@ -79,6 +79,8 @@ public class GAEClientConfiguration
 		public String user;
 		@XmlAttribute
 		public String passwd;
+		@XmlAttribute
+		public boolean backendEnable;
 	}
 
 	public static enum ProxyType

@@ -2,9 +2,9 @@
 <Configure>
 	<!-- Can config more than 1 hyk-proxy-server -->
 	<GAE>
-	   <Server appid="hykserver" />
+	   <Server appid="hykserver" backendEnable="false"/>
+	   <!-- <Server appid="" user="" passwd=""  backendEnable="false"/> -->
 	</GAE>
-	<!-- <hyk-proxy-server appid="" user="" passwd=""/> -->
 
 	<!-- HTTP/HTTPS/XMPP-->
 	<ConnectionMode>HTTP</ConnectionMode>
@@ -34,8 +34,8 @@
 	<ConcurrentRangeFetchWorker>3</ConcurrentRangeFetchWorker>
 
 	<!-- If you want use hyk-proxy througth a proxy, config this item -->
-	<LocalProxy type="HTTP" host="localhost" port="8888"/>
-	<GoogleProxyChain enable="false" host="www.google.com.hk"/>
+	<LocalProxy type="HTTPS" host="10.6.18.168" port="8080"/>
+	<GoogleProxyChain enable="true" host="GoogleHttps"/>
 
 	<AppIdBindings>
 		<!--
