@@ -9,20 +9,28 @@
  */
 package org.hyk.proxy.gae.client.admin.handler;
 
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashSet;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
+import org.arch.buffer.Buffer;
 import org.hyk.proxy.gae.client.admin.GAEAdmin;
-import org.hyk.proxy.gae.client.admin.handler.CommandHandler.AdminResponseEventHandler;
 import org.hyk.proxy.gae.client.connection.ProxyConnection;
-import org.hyk.proxy.gae.common.auth.Operation;
-import org.hyk.proxy.gae.common.auth.User;
+import org.hyk.proxy.gae.common.CompressorType;
+import org.hyk.proxy.gae.common.EncryptType;
+import org.hyk.proxy.gae.common.GAEConstants;
+import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 import org.hyk.proxy.gae.common.event.ServerConfigEvent;
-import org.hyk.proxy.gae.common.event.UserOperationEvent;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 /**
  *
@@ -31,12 +39,12 @@ public class ConfigServer implements CommandHandler
 {
 	public static final String COMMAND = "servercfg";
 
-	private static final String EXAMPLE = "Examples:"
-	        + System.getProperty("line.separator")
-	        + "servercfg get  #get server config  "
-	        + System.getProperty("line.separator")
-	        + "servercfg set  #set server config by gae-server.xml."
-	        + System.getProperty("line.separator");
+//	private static final String EXAMPLE = "Examples:"
+//	        + System.getProperty("line.separator")
+//	        + "servercfg get  #get server config  "
+//	        + System.getProperty("line.separator")
+//	        + "servercfg set  #set server config by gae-server.xml."
+//	        + System.getProperty("line.separator");
 	private Options options = new Options();
 
 	private ProxyConnection connection;
@@ -47,6 +55,49 @@ public class ConfigServer implements CommandHandler
 		options.addOption("h", "help", false, "print this message.");
 	}
 
+	
+	private static GAEServerConfiguration buildFromXML() throws Exception
+	{
+		GAEServerConfiguration cfg = new GAEServerConfiguration();
+		GAEServerConfiguration.class.getResource("/"
+                + GAEConstants.SERVER_CONF_NAME);
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		InputStream is = GAEServerConfiguration.class.getResourceAsStream("/"
+                + GAEConstants.SERVER_CONF_NAME);
+		Document doc = builder.parse(is);
+		is.close();
+		NodeList filters = doc.getElementsByTagName("content-type");
+		HashSet filterset = new HashSet<String>();
+		for(int i = 0; i<filters.getLength(); i++)
+		{
+			
+			filterset.add(filters.item(i).getTextContent().trim());
+		}
+		cfg.setCompressFilter(filterset);
+		NodeList maxxmpp = doc.getElementsByTagName("MaxXMPPDataPackageSize");
+		NodeList fetchRetry = doc.getElementsByTagName("FetchRetryCount");
+		NodeList rangeLimit = doc.getElementsByTagName("RangeFetchLimit");
+		NodeList compressor = doc.getElementsByTagName("Compressor");
+		NodeList encrypter = doc.getElementsByTagName("Encrypter");
+		cfg.setMaxXMPPDataPackageSize(Integer.parseInt(maxxmpp.item(0).getTextContent().trim()));
+		cfg.setFetchRetryCount(Integer.parseInt(fetchRetry.item(0).getTextContent().trim()));
+		cfg.setRangeFetchLimit(Integer.parseInt(rangeLimit.item(0).getTextContent().trim()));
+		cfg.setCompressor(CompressorType.valueOf(compressor.item(0).getTextContent().trim().toUpperCase()));
+		cfg.setEncrypter(EncryptType.valueOf(encrypter.item(0).getTextContent().trim().toUpperCase()));
+		return cfg;
+	}
+	
+//	public static void main(String[] args) throws Exception
+//	{
+//		ConfigServerEvent event = new ConfigServerEvent();
+//		event.cfg = buildFromXML();
+//		Buffer buffer = new Buffer();
+//		buffer.ensureWritableBytes(1024);
+//		event.encode(buffer);
+//		System.out.println(buffer.readableBytes());
+//	}
+	
 	@Override
 	public void execute(String[] args)
 	{
@@ -93,7 +144,7 @@ public class ConfigServer implements CommandHandler
 					else
 					{
 						event.opreration = ServerConfigEvent.SET_CONFIG_REQ;
-						
+						event.cfg = buildFromXML();
 					}
 					AdminResponseEventHandler.syncSendEvent(connection, event);
 				}

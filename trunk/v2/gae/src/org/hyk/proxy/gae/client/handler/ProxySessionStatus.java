@@ -9,6 +9,7 @@ package org.hyk.proxy.gae.client.handler;
  */
 public enum ProxySessionStatus
 {
+	INITED,
 	WAITING_NORMAL_RESPONSE, 
 	WAITING_MULTI_RANGE_RESPONSE, 
 	SESSION_COMPLETED, 

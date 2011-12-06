@@ -38,6 +38,7 @@ public class SignoutRedirectServlet extends HttpServlet
 		{
 			int len = is.read(buffer);
 			INDEX_PAGE = new String(buffer, 0, len);
+			is.close();
 		}
 		catch(IOException e)
 		{

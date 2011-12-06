@@ -22,6 +22,7 @@ public class GAE implements Plugin
 	protected static Logger logger = LoggerFactory.getLogger(GAE.class);
 	ClientProxyEventHandler handler = new ClientProxyEventHandler();
 
+	
 	@Override
 	public void onLoad(PluginContext context) throws Exception
 	{

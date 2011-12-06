@@ -41,6 +41,7 @@ public class HostsHelper
 	        	List<String> mappings = Arrays.asList(splits);
 	        	hostsMappingTable.put(key, new ListSelector<String>(mappings));
 	        }
+	        is.close();
         }
         catch (IOException e)
         {

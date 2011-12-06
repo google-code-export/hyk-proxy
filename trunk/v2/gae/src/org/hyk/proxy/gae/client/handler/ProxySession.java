@@ -62,9 +62,10 @@ public class ProxySession
 	private HTTPRequestEvent proxyEvent;
 	private boolean isHttps;
 	private String httpspath;
-	private ProxySessionStatus status;
+	private ProxySessionStatus status = ProxySessionStatus.INITED;
 
 	private Map<Long, Buffer> rangeFetchContents = new HashMap<Long, Buffer>();
+	private boolean isOriginalContainsRangeHeader = false;
 	private long waitingWriteStreamPos = -1;
 	private long waitingFetchStreamPos = 0;
 	private Buffer uploadBuffer = new Buffer(0);
@@ -75,9 +76,16 @@ public class ProxySession
 		this.localHTTPChannel = localChannel;
 	}
 
+	public ProxySessionStatus getStatus()
+	{
+		return status;
+	}
+
 	private HTTPRequestEvent cloneHeaders(HTTPRequestEvent event)
 	{
 		HTTPRequestEvent newEvent = new HTTPRequestEvent();
+		newEvent.method = event.method;
+		newEvent.url = event.url;
 		newEvent.headers = new ArrayList<KeyValuePair<String, String>>();
 		newEvent.headers.addAll(event.getHeaders());
 		return newEvent;
@@ -102,7 +110,8 @@ public class ProxySession
 		return connectionManager.getClientConnection(event);
 	}
 
-	private synchronized boolean rangeFetch(RangeHeaderValue originRange, long limitSize, int wokerNum)
+	private boolean rangeFetch(RangeHeaderValue originRange,
+	        long limitSize, int wokerNum)
 	{
 		int fetchSizeLimit = GAEClientConfiguration.getInstance()
 		        .getFetchLimitSize();
@@ -126,16 +135,18 @@ public class ProxySession
 			{
 				break;
 			}
-			long end = start + fetchSizeLimit;
+			long end = start + fetchSizeLimit - 1;
 			if (end > limit)
 			{
 				end = limit;
 			}
 			start = end + 1;
 			RangeHeaderValue headerValue = new RangeHeaderValue(begin, end);
-			HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
+			final HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
+			newEvent.setAttachment(proxyEvent.getAttachment());
 			newEvent.setHeader(HttpHeaders.Names.RANGE, headerValue.toString());
 			getConcurrentClientConnection(newEvent).send(newEvent);
+			
 			if (-1 == waitingWriteStreamPos)
 			{
 				waitingWriteStreamPos = begin;
@@ -151,14 +162,23 @@ public class ProxySession
 		return true;
 	}
 
-	private void handleMultiRangeFetchResponse(HTTPResponseEvent ev)
+	private synchronized void handleMultiRangeFetchResponse(HTTPResponseEvent ev)
 	{
 		String contentRangeValue = ev
 		        .getHeader(HttpHeaders.Names.CONTENT_RANGE);
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("Handle MultiRangeFetchResponse:" + ev.toString());
+		}
+		if (null == contentRangeValue)
+		{
+			return;
+		}
 		ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
 		        contentRangeValue);
 		String rangeValue = proxyEvent.getHeader(HttpHeaders.Names.RANGE);
-		RangeHeaderValue range = new RangeHeaderValue(rangeValue);
+		RangeHeaderValue range = isOriginalContainsRangeHeader ? new RangeHeaderValue(
+		        rangeValue) : null;
 		rangeFetchContents.put(contentRange.getFirstBytePos(), ev.content);
 		while (rangeFetchContents.containsKey(waitingWriteStreamPos))
 		{
@@ -166,8 +186,18 @@ public class ProxySession
 			ChannelBuffer buf = ChannelBuffers.wrappedBuffer(
 			        content.getRawBuffer(), content.getReadIndex(),
 			        content.readableBytes());
+			if (logger.isDebugEnabled())
+			{
+				logger.debug("Write content-range content with stream pos:" + waitingWriteStreamPos);
+			}
+
 			localHTTPChannel.write(buf);
 			waitingWriteStreamPos = contentRange.getLastBytePos() + 1;
+		}
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("After writing conten-range contents, waitingWriteStreamPos = "
+			        + waitingWriteStreamPos);
 		}
 		rangeFetch(range, contentRange.getInstanceLength(), 1);
 	}
@@ -179,6 +209,7 @@ public class ProxySession
 			return new DefaultHttpResponse(HttpVersion.HTTP_1_1,
 			        HttpResponseStatus.REQUEST_TIMEOUT);
 		}
+
 		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
 		        HttpResponseStatus.valueOf(ev.statusCode));
 
@@ -208,7 +239,7 @@ public class ProxySession
 		{
 			ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
 			        contentRangeValue);
-			if (!proxyEvent.containsHeader(HttpHeaders.Names.RANGE))
+			if (!isOriginalContainsRangeHeader)
 			{
 				response.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 				response.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
@@ -272,7 +303,7 @@ public class ProxySession
 			String rangeHeaderValue = proxyEvent
 			        .getHeader(HttpHeaders.Names.RANGE);
 			RangeHeaderValue range = null;
-			if (rangeHeaderValue != null)
+			if (isOriginalContainsRangeHeader)
 			{
 				range = new RangeHeaderValue(rangeHeaderValue);
 				if (range.getLastBytePos() >= contentRange.getLastBytePos())
@@ -369,6 +400,10 @@ public class ProxySession
 				close();
 			}
 		}
+		if (status.equals(ProxySessionStatus.SESSION_COMPLETED))
+		{
+			close();
+		}
 	}
 
 	private void handleConnect(HTTPRequestEvent event)
@@ -443,6 +478,8 @@ public class ProxySession
 		event.url = urlbuffer.toString();
 
 		proxyEvent = event;
+		isOriginalContainsRangeHeader = proxyEvent
+		        .containsHeader(HttpHeaders.Names.RANGE);
 		int fetchSizeLimit = GAEClientConfiguration.getInstance()
 		        .getFetchLimitSize();
 		if (proxyEvent.getContentLength() > GAEConstants.APPENGINE_HTTP_BODY_LIMIT)

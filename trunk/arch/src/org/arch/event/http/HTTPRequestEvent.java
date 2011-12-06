@@ -18,6 +18,8 @@ public class HTTPRequestEvent extends HTTPMessageEvent
 {
 	public String url;
 	public String method;
+	
+	public HTTPRequestEvent(){}
 	@Override
     protected boolean doDecode(Buffer buffer)
     {

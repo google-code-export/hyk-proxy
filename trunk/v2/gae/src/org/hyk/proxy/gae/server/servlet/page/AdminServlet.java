@@ -38,7 +38,7 @@ public class AdminServlet extends HttpServlet
 		{
 			int len = is.read(buffer);
 			INDEX_PAGE = new String(buffer, 0, len);
-			// INDEX_PAGE = String.format(format, Version.value, Version.value);
+			is.close();
 		}
 		catch(IOException e)
 		{

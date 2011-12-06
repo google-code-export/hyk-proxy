@@ -122,7 +122,8 @@ public class ServerConfigurationService
                 }
                 catch (EntityNotFoundException e)
                 {
-                	saveServerConfig(new GAEServerConfiguration());    	
+                	saveServerConfig(new GAEServerConfiguration());    
+                	cfg = getServerConfig();
                 }
 			}
 			
@@ -163,7 +164,6 @@ public class ServerConfigurationService
 		Buffer buf = new Buffer(256);
     	cfg.encode(buf);
     	asyncCache.put("ServerConfig:", buf.toArray());  
-    	Key key = KeyFactory.createKey("ServerConfig", 1);
     	Entity entity = toEntity(cfg);
     	asyncdatastore.put(entity);
 	}

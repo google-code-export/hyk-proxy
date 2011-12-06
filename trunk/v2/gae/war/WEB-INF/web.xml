@@ -17,6 +17,16 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 		<servlet-name>XmppInvoke</servlet-name>
 		<servlet-class>org.hyk.proxy.gae.server.servlet.XmppInvokeServlet</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>BackendStart</servlet-name>
+		<servlet-class>org.hyk.proxy.gae.server.servlet.BackendInitServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>BackendStart</servlet-name>
+		<url-pattern>/_ah/start/</url-pattern>
+	</servlet-mapping>
+	
 	<servlet-mapping>
 		<servlet-name>XmppInvoke</servlet-name>
 		<url-pattern>/_ah/xmpp/message/chat/</url-pattern>

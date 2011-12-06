@@ -3,6 +3,7 @@
  */
 package org.hyk.proxy.gae.common.config;
 
+import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,18 +47,18 @@ public class GAEServerConfiguration implements CodecObject
 	private EncryptType encrypter = EncryptType.SE1;
 
 	private Set<String> compressFilter = new HashSet<String>();
-	
-//	private boolean trafficStatEnable = false;
-//
-//	public boolean isTrafficStatEnable()
-//    {
-//    	return trafficStatEnable;
-//    }
-//
-//	public void setTrafficStatEnable(boolean trafficStatEnable)
-//    {
-//    	this.trafficStatEnable = trafficStatEnable;
-//    }
+
+	// private boolean trafficStatEnable = false;
+	//
+	// public boolean isTrafficStatEnable()
+	// {
+	// return trafficStatEnable;
+	// }
+	//
+	// public void setTrafficStatEnable(boolean trafficStatEnable)
+	// {
+	// this.trafficStatEnable = trafficStatEnable;
+	// }
 
 	public GAEServerConfiguration()
 	{
@@ -127,6 +128,19 @@ public class GAEServerConfiguration implements CodecObject
 	@Override
 	public boolean encode(Buffer buffer)
 	{
+		BufferHelper.writeVarInt(buffer, fetchRetryCount);
+		BufferHelper.writeVarInt(buffer, maxXMPPDataPackageSize);
+		BufferHelper.writeVarInt(buffer, rangeFetchLimit);
+		BufferHelper.writeVarInt(buffer, compressor.getValue());
+		BufferHelper.writeVarInt(buffer, encrypter.getValue());
+		BufferHelper.writeSet(buffer, compressFilter);
+
+		return true;
+	}
+
+	@Override
+	public boolean decode(Buffer buffer)
+	{
 		try
 		{
 			fetchRetryCount = BufferHelper.readVarInt(buffer);
@@ -141,19 +155,29 @@ public class GAEServerConfiguration implements CodecObject
 		{
 			return false;
 		}
-
 		return true;
 	}
 
-	@Override
-	public boolean decode(Buffer buffer)
+	public void print(PrintStream ps)
 	{
-		BufferHelper.writeVarInt(buffer, fetchRetryCount);
-		BufferHelper.writeVarInt(buffer, maxXMPPDataPackageSize);
-		BufferHelper.writeVarInt(buffer, rangeFetchLimit);
-		BufferHelper.writeVarInt(buffer, compressor.getValue());
-		BufferHelper.writeVarInt(buffer, encrypter.getValue());
-		BufferHelper.writeSet(buffer, compressFilter);
-		return true;
+		String colu1 = "FetchRetryCount";
+		String colu2 = "MaxXMPPDataPackageSize";
+		String colu3 = "RangeFetchLimit";
+		String colu4 = "Compressor";
+		String colu5 = "Encrypter";
+		String colu6 = "CompressFilter";
+		final String formater = "%" + colu1.length() + "s %" + colu2.length()
+		        + "s %" + colu3.length() + "s %" + colu4.length() + "s %"
+		        + colu5.length() + "s %" + colu6.length() + "s";
+		String header = String.format(formater, "FetchRetryCount",
+		        "MaxXMPPDataPackageSize", "RangeFetchLimit", "Compressor",
+		        "Encrypter", "CompressFilter");
+		ps.println(header);
+		String output = String.format(formater, "" + fetchRetryCount, ""
+		        + maxXMPPDataPackageSize, "" + rangeFetchLimit,
+		        compressor.toString(), encrypter.toString(),
+		        getCompressFilter().toString());
+		ps.println(output);
 	}
+
 }

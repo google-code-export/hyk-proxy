@@ -76,7 +76,8 @@ public class HTTPProxyConnection extends ProxyConnection
 	public HTTPProxyConnection(GAEServerAuth auth)
 	{
 		super(auth);
-		remoteAddress = new HttpServerAddress(auth.appid + ".appspot.com",
+		String appid = auth.backendEnable?(GAEConstants.BACKEND_INSTANCE_NAME + "." +auth.appid):auth.appid;
+		remoteAddress = new HttpServerAddress(appid + ".appspot.com",
 		        GAEConstants.HTTP_INVOKE_PATH, GAEClientConfiguration
 		                .getInstance().getConnectionModeType()
 		                .equals(ConnectionMode.HTTPS));
@@ -94,7 +95,7 @@ public class HTTPProxyConnection extends ProxyConnection
 		return GAEConstants.APPENGINE_HTTP_BODY_LIMIT;
 	}
 
-	protected SocketChannel getHTTPClientChannel()
+	protected synchronized SocketChannel getHTTPClientChannel()
 	{
 		if (null == clientChannel || !clientChannel.isConnected())
 		{
@@ -107,7 +108,7 @@ public class HTTPProxyConnection extends ProxyConnection
 		return clientChannel;
 	}
 
-	private synchronized SocketChannel connectProxyServer(
+	private  SocketChannel connectProxyServer(
 	        HttpServerAddress address)
 	{
 		ChannelPipeline pipeline = Channels.pipeline();
@@ -382,10 +383,6 @@ public class HTTPProxyConnection extends ProxyConnection
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 		        throws Exception
 		{
-			if (logger.isDebugEnabled())
-			{
-				logger.debug("messageReceived.");
-			}
 			waitingResponse = false;
 			if (!readingChunks)
 			{

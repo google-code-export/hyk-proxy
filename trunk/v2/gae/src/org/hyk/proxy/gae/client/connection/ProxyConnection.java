@@ -20,6 +20,7 @@ import org.hyk.proxy.gae.client.config.GAEClientConfiguration;
 import org.hyk.proxy.gae.client.config.GAEClientConfiguration.GAEServerAuth;
 import org.hyk.proxy.gae.client.handler.ProxySession;
 import org.hyk.proxy.gae.client.handler.ProxySessionManager;
+import org.hyk.proxy.gae.client.handler.ProxySessionStatus;
 import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EncryptType;
 import org.hyk.proxy.gae.common.EventHeaderTags;
@@ -71,7 +72,9 @@ public abstract class ProxyConnection
 		{
 			ProxySession session = ProxySessionManager.getInstance()
 			        .getProxySession(sessionID);
-			if (null != session)
+			if (null != session
+			        && session.getStatus().equals(
+			                ProxySessionStatus.WAITING_NORMAL_RESPONSE))
 			{
 				session.close();
 			}
@@ -163,12 +166,12 @@ public abstract class ProxyConnection
 		{
 			if (event instanceof HTTPRequestEvent)
 			{
-				logger.debug("Send out session[" + attach.second
+				logger.debug("Connection:" + this.hashCode() + " send out session[" + attach.second
 				        + "] HTTP request:");
 				logger.debug(event.toString());
 			}
 		}
-		if(null == attach)
+		if (null == attach)
 		{
 			attach = new Pair<Channel, Integer>(null, -1);
 		}
@@ -251,7 +254,7 @@ public abstract class ProxyConnection
 				// just let
 				if (logger.isDebugEnabled())
 				{
-					logger.debug("Received HTTP response:");
+					logger.debug("Proxy connection received HTTP response:");
 					logger.debug(ev.toString());
 				}
 				break;
@@ -275,7 +278,7 @@ public abstract class ProxyConnection
 		if (null != session)
 		{
 			session.handleResponse(ev);
-			session.close();
+			// session.close();
 		}
 		else
 		{
@@ -290,7 +293,8 @@ public abstract class ProxyConnection
 			}
 			else
 			{
-				logger.error("Failed o find session or handle to handle received response event.");
+				logger.error("Failed o find session or handle to handle received session["
+				        + ev.getHash() + "] response event.");
 			}
 		}
 	}
