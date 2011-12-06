@@ -1,0 +1,76 @@
+
+##Third proxy client
+$TOR="127.0.0.1:9050";
+$PUFF="127.0.0.1:1984";
+$APJP="127.0.0.1:10000";
+$SSHD="socks5:127.0.0.1:7070";
+
+##Reserved proxy implementation
+$GAE="GAE";
+$DIRECT="DIRECT";
+$SEATTLE="SeattleGENI";
+$PHP="PHPTunnel";
+
+#defined selected proxy
+$SELECTED1=$GAE;
+$SELECTED2=$SEATTLE;
+$SELECTED3=$PHP;
+
+def onInit()
+{
+  ##Do your business
+}
+
+def onRoutine()
+{
+   #Do your routine business here
+   #eg: $output=system("./mysh.sh");
+   #    log($output);
+   #Tell the script engine to invoke this method 10s later
+   return 10;
+}
+
+def firstSelectProxy(protocol, method, url, headers)
+{
+     #Set your https proxy here
+     if $protocol=="https"
+     { 
+        return $SELECTED1;
+     }
+     ##Google's limit for request body size 10m
+     $contentLength = int(getHeader($headers, "Content-Length"));
+     if $contentLength > 10240000
+     {
+         return $SELECTED2;
+     }
+     
+     ##Only "GET/POST/PUT/DELETE/HEAD" supported in GAE
+     if $method != "GET" && $method != "POST" 
+        && $method != "PUT" && $method != "DELETE"
+        && $method != "HEAD"
+     {
+        return $SELECTED2;
+     }
+     
+     ##Request with body not allowed in GAE if it's not POST/PUT
+     if $contentLength > 0
+     {
+        if $method != "POST" && $method != "PUT" 
+        {
+           return $SELECTED2;
+        }
+     }
+     
+     return $SELECTED1;
+}
+
+def reselectProxyWhenFailed(errorRes, proxy)
+{
+   $rescode = getResponseCode($errorRes);
+   $contentLength = int(getHeader($errorRes, "Content-Length"));
+   if $proxy == $GAE && $contentLength == 0
+   {
+       return $SELECTED2;
+   }
+   return null;
+}
