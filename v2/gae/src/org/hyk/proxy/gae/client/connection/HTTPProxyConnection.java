@@ -388,7 +388,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			{
 				HttpResponse response = (HttpResponse) e.getMessage();
 
-				// workaround solution for netty 3.1.5
+				// workaround solution for netty
 				if (casSSLProxyConnectionStatus(WAITING_CONNECT_RESPONSE,
 				        CONNECT_RESPONSED))
 				{
@@ -421,6 +421,8 @@ public class HTTPProxyConnection extends ProxyConnection
 				else
 				{
 					waitingResponse = false;
+					logger.error("Received error response:" + response);
+					closeRelevantSessions(response);
 				}
 			}
 			else

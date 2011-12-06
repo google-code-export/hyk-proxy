@@ -397,12 +397,12 @@ public class ProxySession
 			if (error.errno == GAEConstants.FETCH_FAILED)
 			{
 				// retryRangeFetch();
-				close();
+				close(null);
 			}
 		}
 		if (status.equals(ProxySessionStatus.SESSION_COMPLETED))
 		{
-			close();
+			close(null);
 		}
 	}
 
@@ -574,7 +574,7 @@ public class ProxySession
 		}
 	}
 
-	public void close()
+	public void close(HttpResponse res)
 	{
 		waitingWriteStreamPos = -1;
 		// rangeUploadingEnable = false;
@@ -587,10 +587,15 @@ public class ProxySession
 			{
 				if (null != localHTTPChannel)
 				{
-					localHTTPChannel.write(new DefaultHttpResponse(
-					        HttpVersion.HTTP_1_1,
-					        HttpResponseStatus.REQUEST_TIMEOUT));
-					logger.error("Send fake 408 to browser since session closed while no response sent.");
+					if(null== res)
+					{
+						res = new DefaultHttpResponse(
+						        HttpVersion.HTTP_1_1,
+						        HttpResponseStatus.REQUEST_TIMEOUT);
+						logger.error("Send fake 408 to browser since session closed while no response sent.");
+					}
+					localHTTPChannel.write(res);
+					
 				}
 				break;
 			}
