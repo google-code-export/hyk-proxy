@@ -31,6 +31,7 @@ import org.hyk.proxy.gae.common.event.AuthResponseEvent;
 import org.hyk.proxy.gae.common.event.CompressEvent;
 import org.hyk.proxy.gae.common.event.EncryptEvent;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public abstract class ProxyConnection
 
 	public abstract boolean isReady();
 
-	private void closeRelevantSessions()
+	protected void closeRelevantSessions(HttpResponse res)
 	{
 		for (Integer sessionID : relevantSessions)
 		{
@@ -76,7 +77,7 @@ public abstract class ProxyConnection
 			        && session.getStatus().equals(
 			                ProxySessionStatus.WAITING_NORMAL_RESPONSE))
 			{
-				session.close();
+				session.close(res);
 			}
 		}
 		relevantSessions.clear();
@@ -85,7 +86,7 @@ public abstract class ProxyConnection
 	public void close()
 	{
 		doClose();
-		closeRelevantSessions();
+		closeRelevantSessions(null);
 	}
 
 	public boolean auth()
@@ -209,7 +210,7 @@ public abstract class ProxyConnection
 	{
 		if (null == ev)
 		{
-			closeRelevantSessions();
+			close();
 			return;
 		}
 
