@@ -66,7 +66,7 @@ public class ProxySessionManager
 		{
 			if(event.status == HTTPConnectionEvent.CLOSED)
 			{
-				session.close();
+				session.close(null);
 			}
 		}
 		return session;

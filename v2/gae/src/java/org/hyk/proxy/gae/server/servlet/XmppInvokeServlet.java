@@ -64,7 +64,7 @@ public class XmppInvokeServlet extends HttpServlet
 					                        buf.readableBytes(), false))
 					        .build();
 					{
-						int retry = 2;
+						int retry = ServerConfigurationService.getServerConfig().getFetchRetryCount();
 						while (SendResponse.Status.SUCCESS != xmpp
 						        .sendMessage(msg).getStatusMap().get(jid)
 						        && retry-- > 0)
