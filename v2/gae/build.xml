@@ -106,7 +106,7 @@
 		<copy todir="${releaseserverdir}">
 			<fileset dir="${deploy}" />
 		</copy>
-		<zip destfile="${project_name}-server-${version}.zip" basedir="${releasedir}" />
+		<zip destfile="${project_name}-java-server-${version}.zip" basedir="${releasedir}" />
 		<delete dir="${releaseserverdir}" />
 	</target>
 

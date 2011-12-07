@@ -43,6 +43,10 @@ public class GAEEvents
 			        handler);
 			EventDispatcher.getSingletonInstance().register(
 			        ServerConfigEvent.class, handler);
+			EventDispatcher.getSingletonInstance().register(
+			        RequestSharedAppIDResultEvent.class, handler);
+			EventDispatcher.getSingletonInstance().register(
+			        RequestSharedAppIDEvent.class, handler);
 			if (isServer)
 			{
 				EventDispatcher.getSingletonInstance().register(

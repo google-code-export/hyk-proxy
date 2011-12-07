@@ -3,7 +3,7 @@ package event
 import (
 	"bytes"
 	"encoding/binary"
-	"varint"
+	"codec"
 	"snappy"
 	"se1"
 	vector "container/vector"
@@ -27,50 +27,13 @@ const (
 	USER_LIST_RESPONSE_EVENT_TYPE   = 2014
 	GROUOP_LIST_RESPONSE_EVENT_TYPE = 2015
 	BLACKLIST_OPERATION_EVENT_TYPE  = 2016
+	REQUEST_SHARED_APPID_EVENT_TYPE = 2017
+	REQUEST_SHARED_APPID_RESULT_EVENT_TYPE = 2018
 	ADMIN_RESPONSE_EVENT_TYPE       = 2020
 	SERVER_CONFIG_EVENT_TYPE        = 2050
 )
 
-func WriteString(buffer *bytes.Buffer, str string) {
-	varint.WriteUvarint(buffer, uint64(len(str)))
-	buffer.WriteString(str)
-}
-func WriteVarBytes(buffer *bytes.Buffer, str []byte) {
-	varint.WriteUvarint(buffer, uint64(len(str)))
-	buffer.Write(str)
-}
-func ReadString(buffer *bytes.Buffer) (line string, ok bool) {
-	length, err := varint.ReadUvarint(buffer)
-	if err != nil {
-		ok = false
-		return
-	}
-	buf := make([]byte, length)
-	realLen, err := buffer.Read(buf)
-	if err != nil || uint64(realLen) < length {
-		ok = false
-		return
-	}
-	line = string(buf)
-	ok = true
-	return
-}
-func ReadVarBytes(buffer *bytes.Buffer) (line []byte, ok bool) {
-	length, err := varint.ReadUvarint(buffer)
-	if err != nil {
-		ok = false
-		return
-	}
-	buf := make([]byte, length)
-	realLen, err := buffer.Read(buf)
-	if err != nil || uint64(realLen) < length {
-		ok = false
-		return
-	}
-	line = buf
-	ok = true
-	return
-}
+
 
 const (
 	MAGIC_NUMBER uint16 = 0xCAFE
@@ -85,7 +48,7 @@ func (tags *EventHeaderTags) Encode(buffer *bytes.Buffer) bool {
 	b := make([]byte, 2)
 	binary.BigEndian.PutUint16(b, MAGIC_NUMBER)
 	buffer.Write(b)
-	WriteString(buffer, tags.token)
+	codec.WriteVarString(buffer, tags.token)
 	return true
 }
 func (tags *EventHeaderTags) Decode(buffer *bytes.Buffer) bool {
@@ -98,7 +61,7 @@ func (tags *EventHeaderTags) Decode(buffer *bytes.Buffer) bool {
 	if tags.magic != MAGIC_NUMBER {
 		return false
 	}
-	token, ok := ReadString(buffer)
+	token, ok := codec.ReadVarString(buffer)
 	tags.token = token
 	return ok
 }
@@ -117,15 +80,15 @@ type EventHeader struct {
 }
 
 func (header *EventHeader) Encode(buffer *bytes.Buffer) bool {
-	varint.WriteUvarint(buffer, uint64(header.Type))
-	varint.WriteUvarint(buffer, uint64(header.Version))
-	varint.WriteUvarint(buffer, uint64(header.Hash))
+	codec.WriteUvarint(buffer, uint64(header.Type))
+	codec.WriteUvarint(buffer, uint64(header.Version))
+	codec.WriteUvarint(buffer, uint64(header.Hash))
 	return true
 }
 func (header *EventHeader) Decode(buffer *bytes.Buffer) bool {
-	tmp1, err1 := varint.ReadUvarint(buffer)
-	tmp2, err2 := varint.ReadUvarint(buffer)
-	tmp3, err3 := varint.ReadUvarint(buffer)
+	tmp1, err1 := codec.ReadUvarint(buffer)
+	tmp2, err2 := codec.ReadUvarint(buffer)
+	tmp3, err3 := codec.ReadUvarint(buffer)
 	if err1 != nil || err2 != nil || err3 != nil {
 		return false
 	}
@@ -140,36 +103,36 @@ type HTTPMessageEvent struct {
 
 func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
 	var slen int = msg.headers.Len()
-	varint.WriteUvarint(buffer, uint64(slen))
+	codec.WriteUvarint(buffer, uint64(slen))
 	for i := 0; i < slen; i++ {
 		header, ok := msg.headers.At(i).([]string)
 		if ok {
-			WriteString(buffer, header[0])
-			WriteString(buffer, header[1])
+			codec.WriteString(buffer, header[0])
+			codec.WriteString(buffer, header[1])
 		}
 	}
 	b := msg.content.Bytes()
-	WriteVarBytes(buffer, b)
+	codec.WriteVarBytes(buffer, b)
 	return true
 }
 
 func (msg *HTTPMessageEvent) DoDecode(buffer *bytes.Buffer) bool {
-	length, err := varint.ReadUvarint(buffer)
+	length, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
 	for i := 0; i < int(length); i++ {
-		headerName, ok := ReadString(buffer)
+		headerName, ok := codec.ReadVarString(buffer)
 		if !ok {
 			return false
 		}
-		headerValue, ok := ReadString(buffer)
+		headerValue, ok := codec.ReadVarString(buffer)
 		if !ok {
 			return false
 		}
 		msg.headers.Push([]string{headerName, headerValue})
 	}
-	b, ok := ReadVarBytes(buffer)
+	b, ok := codec.ReadVarBytes(buffer)
 	if !ok {
 		return false
 	}
@@ -184,18 +147,18 @@ type HTTPRequestEvent struct {
 }
 
 func (req *HTTPRequestEvent) Encode(buffer *bytes.Buffer) bool {
-	WriteString(buffer, req.Method)
-	WriteString(buffer, req.Url)
+	codec.WriteVarString(buffer, req.Method)
+	codec.WriteVarString(buffer, req.Url)
 	req.Base.DoEncode(buffer)
 	return true
 }
 func (req *HTTPRequestEvent) Decode(buffer *bytes.Buffer) bool {
 	var ok bool
-	req.Method, ok = ReadString(buffer)
+	req.Method, ok = codec.ReadVarString(buffer)
 	if !ok {
 		return false
 	}
-	req.Url, ok = ReadString(buffer)
+	req.Url, ok = codec.ReadVarString(buffer)
 	if !ok {
 		return false
 	}
@@ -218,12 +181,12 @@ type HTTPResponseEvent struct {
 }
 
 func (res *HTTPResponseEvent) Encode(buffer *bytes.Buffer) bool {
-	varint.WriteUvarint(buffer, uint64(res.Status))
+	codec.WriteUvarint(buffer, uint64(res.Status))
 	res.Base.DoEncode(buffer)
 	return true
 }
 func (res *HTTPResponseEvent) Decode(buffer *bytes.Buffer) bool {
-	tmp, err := varint.ReadUvarint(buffer)
+	tmp, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
@@ -249,23 +212,23 @@ type SegmentEvent struct {
 }
 
 func (seg *SegmentEvent) Encode(buffer *bytes.Buffer) bool {
-	varint.WriteUvarint(buffer, uint64(seg.sequence))
-	varint.WriteUvarint(buffer, uint64(seg.total))
+	codec.WriteUvarint(buffer, uint64(seg.sequence))
+	codec.WriteUvarint(buffer, uint64(seg.total))
 	buffer.Write(seg.content.Bytes())
 	return true
 }
 func (seg *SegmentEvent) Decode(buffer *bytes.Buffer) bool {
-	tmp, err := varint.ReadUvarint(buffer)
+	tmp, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
 	seg.sequence = uint32(tmp)
-	tmp, err := varint.ReadUvarint(buffer)
+	tmp, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
 	seg.total = uint32(tmp)
-	length, err := varint.ReadUvarint(buffer)
+	length, err := codec.ReadUvarint(buffer)
 	buf := make([]byte, length)
 	realLen, err := buffer.Read(buf)
 	if err != nil || uint64(realLen) < length {
@@ -299,7 +262,7 @@ func (ev *CompressEvent) Encode(buffer *bytes.Buffer) bool {
 	if ev.CompressType != C_NONE && ev.CompressType != C_SNAPPY {
 		ev.CompressType = C_NONE
 	}
-	varint.WriteUvarint(buffer, uint64(ev.CompressType))
+	codec.WriteUvarint(buffer, uint64(ev.CompressType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
 	ev.ev.Encode(&buf)
@@ -318,7 +281,7 @@ func (ev *CompressEvent) Encode(buffer *bytes.Buffer) bool {
 	return true
 }
 func (ev *CompressEvent) Decode(buffer *bytes.Buffer) bool {
-	tmp, err := varint.ReadUvarint(buffer)
+	tmp, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
@@ -361,8 +324,7 @@ type EncryptEvent struct {
 }
 
 func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
-
-	varint.WriteUvarint(buffer, uint64(ev.EncryptType))
+	codec.WriteUvarint(buffer, uint64(ev.EncryptType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
 	ev.ev.Encode(&buf)
@@ -380,7 +342,7 @@ func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 	return true
 }
 func (ev *EncryptEvent) Decode(buffer *bytes.Buffer) bool {
-	tmp, err := varint.ReadUvarint(buffer)
+	tmp, err := codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
