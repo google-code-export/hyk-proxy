@@ -5,8 +5,7 @@
 
 	<property name='warlib' value='${root}/war/WEB-INF/lib' />
 	<property name='serverclass' value='${root}/war/WEB-INF/classes' />
-	<property name="srcroot" value="${root}/src" />
-	<property name="3rdsrc" value="${root}/3rd" />
+	<property name="srcroot" value="${root}/src/java" />
 	<property name="releasedir" value="${root}/release" />
 	<property name="clientclasses" value="${root}/build" />
 	<property name="clientjar" value="gae-client.jar" />
