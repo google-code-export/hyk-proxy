@@ -37,6 +37,8 @@ public interface GAEConstants
 	public static final int USER_LIST_RESPONSE_EVENT_TYPE = 2014;
 	public static final int GROUOP_LIST_RESPONSE_EVENT_TYPE = 2015;
 	public static final int BLACKLIST_OPERATION_EVENT_TYPE = 2016;
+	public static final int REQUEST_SHARED_APPID_EVENT_TYPE = 2017;
+	public static final int REQUEST_SHARED_APPID_RESULT_EVENT_TYPE = 2018;
 	public static final int ADMIN_RESPONSE_EVENT_TYPE = 2020;
 	public static final int SERVER_CONFIG_EVENT_TYPE = 2050;
 	
