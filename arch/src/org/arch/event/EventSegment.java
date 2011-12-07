@@ -3,6 +3,8 @@
  */
 package org.arch.event;
 
+import java.io.IOException;
+
 import org.arch.buffer.Buffer;
 import org.arch.buffer.BufferHelper;
 
@@ -21,7 +23,23 @@ public class EventSegment extends Event implements Comparable<EventSegment>
 	@Override
     public boolean onDecode(Buffer buffer)
     {
-	    // TODO Auto-generated method stub
+		try
+        {
+	        sequence = BufferHelper.readVarInt(buffer);
+	        total = BufferHelper.readVarInt(buffer);
+	        int len = BufferHelper.readVarInt(buffer);
+	        byte[] b = new byte[len];
+	        int k = buffer.read(b);
+	        if(k != len)
+	        {
+	        	return false;
+	        }
+	        content = Buffer.wrapReadableContent(b);
+        }
+        catch (IOException e)
+        {
+	        return false;
+        }
 	    return false;
     }
 
