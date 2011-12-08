@@ -123,7 +123,6 @@ public class FetchServiceHandler
 		{
 			errorResponse.statusCode = 408;
 			fillErrorResponse(errorResponse, "Fetch timeout for url:" + req.url);
-			System.out.println("############@@@@@@@@Timeout for url" + req.url);
 			ret = errorResponse;
 		}
 		return ret;

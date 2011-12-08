@@ -16,6 +16,7 @@ import org.arch.buffer.Buffer;
 import org.arch.event.Event;
 import org.hyk.proxy.gae.common.CompressorType;
 import org.hyk.proxy.gae.common.EncryptType;
+import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.config.GAEServerConfiguration;
 import org.hyk.proxy.gae.common.event.AdminResponseEvent;
 import org.hyk.proxy.gae.common.event.ServerConfigEvent;
@@ -131,8 +132,13 @@ public class ServerConfigurationService
 		return cfg;
 	}
 	
-	public static Event handleServerConfig(ServerConfigEvent event)
+	public static Event handleServerConfig(EventHeaderTags tags,ServerConfigEvent event)
 	{
+		if(!UserManagementService.isRootUser(tags.token))
+		{
+			return new AdminResponseEvent("", "User must be root.", -1);
+		}
+		
 		switch (event.opreration)
         {
 	        case ServerConfigEvent.GET_CONFIG_REQ:

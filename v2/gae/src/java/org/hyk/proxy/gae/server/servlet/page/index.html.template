@@ -7,7 +7,7 @@
   <body>
     <table width="800" border="0" align="center">
             <tr><td align="center">
-                <b><h1>hyk-proxy-gae %s server is running!</h1></b>
+                <b><h1>hyk-proxy-java-gae %s server is running!</h1></b>
             </td></tr>
             <tr><td align="center">
                 <a href="/admin">admin</a>

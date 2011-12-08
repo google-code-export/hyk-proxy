@@ -132,7 +132,7 @@ public class ServerEventHandler implements EventHandler
 			case GAEConstants.SERVER_CONFIG_EVENT_TYPE:
 			{
 				ServerConfigEvent ev = (ServerConfigEvent) event;
-				response = ServerConfigurationService.handleServerConfig(ev);
+				response = ServerConfigurationService.handleServerConfig(tags,ev);
 				break;
 			}
 			default:

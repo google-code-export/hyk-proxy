@@ -329,4 +329,14 @@ public class UserManagementService
 		}
 		return true;
 	}
+	
+	public static boolean isRootUser(String token)
+	{
+		User user = getUserWithToken(token);
+		if(user != null && user.getEmail().equals(GAEConstants.ROOT_NAME))
+		{
+			return true;
+		}
+		return false;
+	}
 }
