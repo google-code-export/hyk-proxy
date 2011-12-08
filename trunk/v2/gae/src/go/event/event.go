@@ -71,6 +71,32 @@ type Event interface {
 	Decode(buffer *bytes.Buffer) bool
 	GetType() uint32
 	GetVersion() uint32
+	GetHash() uint32
+	SetHash(hash uint32)
+	GetAttachement() interface{}
+	SetAttachement(interface{})
+}
+
+type Attachement struct{
+    attachment interface{}
+}
+
+func (att *Attachement) GetAttachement() interface{} {
+	return att.attachment
+}
+func (att *Attachement) SetAttachement(a interface{}) {
+	att.attachment = a
+}
+
+type HashField struct{
+    Hash uint32
+}
+
+func (field *HashField) GetHash() uint32 {
+	return field.Hash
+}
+func (field *HashField) SetHash(hash uint32) {
+	field.Hash = hash
 }
 
 type EventHeader struct {
@@ -96,22 +122,104 @@ func (header *EventHeader) Decode(buffer *bytes.Buffer) bool {
 	return true
 }
 
+func EncodeEvent(buffer *bytes.Buffer, ev Event) bool{
+    var header EventHeader{ev.GetType(), ev.GetVersion(), ev.GetHash()}
+    header.Encode(buffer)
+    return ev.Encode(buffer)
+}
+
+func DecodeEvent(buffer *bytes.Buffer) (bool, Event){
+    return ParseEvent(buffer)
+}
+
+type AuthRequestEvent struct {
+	Appid string
+	User string
+	Passwd string
+	HashField
+	Attachement
+}
+
+func (req *AuthRequestEvent) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, req.Appid)
+	codec.WriteVarString(buffer, req.User)
+	codec.WriteVarString(buffer, req.Passwd)
+	return true
+}
+func (req *AuthRequestEvent) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	req.Appid, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	req.User, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	req.Passwd, ok = codec.ReadVarString(buffer)
+	return ok
+}
+func (req *AuthRequestEvent) GetType() uint32 {
+	return AUTH_REQUEST_EVENT_TYPE
+}
+func (req *AuthRequestEvent) GetVersion() uint32 {
+	return 1
+}
+
+type AuthResponseEvent struct {
+	Appid string
+	Token string
+	Error string
+	HashField
+	Attachement
+}
+
+func (req *AuthResponseEvent) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, req.Appid)
+	codec.WriteVarString(buffer, req.Token)
+	codec.WriteVarString(buffer, req.Error)
+	return true
+}
+func (req *AuthResponseEvent) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	req.Appid, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	req.Token, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	req.Error, ok = codec.ReadVarString(buffer)
+	return ok
+}
+func (req *AuthResponseEvent) GetType() uint32 {
+	return AUTH_RESPONSE_EVENT_TYPE
+}
+func (req *AuthRequestEvent) GetVersion() uint32 {
+	return 1
+}
+
 type HTTPMessageEvent struct {
-	headers vector.Vector
-	content bytes.Buffer
+	Headers vector.Vector
+	Content bytes.Buffer
+}
+
+func  (msg *HTTPMessageEvent) SetHeader(name, value string){
+    
 }
 
 func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
-	var slen int = msg.headers.Len()
+	var slen int = msg.Headers.Len()
 	codec.WriteUvarint(buffer, uint64(slen))
 	for i := 0; i < slen; i++ {
-		header, ok := msg.headers.At(i).([]string)
+		header, ok := msg.Headers.At(i).([]string)
 		if ok {
 			codec.WriteString(buffer, header[0])
 			codec.WriteString(buffer, header[1])
 		}
 	}
-	b := msg.content.Bytes()
+	b := msg.Content.Bytes()
 	codec.WriteVarBytes(buffer, b)
 	return true
 }
@@ -130,26 +238,28 @@ func (msg *HTTPMessageEvent) DoDecode(buffer *bytes.Buffer) bool {
 		if !ok {
 			return false
 		}
-		msg.headers.Push([]string{headerName, headerValue})
+		msg.Headers.Push([]string{headerName, headerValue})
 	}
 	b, ok := codec.ReadVarBytes(buffer)
 	if !ok {
 		return false
 	}
-	msg.content.Write(b)
+	msg.Content.Write(b)
 	return true
 }
 
 type HTTPRequestEvent struct {
-	Base   HTTPMessageEvent
+	HTTPMessageEvent
 	Method string
 	Url    string
+	HashField
+	Attachement
 }
 
 func (req *HTTPRequestEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteVarString(buffer, req.Method)
 	codec.WriteVarString(buffer, req.Url)
-	req.Base.DoEncode(buffer)
+	req.DoEncode(buffer)
 	return true
 }
 func (req *HTTPRequestEvent) Decode(buffer *bytes.Buffer) bool {
@@ -162,7 +272,7 @@ func (req *HTTPRequestEvent) Decode(buffer *bytes.Buffer) bool {
 	if !ok {
 		return false
 	}
-	ok = req.Base.DoDecode(buffer)
+	ok = req.DoDecode(buffer)
 	if !ok {
 		return false
 	}
@@ -176,13 +286,15 @@ func (req *HTTPRequestEvent) GetVersion() uint32 {
 }
 
 type HTTPResponseEvent struct {
-	Base   HTTPMessageEvent
+	HTTPMessageEvent
 	Status uint32
+	HashField
+	Attachement
 }
 
 func (res *HTTPResponseEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(res.Status))
-	res.Base.DoEncode(buffer)
+	res.DoEncode(buffer)
 	return true
 }
 func (res *HTTPResponseEvent) Decode(buffer *bytes.Buffer) bool {
@@ -191,7 +303,7 @@ func (res *HTTPResponseEvent) Decode(buffer *bytes.Buffer) bool {
 		return false
 	}
 	res.Status = uint32(tmp)
-	ok := res.Base.DoDecode(buffer)
+	ok := res.DoDecode(buffer)
 	if !ok {
 		return false
 	}
@@ -209,6 +321,8 @@ type SegmentEvent struct {
 	sequence int
 	total    int
 	content  bytes.Buffer
+	HashField
+	Attachement
 }
 
 func (seg *SegmentEvent) Encode(buffer *bytes.Buffer) bool {
@@ -256,6 +370,8 @@ const (
 type CompressEvent struct {
 	CompressType uint32
 	ev           Event
+	HashField
+	Attachement
 }
 
 func (ev *CompressEvent) Encode(buffer *bytes.Buffer) bool {
@@ -265,7 +381,7 @@ func (ev *CompressEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(ev.CompressType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
-	ev.ev.Encode(&buf)
+	EncodeEvent(&buf, ev.ev)
 	switch ev.CompressType {
 	case C_NONE:
 		{
@@ -321,13 +437,15 @@ const (
 type EncryptEvent struct {
 	EncryptType uint32
 	ev           Event
+	HashField
+	Attachement
 }
 
 func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(ev.EncryptType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
-	ev.ev.Encode(&buf)
+	EncodeEvent(&buf, ev.ev)
 	switch ev.EncryptType {
 	case E_NONE:
 		{
@@ -370,6 +488,8 @@ func (ev *EncryptEvent) GetType() uint32 {
 func (ev *EncryptEvent) GetVersion() uint32 {
 	return 1
 }
+
+
 
 
 
