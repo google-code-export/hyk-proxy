@@ -2,9 +2,7 @@ package event
 
 import (
 	"bytes"
-	"encoding/binary"
 	"codec"
-	"os"
 )
 
 type GAEServerConfig struct {
@@ -17,13 +15,13 @@ type GAEServerConfig struct {
 }
 
 func (cfg *GAEServerConfig) Encode(buffer *bytes.Buffer) bool {
-	codec.WriteUvarint(buffer, cfg.RetryFetchCount)
-	codec.WriteUvarint(buffer, cfg.MaxXMPPDataPackageSize)
-	codec.WriteUvarint(buffer, cfg.RangeFetchLimit)
-	codec.WriteUvarint(buffer, cfg.CompressType)
-	codec.WriteUvarint(buffer, cfg.EncryptType)
-	codec.WriteUvarint(buffer, len(cfg.CompressFilter))
-	for key = range cfg.CompressFilter {
+	codec.WriteUvarint(buffer, uint64(cfg.RetryFetchCount))
+	codec.WriteUvarint(buffer, uint64(cfg.MaxXMPPDataPackageSize))
+	codec.WriteUvarint(buffer, uint64(cfg.RangeFetchLimit))
+	codec.WriteUvarint(buffer, uint64(cfg.CompressType))
+	codec.WriteUvarint(buffer, uint64(cfg.EncryptType))
+	codec.WriteUvarint(buffer, uint64(len(cfg.CompressFilter)))
+	for key := range cfg.CompressFilter {
 		codec.WriteVarString(buffer, key)
 	}
 	return true
@@ -65,8 +63,44 @@ type User struct {
 }
 
 func (cfg *User) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, cfg.Email)
+	codec.WriteVarString(buffer, cfg.Passwd)
+	codec.WriteVarString(buffer, cfg.Group)
+	codec.WriteVarString(buffer, cfg.AuthToken)
+	codec.WriteUvarint(buffer, uint64(len(cfg.BlackList)))
+	for key := range cfg.BlackList {
+		codec.WriteVarString(buffer, key)
+	}
+	return true
 }
 func (cfg *User) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	if cfg.Email, ok = codec.ReadVarString(buffer); !ok {
+		return false
+	}
+	if cfg.Passwd, ok = codec.ReadVarString(buffer); !ok {
+		return false
+	}
+	if cfg.Group, ok = codec.ReadVarString(buffer); !ok {
+		return false
+	}
+	if cfg.AuthToken, ok = codec.ReadVarString(buffer); !ok {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	blacklist := make(map[string]string)
+	for i := 0; i < int(tmp); i++ {
+		line, success := codec.ReadVarString(buffer)
+		if !success {
+			return false
+		}
+		blacklist[line] = line
+	}
+	cfg.BlackList = blacklist
+	return true
 }
 
 type Group struct {
@@ -75,6 +109,30 @@ type Group struct {
 }
 
 func (cfg *Group) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, cfg.Name)
+	codec.WriteUvarint(buffer, uint64(len(cfg.BlackList)))
+	for key := range cfg.BlackList {
+		codec.WriteVarString(buffer, key)
+	}
+	return true
 }
 func (cfg *Group) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	if cfg.Name, ok = codec.ReadVarString(buffer); !ok {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	blacklist := make(map[string]string)
+	for i := 0; i < int(tmp); i++ {
+		line, success := codec.ReadVarString(buffer)
+		if !success {
+			return false
+		}
+		blacklist[line] = line
+	}
+	cfg.BlackList = blacklist
+	return true
 }

@@ -6,45 +6,45 @@ import (
 	"appengine/memcache"
 	"event"
 	"bytes"
-	"codec"
+	//"codec"
 	"strconv"
 	"strings"
 )
-
 
 func initServerConfig() *event.GAEServerConfig {
 	cfg := new(event.GAEServerConfig)
 	cfg.RetryFetchCount = 2
 	cfg.RangeFetchLimit = 256 * 1024
 	cfg.MaxXMPPDataPackageSize = 40960
-	cfg.CompressType = C_SNAPPY
-	cfg.EncryptType = E_SE1
+	cfg.CompressType = event.C_SNAPPY
+	cfg.EncryptType = event.E_SE1
 	cfg.CompressFilter = make(map[string]string)
+	return cfg
 }
 
 var ServerConfig = initServerConfig()
 
 func toPropertyList() datastore.PropertyList {
-	var ret = make([]datastore.PropertyList, 0, 6)
+	var ret = make(datastore.PropertyList, 0, 6)
 	ret = append(ret, datastore.Property{
 		Name:  "RetryFetchCount",
-		Value: Itoa(ServerConfig.RetryFetchCount),
+		Value: strconv.Itoa64(int64(ServerConfig.RetryFetchCount)),
 	})
 	ret = append(ret, datastore.Property{
 		Name:  "RangeFetchLimit",
-		Value: Itoa(ServerConfig.RangeFetchLimit),
+		Value: strconv.Itoa64(int64(ServerConfig.RangeFetchLimit)),
 	})
 	ret = append(ret, datastore.Property{
 		Name:  "MaxXMPPDataPackageSize",
-		Value: Itoa(ServerConfig.MaxXMPPDataPackageSize),
+		Value: strconv.Itoa64(int64(ServerConfig.MaxXMPPDataPackageSize)),
 	})
 	ret = append(ret, datastore.Property{
 		Name:  "CompressType",
-		Value: Itoa(ServerConfig.CompressType),
+		Value: strconv.Itoa64(int64(ServerConfig.CompressType)),
 	})
 	ret = append(ret, datastore.Property{
 		Name:  "EncryptType",
-		Value: Itoa(ServerConfig.EncryptType),
+		Value: strconv.Itoa64(int64(ServerConfig.EncryptType)),
 	})
 	var tmp string
 	for key, _ := range ServerConfig.CompressFilter {
@@ -59,22 +59,27 @@ func toPropertyList() datastore.PropertyList {
 }
 
 func fromPropertyList(item datastore.PropertyList) {
-	for v := range item {
+	for _,v := range item {
 		switch v.Name {
 		case "RetryFetchCount":
-			ServerConfig.RetryFetchCount = uint32(Atoui64(v.Value.(string)))
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.RetryFetchCount = uint32(tmp)
 		case "RangeFetchLimit":
-			ServerConfig.RangeFetchLimit = uint32(Atoui64(v.Value.(string)))
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.RangeFetchLimit= uint32(tmp)
 		case "MaxXMPPDataPackageSize":
-			ServerConfig.MaxXMPPDataPackageSize = uint32(Atoui64(v.Value.(string)))
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.MaxXMPPDataPackageSize = uint32(tmp)
 		case "CompressType":
-			ServerConfig.CompressType = uint32(Atoui64(v.Value.(string)))
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.CompressType = uint32(tmp)
 		case "EncryptType":
-			ServerConfig.EncryptType = uint32(Atoui64(v.Value.(string)))
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.EncryptType = uint32(tmp)
 		case "CompressFilter":
 			str := v.Value.(string)
-			ss := strings.Split(str)
-			for s := range ss {
+			ss := strings.Split(str, ";")
+			for _,s := range ss {
 				s = strings.TrimSpace(s)
 				if len(s) > 0 {
 					ServerConfig.CompressFilter[s] = s
@@ -85,7 +90,7 @@ func fromPropertyList(item datastore.PropertyList) {
 }
 
 func SaveServerConfig(ctx appengine.Context) {
-	key := datastore.NewKey(ctx, "ServerConfig", nil, 1, nil)
+	key := datastore.NewKey(ctx, "ServerConfig", "", 1, nil)
 	item := toPropertyList()
 	_, err := datastore.Put(ctx, key, item)
 	if err != nil {
@@ -109,7 +114,7 @@ func LoadServerConfig(ctx appengine.Context) {
 		}
 	}
 	var item datastore.PropertyList
-	key := datastore.NewKey(ctx, "ServerConfig", nil, 1, nil)
+	key := datastore.NewKey(ctx, "ServerConfig", "", 1, nil)
 	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
 		return
 	}

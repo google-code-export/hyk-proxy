@@ -1,22 +1,26 @@
 package event
 
+import (
+	"bytes"
+)
+
 type EventHandler interface {
 	OnEvent(header *EventHeader, event Event)
 }
 
 type EventRegisterValue struct {
 	creator func(Type uint32, Version uint32) Event
-	handler *EventHandler
+	handler EventHandler
 }
 
 var RegistedEventTable map[uint64]EventRegisterValue
 
-func getEventHandler(ev Event)(*EventHandler){
+func getEventHandler(ev Event)(EventHandler){
     var typeVer uint64
 	typeVer = uint64(ev.GetType())<<32 + uint64(ev.GetVersion())
 	handler, ok := RegistedEventTable[typeVer]
 	if ok {
-		return handler
+		return handler.handler
 	}
 	return nil
 }
@@ -78,7 +82,7 @@ func CreateEvent(Type uint32, Version uint32) Event {
 	return nil
 }
 
-func RegisterEventHandler(ev Event, handler *EventHandler) (ok bool, err string) {
+func RegisterEventHandler(ev Event, handler EventHandler) (ok bool, err string) {
 	if nil == ev {
 		return false, "Nil event!"
 	}
@@ -109,8 +113,8 @@ func DiaptchEvent(ev Event){
    }
 }
 
-func InitEvents(handler *EventHandler) {
-    RegisterEventHandler(new (HTTP_REQUEST_EVENT_TYPE), handler)
+func InitEvents(handler EventHandler) {
+    RegisterEventHandler(new (HTTPRequestEvent), handler)
     RegisterEventHandler(new (SegmentEvent),handler)
     RegisterEventHandler(new (EncryptEvent),handler)
     RegisterEventHandler(new (CompressEvent),handler)

@@ -4,13 +4,9 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=event
+TARG=se1
 GOFILES=\
-	event.go\
-	factory.go\
-	data.go\
-
-export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se1/_obj
+	se1.go\
 
 include $(GOROOT)/src/Make.pkg
 
