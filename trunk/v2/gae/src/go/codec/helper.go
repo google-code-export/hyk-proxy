@@ -6,15 +6,15 @@ import (
 
 
 func WriteVarString(buffer *bytes.Buffer, str string) {
-	varint.WriteUvarint(buffer, uint64(len(str)))
+	WriteUvarint(buffer, uint64(len(str)))
 	buffer.WriteString(str)
 }
 func WriteVarBytes(buffer *bytes.Buffer, str []byte) {
-	varint.WriteUvarint(buffer, uint64(len(str)))
+	WriteUvarint(buffer, uint64(len(str)))
 	buffer.Write(str)
 }
 func ReadVarString(buffer *bytes.Buffer) (line string, ok bool) {
-	length, err := varint.ReadUvarint(buffer)
+	length, err := ReadUvarint(buffer)
 	if err != nil {
 		ok = false
 		return
@@ -30,7 +30,7 @@ func ReadVarString(buffer *bytes.Buffer) (line string, ok bool) {
 	return
 }
 func ReadVarBytes(buffer *bytes.Buffer) (line []byte, ok bool) {
-	length, err := varint.ReadUvarint(buffer)
+	length, err := ReadUvarint(buffer)
 	if err != nil {
 		ok = false
 		return

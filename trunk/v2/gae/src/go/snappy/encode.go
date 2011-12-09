@@ -1,7 +1,7 @@
 package snappy
 
 import (
-	"encoding/binary"
+	//"encoding/binary"
 	"codec"
 )
 

@@ -4,13 +4,13 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=event
+TARG=service
 GOFILES=\
-	event.go\
-	factory.go\
-	data.go\
+	auth.go\
+	user.go\
+	fetch.go\
+	config.go\
 
-export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se1/_obj
-
+export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se1/_obj -I../event/_obj -I$(GOAPPENGINEROOT)/goroot/pkg/linux_amd64/
 include $(GOROOT)/src/Make.pkg
 

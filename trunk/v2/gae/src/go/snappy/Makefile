@@ -10,5 +10,6 @@ GOFILES=\
 	encode.go\
 	snappy.go\
 
+export GCIMPORTS=-I../codec/_obj
 include $(GOROOT)/src/Make.pkg
 

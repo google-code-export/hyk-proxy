@@ -7,16 +7,16 @@ import (
 	"appengine/capability"
 	"event"
 	"bytes"
-	"codec"
 	"strings"
-	"strconv"
+	//"codec"
+	//"strconv"
 )
 
 var UserTable map[string]*event.User
 var GroupTable map[string]*event.Group
 
 func User2PropertyList(user *event.User) datastore.PropertyList {
-	var ret = make([]datastore.PropertyList, 0, 6)
+	var ret = make(datastore.PropertyList, 0, 6)
 	ret = append(ret, datastore.Property{
 		Name:  "Name",
 		Value: user.Email,
@@ -46,15 +46,36 @@ func User2PropertyList(user *event.User) datastore.PropertyList {
 }
 
 func PropertyList2User(props datastore.PropertyList) *event.User {
-
-	return ret
+	user := new(event.User)
+	for _, v := range props {
+		switch v.Name {
+		case "Name":
+			user.Email = v.Value.(string)
+		case "Passwd":
+			user.Passwd = v.Value.(string)
+		case "Group":
+			user.Group = v.Value.(string)
+		case "AuthToken":
+			user.AuthToken = v.Value.(string)
+		case "BlackList":
+			str := v.Value.(string)
+			ss := strings.Split(str, ";")
+			for _, s := range ss {
+				s = strings.TrimSpace(s)
+				if len(s) > 0 {
+					user.BlackList[s] = s
+				}
+			}
+		}
+	}
+	return user
 }
 
 func Group2PropertyList(group *event.Group) datastore.PropertyList {
-	var ret = make([]datastore.PropertyList, 0, 2)
+	var ret = make(datastore.PropertyList, 0, 2)
 	ret = append(ret, datastore.Property{
 		Name:  "Name",
-		Value: group.Email,
+		Value: group.Name,
 	})
 	var tmp string = ""
 	for key, _ := range group.BlackList {
@@ -69,15 +90,30 @@ func Group2PropertyList(group *event.Group) datastore.PropertyList {
 }
 
 func PropertyList2Group(props datastore.PropertyList) *event.Group {
-
-	return ret
+	group := new(event.Group)
+	for _, v := range props {
+		switch v.Name {
+		case "Name":
+			group.Name = v.Value.(string)
+		case "BlackList":
+			str := v.Value.(string)
+			ss := strings.Split(str, ";")
+			for _, s := range ss {
+				s = strings.TrimSpace(s)
+				if len(s) > 0 {
+					group.BlackList[s] = s
+				}
+			}
+		}
+	}
+	return group
 }
 
 const USER_CACHE_KEY_PREFIX = "ProxyUser:"
 const GROUP_CACHE_KEY_PREFIX = "ProxyGroup:"
 
 func SaveUser(ctx appengine.Context, user *event.User) {
-	props = User2PropertyList(user)
+	props := User2PropertyList(user)
 	key := datastore.NewKey(ctx, "ProxyUser", user.Email, 0, nil)
 	_, err := datastore.Put(ctx, key, props)
 	if err != nil {
@@ -102,7 +138,7 @@ func SaveUser(ctx appengine.Context, user *event.User) {
 }
 
 func GetUserFromCache(ctx appengine.Context, name string) *event.User {
-	user, exist = UserTable[USER_CACHE_KEY_PREFIX+name]
+	user, exist := UserTable[USER_CACHE_KEY_PREFIX+name]
 	if exist {
 		return user
 	}
@@ -118,14 +154,14 @@ func GetUserFromCache(ctx appengine.Context, name string) *event.User {
 }
 
 func GetUserWithName(ctx appengine.Context, name string) *event.User {
-	user := GetUserFromCache(name)
+	user := GetUserFromCache(ctx, name)
 	if nil != user {
 		return user
 	}
 	var item datastore.PropertyList
 	key := datastore.NewKey(ctx, "ProxyUser", name, 0, nil)
 	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
-		return
+		return nil
 	}
 	user = PropertyList2User(item)
 	var buf bytes.Buffer
@@ -140,20 +176,21 @@ func GetUserWithName(ctx appengine.Context, name string) *event.User {
 	}
 	memcache.Set(ctx, memitem)
 	memcache.Set(ctx, memitem2)
+	return user
 }
 
 func GetUserWithToken(ctx appengine.Context, token string) *event.User {
-	user := GetUserFromCache(name)
+	user := GetUserFromCache(ctx, token)
 	if nil != user {
 		return user
 	}
 	q := datastore.NewQuery("ProxyUser").Filter("AuthToken =", token)
-	props := make(datastore.PropertyList, 0, 10)
+	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
 		//http.Error(w, err.String(), http.StatusInternalServerError)
 		return nil
 	}
-	for x := range props {
+	for _, x := range props {
 		user = PropertyList2User(x)
 		if nil != user {
 			return user
@@ -164,21 +201,21 @@ func GetUserWithToken(ctx appengine.Context, token string) *event.User {
 
 func GetAllUsers(ctx appengine.Context) []*event.User {
 	q := datastore.NewQuery("ProxyUser")
-	props := make(datastore.PropertyList, 0, 10)
+	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
 		//http.Error(w, err.String(), http.StatusInternalServerError)
 		return nil
 	}
-	users := make(*event.User, 0, len(props))
-	for x := range props {
-		user = PropertyList2User(x)
+	users := make([]*event.User, 0, len(props))
+	for _, x := range props {
+		user := PropertyList2User(x)
 		users = append(users, user)
 	}
 	return users
 }
 
 func SaveGroup(ctx appengine.Context, grp *event.Group) {
-	props = Group2PropertyList(grp)
+	props := Group2PropertyList(grp)
 	key := datastore.NewKey(ctx, "ProxyGroup", grp.Name, 0, nil)
 	_, err := datastore.Put(ctx, key, props)
 	if err != nil {
@@ -188,12 +225,12 @@ func SaveGroup(ctx appengine.Context, grp *event.Group) {
 	var buf bytes.Buffer
 	grp.Encode(&buf)
 	memitem1 := &memcache.Item{
-		Key:   GROUP_CACHE_KEY_PREFIX + group.Name,
+		Key:   GROUP_CACHE_KEY_PREFIX + grp.Name,
 		Value: buf.Bytes(),
 	}
 	// Add the item to the memcache, if the key does not already exist
 	memcache.Set(ctx, memitem1)
-	GroupTable[GROUP_CACHE_KEY_PREFIX+group.Name] = group
+	GroupTable[GROUP_CACHE_KEY_PREFIX+grp.Name] = grp
 }
 
 func GetGroup(ctx appengine.Context, name string) *event.Group {
@@ -212,7 +249,7 @@ func GetGroup(ctx appengine.Context, name string) *event.Group {
 	var item datastore.PropertyList
 	key := datastore.NewKey(ctx, "ProxyGroup", name, 0, nil)
 	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
-		return
+		return nil
 	}
 	group = PropertyList2Group(item)
 	var buf bytes.Buffer
@@ -222,18 +259,19 @@ func GetGroup(ctx appengine.Context, name string) *event.Group {
 		Value: buf.Bytes(),
 	}
 	memcache.Set(ctx, memitem)
+	return group
 }
 
 func GetAllGroups(ctx appengine.Context) []*event.Group {
 	q := datastore.NewQuery("ProxyGroup")
-	props := make(datastore.PropertyList, 0, 10)
+	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
 		//http.Error(w, err.String(), http.StatusInternalServerError)
 		return nil
 	}
-	groups := make(*event.Group, 0, len(props))
-	for x := range props {
-		group = PropertyList2Group(x)
+	groups := make([]*event.Group, 0, len(props))
+	for _, x := range props {
+		group := PropertyList2Group(x)
 		groups = append(groups, group)
 	}
 	return groups
@@ -241,26 +279,26 @@ func GetAllGroups(ctx appengine.Context) []*event.Group {
 
 func DeleteUser(ctx appengine.Context, user *event.User) {
 	key := datastore.NewKey(ctx, "ProxyUser", user.Email, 0, nil)
-	datastore.delete(ctx, key)
-	key1 := USER_CACHE_KEY_PREFIX + User.Email
-	key2 := USER_CACHE_KEY_PREFIX + User.AuthToken
+	datastore.Delete(ctx, key)
+	key1 := USER_CACHE_KEY_PREFIX + user.Email
+	key2 := USER_CACHE_KEY_PREFIX + user.AuthToken
 	UserTable[key1] = nil, false
 	UserTable[key2] = nil, false
-	memcache.Delete(key1)
-	memcache.Delete(key2)
+	memcache.Delete(ctx, key1)
+	memcache.Delete(ctx, key2)
 }
 
 func DeleteGroup(ctx appengine.Context, group *event.Group) {
 	key := datastore.NewKey(ctx, "ProxyGroup", group.Name, 0, nil)
-	datastore.delete(ctx, key)
+	datastore.Delete(ctx, key)
 	key1 := GROUP_CACHE_KEY_PREFIX + group.Name
 	GroupTable[key1] = nil, false
-	memcache.Delete(key1)
+	memcache.Delete(ctx, key1)
 }
 
 func IsRootUser(ctx appengine.Context, token string) bool {
 	user := GetUserWithToken(ctx, token)
-	if nil != user && user.Name == "Root" {
+	if nil != user && user.Email == "Root" {
 		return true
 	}
 	return false

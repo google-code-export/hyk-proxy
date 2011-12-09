@@ -1,7 +1,7 @@
 package snappy
 
 import (
-	"encoding/binary"
+	//"encoding/binary"
 	"codec"
 )
 
@@ -24,7 +24,7 @@ func decodedLen(src []byte) (blockLen, headerLen int, success bool, err string) 
 	if uint64(int(v)) != v {
 		return 0, 0, false,"snappy: decoded block is too large"
 	}
-	return int(v), n, true, nil
+	return int(v), n, true, ""
 }
 
 // Decode returns the decoded form of src. The returned slice may be a sub-
@@ -88,7 +88,7 @@ func Decode(dst, src []byte) ([]byte, bool, string) {
 		case tagCopy1:
 			s += 2
 			if s > len(src) {
-				return nil, ErrCorrupt
+				return nil, false, ErrCorrupt
 			}
 			length = 4 + int(src[s-2])>>2&0x7
 			offset = int(src[s-2])&0xe0<<3 | int(src[s-1])

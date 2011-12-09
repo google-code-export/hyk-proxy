@@ -6,7 +6,7 @@ import (
 
 func Encrypt(buffer *bytes.Buffer) *bytes.Buffer {
 	buf := buffer.Bytes()
-	for i = 0; i < len(buf); i++ {
+	for i := 0; i < len(buf); i++ {
 		var k int32 = int32(buf[i])
 		v := k - 1
 		if v < 0 {
@@ -19,7 +19,7 @@ func Encrypt(buffer *bytes.Buffer) *bytes.Buffer {
 
 func Decrypt(buffer *bytes.Buffer) *bytes.Buffer {
 	buf := buffer.Bytes()
-	for i = 0; i < len(buf); i++ {
+	for i := 0; i < len(buf); i++ {
 		var k int32 = int32(buf[i])
 		v := k + 1
 		if v > 256 {

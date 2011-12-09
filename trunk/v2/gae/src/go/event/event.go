@@ -10,30 +10,28 @@ import (
 )
 
 const (
-	HTTP_REQUEST_EVENT_TYPE         = 1000
-	HTTP_RESPONSE_EVENT_TYPE        = 1001
-	HTTP_CHUNK_EVENT_TYPE           = 1002
-	HTTP_ERROR_EVENT_TYPE           = 1003
-	HTTP_CONNECTION_EVENT_TYPE      = 1004
-	RESERVED_SEGMENT_EVENT_TYPE     = 48100
-	COMPRESS_EVENT_TYPE             = 1500
-	ENCRYPT_EVENT_TYPE              = 1501
-	AUTH_REQUEST_EVENT_TYPE         = 2000
-	AUTH_RESPONSE_EVENT_TYPE        = 2001
-	USER_OPERATION_EVENT_TYPE       = 2010
-	GROUP_OPERATION_EVENT_TYPE      = 2011
-	USER_LIST_REQUEST_EVENT_TYPE    = 2012
-	GROUOP_LIST_REQUEST_EVENT_TYPE  = 2013
-	USER_LIST_RESPONSE_EVENT_TYPE   = 2014
-	GROUOP_LIST_RESPONSE_EVENT_TYPE = 2015
-	BLACKLIST_OPERATION_EVENT_TYPE  = 2016
-	REQUEST_SHARED_APPID_EVENT_TYPE = 2017
+	HTTP_REQUEST_EVENT_TYPE                = 1000
+	HTTP_RESPONSE_EVENT_TYPE               = 1001
+	HTTP_CHUNK_EVENT_TYPE                  = 1002
+	HTTP_ERROR_EVENT_TYPE                  = 1003
+	HTTP_CONNECTION_EVENT_TYPE             = 1004
+	RESERVED_SEGMENT_EVENT_TYPE            = 48100
+	COMPRESS_EVENT_TYPE                    = 1500
+	ENCRYPT_EVENT_TYPE                     = 1501
+	AUTH_REQUEST_EVENT_TYPE                = 2000
+	AUTH_RESPONSE_EVENT_TYPE               = 2001
+	USER_OPERATION_EVENT_TYPE              = 2010
+	GROUP_OPERATION_EVENT_TYPE             = 2011
+	USER_LIST_REQUEST_EVENT_TYPE           = 2012
+	GROUOP_LIST_REQUEST_EVENT_TYPE         = 2013
+	USER_LIST_RESPONSE_EVENT_TYPE          = 2014
+	GROUOP_LIST_RESPONSE_EVENT_TYPE        = 2015
+	BLACKLIST_OPERATION_EVENT_TYPE         = 2016
+	REQUEST_SHARED_APPID_EVENT_TYPE        = 2017
 	REQUEST_SHARED_APPID_RESULT_EVENT_TYPE = 2018
-	ADMIN_RESPONSE_EVENT_TYPE       = 2020
-	SERVER_CONFIG_EVENT_TYPE        = 2050
+	ADMIN_RESPONSE_EVENT_TYPE              = 2020
+	SERVER_CONFIG_EVENT_TYPE               = 2050
 )
-
-
 
 const (
 	MAGIC_NUMBER uint16 = 0xCAFE
@@ -77,8 +75,8 @@ type Event interface {
 	SetAttachement(interface{})
 }
 
-type Attachement struct{
-    attachment interface{}
+type Attachement struct {
+	attachment interface{}
 }
 
 func (att *Attachement) GetAttachement() interface{} {
@@ -88,8 +86,8 @@ func (att *Attachement) SetAttachement(a interface{}) {
 	att.attachment = a
 }
 
-type HashField struct{
-    Hash uint32
+type HashField struct {
+	Hash uint32
 }
 
 func (field *HashField) GetHash() uint32 {
@@ -122,19 +120,19 @@ func (header *EventHeader) Decode(buffer *bytes.Buffer) bool {
 	return true
 }
 
-func EncodeEvent(buffer *bytes.Buffer, ev Event) bool{
-    var header EventHeader{ev.GetType(), ev.GetVersion(), ev.GetHash()}
-    header.Encode(buffer)
-    return ev.Encode(buffer)
+func EncodeEvent(buffer *bytes.Buffer, ev Event) bool {
+	header := EventHeader{ev.GetType(), ev.GetVersion(), ev.GetHash()}
+	header.Encode(buffer)
+	return ev.Encode(buffer)
 }
 
-func DecodeEvent(buffer *bytes.Buffer) (bool, Event){
-    return ParseEvent(buffer)
+func DecodeEvent(buffer *bytes.Buffer) (bool, Event) {
+	return ParseEvent(buffer)
 }
 
 type AuthRequestEvent struct {
-	Appid string
-	User string
+	Appid  string
+	User   string
 	Passwd string
 	HashField
 	Attachement
@@ -196,7 +194,7 @@ func (req *AuthResponseEvent) Decode(buffer *bytes.Buffer) bool {
 func (req *AuthResponseEvent) GetType() uint32 {
 	return AUTH_RESPONSE_EVENT_TYPE
 }
-func (req *AuthRequestEvent) GetVersion() uint32 {
+func (req *AuthResponseEvent) GetVersion() uint32 {
 	return 1
 }
 
@@ -205,8 +203,8 @@ type HTTPMessageEvent struct {
 	Content bytes.Buffer
 }
 
-func  (msg *HTTPMessageEvent) SetHeader(name, value string){
-    
+func (msg *HTTPMessageEvent) SetHeader(name, value string) {
+
 }
 
 func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
@@ -215,8 +213,8 @@ func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
 	for i := 0; i < slen; i++ {
 		header, ok := msg.Headers.At(i).([]string)
 		if ok {
-			codec.WriteString(buffer, header[0])
-			codec.WriteString(buffer, header[1])
+			codec.WriteVarString(buffer, header[0])
+			codec.WriteVarString(buffer, header[1])
 		}
 	}
 	b := msg.Content.Bytes()
@@ -318,8 +316,8 @@ func (req *HTTPResponseEvent) GetVersion() uint32 {
 }
 
 type SegmentEvent struct {
-	sequence int
-	total    int
+	sequence uint32
+	total    uint32
 	content  bytes.Buffer
 	HashField
 	Attachement
@@ -337,7 +335,7 @@ func (seg *SegmentEvent) Decode(buffer *bytes.Buffer) bool {
 		return false
 	}
 	seg.sequence = uint32(tmp)
-	tmp, err := codec.ReadUvarint(buffer)
+	tmp, err = codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
@@ -369,7 +367,7 @@ const (
 
 type CompressEvent struct {
 	CompressType uint32
-	ev           Event
+	Ev           Event
 	HashField
 	Attachement
 }
@@ -381,7 +379,7 @@ func (ev *CompressEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(ev.CompressType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
-	EncodeEvent(&buf, ev.ev)
+	EncodeEvent(&buf, ev.Ev)
 	switch ev.CompressType {
 	case C_NONE:
 		{
@@ -406,16 +404,17 @@ func (ev *CompressEvent) Decode(buffer *bytes.Buffer) bool {
 	switch ev.CompressType {
 	case C_NONE:
 		{
-			success, ev.ev = ParseEvent(buffer)
+			success, ev.Ev = ParseEvent(buffer)
 			return success
 		}
 	case C_SNAPPY:
 		{
-			newbuf, ok, cause := snappy.Decode(buffer.Bytes())
+            b := make([]byte, 0, 0)
+			newbuf, ok, _ := snappy.Decode(b,buffer.Bytes())
 			if !ok {
 				return false
 			}
-			success, ev.ev = ParseEvent(bytes.NewBuffer(newbuf))
+			success, ev.Ev = ParseEvent(bytes.NewBuffer(newbuf))
 			return success
 		}
 	}
@@ -430,13 +429,13 @@ func (ev *CompressEvent) GetVersion() uint32 {
 }
 
 const (
-	E_NONE    uint32 = 0
+	E_NONE uint32 = 0
 	E_SE1  uint32 = 1
 )
 
 type EncryptEvent struct {
 	EncryptType uint32
-	ev           Event
+	Ev          Event
 	HashField
 	Attachement
 }
@@ -445,7 +444,7 @@ func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(ev.EncryptType))
 	//ev.ev.Encode(buffer);
 	var buf bytes.Buffer
-	EncodeEvent(&buf, ev.ev)
+	EncodeEvent(&buf, ev.Ev)
 	switch ev.EncryptType {
 	case E_NONE:
 		{
@@ -453,7 +452,7 @@ func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 		}
 	case E_SE1:
 		{
-			newbuf := se1.Encrypt(buf)
+			newbuf := se1.Encrypt(&buf)
 			buffer.Write(newbuf.Bytes())
 		}
 	}
@@ -469,13 +468,13 @@ func (ev *EncryptEvent) Decode(buffer *bytes.Buffer) bool {
 	switch ev.EncryptType {
 	case E_NONE:
 		{
-			success, ev.ev = ParseEvent(buffer)
+			success, ev.Ev = ParseEvent(buffer)
 			return success
 		}
 	case E_SE1:
 		{
 			newbuf := se1.Decrypt(buffer)
-			success, ev.ev = ParseEvent(newbuf)
+			success, ev.Ev = ParseEvent(newbuf)
 			return success
 		}
 	}
@@ -488,9 +487,3 @@ func (ev *EncryptEvent) GetType() uint32 {
 func (ev *EncryptEvent) GetVersion() uint32 {
 	return 1
 }
-
-
-
-
-
-
