@@ -92,7 +92,7 @@ func fromPropertyList(item datastore.PropertyList) {
 func SaveServerConfig(ctx appengine.Context) {
 	key := datastore.NewKey(ctx, "ServerConfig", "", 1, nil)
 	item := toPropertyList()
-	_, err := datastore.Put(ctx, key, item)
+	_, err := datastore.Put(ctx, key, &item)
 	if err != nil {
 		return
 	}
@@ -115,7 +115,8 @@ func LoadServerConfig(ctx appengine.Context) {
 	}
 	var item datastore.PropertyList
 	key := datastore.NewKey(ctx, "ServerConfig", "", 1, nil)
-	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
+	if err := datastore.Get(ctx, key, &item); err != nil {
+	    SaveServerConfig(ctx)
 		return
 	}
 	fromPropertyList(item)

@@ -434,7 +434,7 @@ public class GAEClientConfiguration
 			{
 				localProxy = null;
 			}
-			if(localProxy.port == 0)
+			else if(localProxy.port == 0)
 			{
 				if(localProxy.type.equals(ProxyType.HTTP))
 				{

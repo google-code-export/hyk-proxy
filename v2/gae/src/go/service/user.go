@@ -12,8 +12,8 @@ import (
 	//"strconv"
 )
 
-var UserTable map[string]*event.User
-var GroupTable map[string]*event.Group
+var UserTable map[string]*event.User = make(map[string]*event.User)
+var GroupTable map[string]*event.Group = make(map[string]*event.Group)
 
 func User2PropertyList(user *event.User) datastore.PropertyList {
 	var ret = make(datastore.PropertyList, 0, 6)
@@ -109,15 +109,15 @@ func PropertyList2Group(props datastore.PropertyList) *event.Group {
 	return group
 }
 
-const USER_CACHE_KEY_PREFIX = "ProxyUser:"
-const GROUP_CACHE_KEY_PREFIX = "ProxyGroup:"
+const USER_CACHE_KEY_PREFIX = "User:"
+const GROUP_CACHE_KEY_PREFIX = "Group:"
 
 func SaveUser(ctx appengine.Context, user *event.User) {
 	props := User2PropertyList(user)
 	key := datastore.NewKey(ctx, "ProxyUser", user.Email, 0, nil)
-	_, err := datastore.Put(ctx, key, props)
+	_, err := datastore.Put(ctx, key, &props)
 	if err != nil {
-		//ctx.LogE()
+		ctx.Errorf("Failed to put user:%s data in datastore:%s", user.Email, err.String())
 		return
 	}
 	var buf bytes.Buffer
@@ -160,7 +160,8 @@ func GetUserWithName(ctx appengine.Context, name string) *event.User {
 	}
 	var item datastore.PropertyList
 	key := datastore.NewKey(ctx, "ProxyUser", name, 0, nil)
-	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
+	if err := datastore.Get(ctx, key, &item); err != nil {
+		ctx.Errorf("Failed to get user:%s data in datastore:%s", name, err.String())
 		return nil
 	}
 	user = PropertyList2User(item)
@@ -187,7 +188,7 @@ func GetUserWithToken(ctx appengine.Context, token string) *event.User {
 	q := datastore.NewQuery("ProxyUser").Filter("AuthToken =", token)
 	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
-		//http.Error(w, err.String(), http.StatusInternalServerError)
+		ctx.Errorf("Failed to get user token:%s data in datastore:%s", token, err.String())
 		return nil
 	}
 	for _, x := range props {
@@ -203,7 +204,7 @@ func GetAllUsers(ctx appengine.Context) []*event.User {
 	q := datastore.NewQuery("ProxyUser")
 	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
-		//http.Error(w, err.String(), http.StatusInternalServerError)
+		ctx.Errorf("Failed to get all user data in datastore:%s", err.String())
 		return nil
 	}
 	users := make([]*event.User, 0, len(props))
@@ -217,9 +218,9 @@ func GetAllUsers(ctx appengine.Context) []*event.User {
 func SaveGroup(ctx appengine.Context, grp *event.Group) {
 	props := Group2PropertyList(grp)
 	key := datastore.NewKey(ctx, "ProxyGroup", grp.Name, 0, nil)
-	_, err := datastore.Put(ctx, key, props)
+	_, err := datastore.Put(ctx, key, &props)
 	if err != nil {
-		//ctx.LogE()
+		ctx.Errorf("Failed to put group:%s data in datastore:%s", grp.Name, err.String())
 		return
 	}
 	var buf bytes.Buffer
@@ -248,7 +249,8 @@ func GetGroup(ctx appengine.Context, name string) *event.Group {
 	}
 	var item datastore.PropertyList
 	key := datastore.NewKey(ctx, "ProxyGroup", name, 0, nil)
-	if err := datastore.Get(ctx, key, item); err != nil && err != datastore.ErrNoSuchEntity {
+	if err := datastore.Get(ctx, key, &item); err != nil {
+		ctx.Errorf("Failed to get group:%s data in datastore:%s", name, err.String())
 		return nil
 	}
 	group = PropertyList2Group(item)
@@ -266,7 +268,7 @@ func GetAllGroups(ctx appengine.Context) []*event.Group {
 	q := datastore.NewQuery("ProxyGroup")
 	props := make([]datastore.PropertyList, 0, 10)
 	if _, err := q.GetAll(ctx, &props); err != nil {
-		//http.Error(w, err.String(), http.StatusInternalServerError)
+		ctx.Errorf("Failed to gut all group data in datastore:%s", err.String())
 		return nil
 	}
 	groups := make([]*event.Group, 0, len(props))

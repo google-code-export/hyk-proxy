@@ -1,4 +1,4 @@
-application: hykgo
+application: go-hyk
 version: 1
 runtime: go
 api_version: 3
@@ -8,5 +8,4 @@ handlers:
   script: _go_app
 
 inbound_services:
-- warmup
-- xmpp
+- xmpp_message

@@ -37,6 +37,26 @@ const (
 	MAGIC_NUMBER uint16 = 0xCAFE
 )
 
+func equalIgnoreCase(s1, s2 string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for i := 0; i < len(s1); i++ {
+		c1 := s1[i]
+		if 'A' <= c1 && c1 <= 'Z' {
+			c1 += 'a' - 'A'
+		}
+		c2 := s2[i]
+		if 'A' <= c2 && c2 <= 'Z' {
+			c2 += 'a' - 'A'
+		}
+		if c1 != c2 {
+			return false
+		}
+	}
+	return true
+}
+
 type EventHeaderTags struct {
 	magic uint16
 	token string
@@ -120,16 +140,6 @@ func (header *EventHeader) Decode(buffer *bytes.Buffer) bool {
 	return true
 }
 
-func EncodeEvent(buffer *bytes.Buffer, ev Event) bool {
-	header := EventHeader{ev.GetType(), ev.GetVersion(), ev.GetHash()}
-	header.Encode(buffer)
-	return ev.Encode(buffer)
-}
-
-func DecodeEvent(buffer *bytes.Buffer) (bool, Event) {
-	return ParseEvent(buffer)
-}
-
 type AuthRequestEvent struct {
 	Appid  string
 	User   string
@@ -203,8 +213,32 @@ type HTTPMessageEvent struct {
 	Content bytes.Buffer
 }
 
-func (msg *HTTPMessageEvent) SetHeader(name, value string) {
+func (msg *HTTPMessageEvent) getHeaderEntry(name string) []string {
+	slen := msg.Headers.Len()
+	for i := 0; i < slen; i++ {
+		header, ok := msg.Headers.At(i).([]string)
+		if ok {
+			return header
+		}
+	}
+	return nil
+}
 
+func (msg *HTTPMessageEvent) SetHeader(name, value string) {
+	he := msg.getHeaderEntry(name)
+	if nil != he {
+		he[1] = value
+	} else {
+		msg.Headers.Push([]string{name, value})
+	}
+}
+
+func (msg *HTTPMessageEvent) GetHeader(name string) string {
+	he := msg.getHeaderEntry(name)
+	if nil != he {
+		return he[1]
+	}
+	return ""
 }
 
 func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
@@ -316,17 +350,17 @@ func (req *HTTPResponseEvent) GetVersion() uint32 {
 }
 
 type SegmentEvent struct {
-	sequence uint32
-	total    uint32
-	content  bytes.Buffer
+	Sequence uint32
+	Total    uint32
+	Content  bytes.Buffer
 	HashField
 	Attachement
 }
 
 func (seg *SegmentEvent) Encode(buffer *bytes.Buffer) bool {
-	codec.WriteUvarint(buffer, uint64(seg.sequence))
-	codec.WriteUvarint(buffer, uint64(seg.total))
-	buffer.Write(seg.content.Bytes())
+	codec.WriteUvarint(buffer, uint64(seg.Sequence))
+	codec.WriteUvarint(buffer, uint64(seg.Total))
+	buffer.Write(seg.Content.Bytes())
 	return true
 }
 func (seg *SegmentEvent) Decode(buffer *bytes.Buffer) bool {
@@ -334,19 +368,19 @@ func (seg *SegmentEvent) Decode(buffer *bytes.Buffer) bool {
 	if err != nil {
 		return false
 	}
-	seg.sequence = uint32(tmp)
+	seg.Sequence = uint32(tmp)
 	tmp, err = codec.ReadUvarint(buffer)
 	if err != nil {
 		return false
 	}
-	seg.total = uint32(tmp)
+	seg.Total = uint32(tmp)
 	length, err := codec.ReadUvarint(buffer)
 	buf := make([]byte, length)
 	realLen, err := buffer.Read(buf)
 	if err != nil || uint64(realLen) < length {
 		return false
 	}
-	seg.content.Write(buf)
+	seg.Content.Write(buf)
 	return true
 }
 
@@ -404,17 +438,17 @@ func (ev *CompressEvent) Decode(buffer *bytes.Buffer) bool {
 	switch ev.CompressType {
 	case C_NONE:
 		{
-			success, ev.Ev = ParseEvent(buffer)
+			success, ev.Ev, _ = ParseEvent(buffer)
 			return success
 		}
 	case C_SNAPPY:
 		{
-            b := make([]byte, 0, 0)
-			newbuf, ok, _ := snappy.Decode(b,buffer.Bytes())
+			b := make([]byte, 0, 0)
+			newbuf, ok, _ := snappy.Decode(b, buffer.Bytes())
 			if !ok {
 				return false
 			}
-			success, ev.Ev = ParseEvent(bytes.NewBuffer(newbuf))
+			success, ev.Ev, _ = ParseEvent(bytes.NewBuffer(newbuf))
 			return success
 		}
 	}
@@ -443,8 +477,8 @@ type EncryptEvent struct {
 func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(ev.EncryptType))
 	//ev.ev.Encode(buffer);
-	var buf bytes.Buffer
-	EncodeEvent(&buf, ev.Ev)
+	buf := new(bytes.Buffer)
+	EncodeEvent(buf, ev.Ev)
 	switch ev.EncryptType {
 	case E_NONE:
 		{
@@ -452,7 +486,7 @@ func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 		}
 	case E_SE1:
 		{
-			newbuf := se1.Encrypt(&buf)
+			newbuf := se1.Encrypt(buf)
 			buffer.Write(newbuf.Bytes())
 		}
 	}
@@ -468,13 +502,13 @@ func (ev *EncryptEvent) Decode(buffer *bytes.Buffer) bool {
 	switch ev.EncryptType {
 	case E_NONE:
 		{
-			success, ev.Ev = ParseEvent(buffer)
+			success, ev.Ev, _ = ParseEvent(buffer)
 			return success
 		}
 	case E_SE1:
 		{
 			newbuf := se1.Decrypt(buffer)
-			success, ev.Ev = ParseEvent(newbuf)
+			success, ev.Ev, _ = ParseEvent(newbuf)
 			return success
 		}
 	}
@@ -485,5 +519,194 @@ func (ev *EncryptEvent) GetType() uint32 {
 	return ENCRYPT_EVENT_TYPE
 }
 func (ev *EncryptEvent) GetVersion() uint32 {
+	return 1
+}
+
+type UserOperationEvent struct {
+	User      User
+	Operation uint32
+	HashField
+	Attachement
+}
+
+func (ev *UserOperationEvent) Encode(buffer *bytes.Buffer) bool {
+	ev.User.Encode(buffer)
+	codec.WriteUvarint(buffer, uint64(ev.Operation))
+	return true
+}
+func (ev *UserOperationEvent) Decode(buffer *bytes.Buffer) bool {
+	if !ev.User.Decode(buffer) {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Operation = uint32(tmp)
+	return true
+}
+
+func (ev *UserOperationEvent) GetType() uint32 {
+	return USER_OPERATION_EVENT_TYPE
+}
+func (ev *UserOperationEvent) GetVersion() uint32 {
+	return 1
+}
+
+type GroupOperationEvent struct {
+	Group     Group
+	Operation uint32
+	HashField
+	Attachement
+}
+
+func (ev *GroupOperationEvent) Encode(buffer *bytes.Buffer) bool {
+	ev.Group.Encode(buffer)
+	codec.WriteUvarint(buffer, uint64(ev.Operation))
+	return true
+}
+func (ev *GroupOperationEvent) Decode(buffer *bytes.Buffer) bool {
+	if !ev.Group.Decode(buffer) {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Operation = uint32(tmp)
+	return true
+}
+
+func (ev *GroupOperationEvent) GetType() uint32 {
+	return GROUP_OPERATION_EVENT_TYPE
+}
+func (ev *GroupOperationEvent) GetVersion() uint32 {
+	return 1
+}
+
+const (
+	GET_CONFIG_REQ uint32 = 1
+	GET_CONFIG_RES uint32 = 2
+	SET_CONFIG_REQ uint32 = 3
+	SET_CONFIG_RES uint32 = 4
+)
+
+type ServerConfigEvent struct {
+	Cfg       GAEServerConfig
+	Operation uint32
+	HashField
+	Attachement
+}
+
+func (ev *ServerConfigEvent) Encode(buffer *bytes.Buffer) bool {
+	ev.Cfg.Encode(buffer)
+	codec.WriteUvarint(buffer, uint64(ev.Operation))
+	return true
+}
+func (ev *ServerConfigEvent) Decode(buffer *bytes.Buffer) bool {
+	if !ev.Cfg.Decode(buffer) {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Operation = uint32(tmp)
+	return true
+}
+
+func (ev *ServerConfigEvent) GetType() uint32 {
+	return SERVER_CONFIG_EVENT_TYPE
+}
+func (ev *ServerConfigEvent) GetVersion() uint32 {
+	return 1
+}
+
+type ListGroupRequestEvent struct {
+	HashField
+	Attachement
+}
+
+func (ev *ListGroupRequestEvent) Encode(buffer *bytes.Buffer) bool {
+	return true
+}
+func (ev *ListGroupRequestEvent) Decode(buffer *bytes.Buffer) bool {
+	return true
+}
+
+func (ev *ListGroupRequestEvent) GetType() uint32 {
+	return GROUOP_LIST_REQUEST_EVENT_TYPE
+}
+func (ev *ListGroupRequestEvent) GetVersion() uint32 {
+	return 1
+}
+
+type ListUserRequestEvent struct {
+	HashField
+	Attachement
+}
+
+func (ev *ListUserRequestEvent) Encode(buffer *bytes.Buffer) bool {
+	return true
+}
+func (ev *ListUserRequestEvent) Decode(buffer *bytes.Buffer) bool {
+	return true
+}
+
+func (ev *ListUserRequestEvent) GetType() uint32 {
+	return USER_LIST_REQUEST_EVENT_TYPE
+}
+func (ev *ListUserRequestEvent) GetVersion() uint32 {
+	return 1
+}
+
+const (
+	BLACKLIST_ADD    uint32 = 0
+	BLACKLIST_DELETE uint32 = 1
+	BLACKLIST_MODIFY uint32 = 2
+)
+
+type BlackListOperationEvent struct {
+	User      string
+	Group     string
+	Host      string
+	Operation uint32
+	HashField
+	Attachement
+}
+
+func (ev *BlackListOperationEvent) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, ev.User)
+	codec.WriteVarString(buffer, ev.Group)
+	codec.WriteVarString(buffer, ev.Host)
+	codec.WriteUvarint(buffer, uint64(ev.Operation))
+	return true
+}
+func (ev *BlackListOperationEvent) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	ev.User, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	ev.Group, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	ev.Host, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Operation = uint32(tmp)
+	return true
+}
+
+func (ev *BlackListOperationEvent) GetType() uint32 {
+	return BLACKLIST_OPERATION_EVENT_TYPE
+}
+func (ev *BlackListOperationEvent) GetVersion() uint32 {
 	return 1
 }

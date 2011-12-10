@@ -3,6 +3,7 @@ package event
 import (
 	"bytes"
 	"codec"
+	"strings"
 )
 
 type GAEServerConfig struct {
@@ -12,6 +13,15 @@ type GAEServerConfig struct {
 	CompressType           uint32
 	EncryptType            uint32
 	CompressFilter         map[string]string
+}
+
+func (cfg *GAEServerConfig)IsContentTypeInCompressFilter(v string)bool{
+   for key := range cfg.CompressFilter {
+		if strings.Index(v, key) != -1 {
+		   return true
+		}
+	}
+	return false
 }
 
 func (cfg *GAEServerConfig) Encode(buffer *bytes.Buffer) bool {
