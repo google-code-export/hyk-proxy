@@ -9,7 +9,6 @@
  */
 package org.hyk.proxy.gae.common.auth;
 
-import org.hyk.proxy.gae.common.CompressorType;
 
 /**
  *
