@@ -1,4 +1,4 @@
-package se1
+package se
 
 import (
 	"bytes"

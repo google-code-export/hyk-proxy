@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"codec"
 	"snappy"
-	"se1"
+	"se"
+	//"fmt"
 	vector "container/vector"
 )
 
@@ -59,14 +60,14 @@ func equalIgnoreCase(s1, s2 string) bool {
 
 type EventHeaderTags struct {
 	magic uint16
-	token string
+	Token string
 }
 
 func (tags *EventHeaderTags) Encode(buffer *bytes.Buffer) bool {
 	b := make([]byte, 2)
 	binary.BigEndian.PutUint16(b, MAGIC_NUMBER)
 	buffer.Write(b)
-	codec.WriteVarString(buffer, tags.token)
+	codec.WriteVarString(buffer, tags.Token)
 	return true
 }
 func (tags *EventHeaderTags) Decode(buffer *bytes.Buffer) bool {
@@ -80,7 +81,7 @@ func (tags *EventHeaderTags) Decode(buffer *bytes.Buffer) bool {
 		return false
 	}
 	token, ok := codec.ReadVarString(buffer)
-	tags.token = token
+	tags.Token = token
 	return ok
 }
 
@@ -138,6 +139,44 @@ func (header *EventHeader) Decode(buffer *bytes.Buffer) bool {
 	}
 	header.Type, header.Version, header.Hash = uint32(tmp1), uint32(tmp2), uint32(tmp3)
 	return true
+}
+
+type AdminResponseEvent struct {
+	Response  string
+	ErrorCause   string
+	errno int32
+	HashField
+	Attachement
+}
+
+func (res *AdminResponseEvent) Encode(buffer *bytes.Buffer) bool {
+	codec.WriteVarString(buffer, res.Response)
+	codec.WriteVarString(buffer, res.ErrorCause)
+	codec.WriteUvarint(buffer, uint64(res.errno))
+	return true
+}
+func (res *AdminResponseEvent) Decode(buffer *bytes.Buffer) bool {
+	var ok bool
+	res.Response, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	res.ErrorCause, ok = codec.ReadVarString(buffer)
+	if !ok {
+		return false
+	}
+	tmp, err := codec.ReadUvarint(buffer)
+	if err != nil  {
+		return false
+	}
+	res.errno = int32(tmp)
+	return true
+}
+func (res *AdminResponseEvent) GetType() uint32 {
+	return AUTH_REQUEST_EVENT_TYPE
+}
+func (res *AdminResponseEvent) GetVersion() uint32 {
+	return 1
 }
 
 type AuthRequestEvent struct {
@@ -208,15 +247,20 @@ func (req *AuthResponseEvent) GetVersion() uint32 {
 	return 1
 }
 
+type NameValuePair struct{
+     Name string
+	 Value string
+}
+
 type HTTPMessageEvent struct {
 	Headers vector.Vector
 	Content bytes.Buffer
 }
 
-func (msg *HTTPMessageEvent) getHeaderEntry(name string) []string {
+func (msg *HTTPMessageEvent) getHeaderEntry(name string) *NameValuePair {
 	slen := msg.Headers.Len()
 	for i := 0; i < slen; i++ {
-		header, ok := msg.Headers.At(i).([]string)
+		header, ok := msg.Headers.At(i).(*NameValuePair)
 		if ok {
 			return header
 		}
@@ -227,16 +271,26 @@ func (msg *HTTPMessageEvent) getHeaderEntry(name string) []string {
 func (msg *HTTPMessageEvent) SetHeader(name, value string) {
 	he := msg.getHeaderEntry(name)
 	if nil != he {
-		he[1] = value
+		he.Value = value
 	} else {
-		msg.Headers.Push([]string{name, value})
+	    pair := new(NameValuePair)
+		pair.Name = name
+		pair.Value = value
+		msg.Headers.Push(pair)
 	}
+}
+
+func (msg *HTTPMessageEvent) AddHeader(name, value string) {
+	pair := new(NameValuePair)
+	pair.Name = name
+	pair.Value = value
+	msg.Headers.Push(pair)
 }
 
 func (msg *HTTPMessageEvent) GetHeader(name string) string {
 	he := msg.getHeaderEntry(name)
 	if nil != he {
-		return he[1]
+		return he.Name
 	}
 	return ""
 }
@@ -244,11 +298,15 @@ func (msg *HTTPMessageEvent) GetHeader(name string) string {
 func (msg *HTTPMessageEvent) DoEncode(buffer *bytes.Buffer) bool {
 	var slen int = msg.Headers.Len()
 	codec.WriteUvarint(buffer, uint64(slen))
+	//fmt.Printf("#######headers=%d\n",slen)
 	for i := 0; i < slen; i++ {
-		header, ok := msg.Headers.At(i).([]string)
+	    //fmt.Printf("#######Type=%T\n", msg.Headers.At(i))
+		header, ok := (msg.Headers.At(i)).(*NameValuePair)
 		if ok {
-			codec.WriteVarString(buffer, header[0])
-			codec.WriteVarString(buffer, header[1])
+		    //fmt.Printf("#######Name=%s\n", header.Name)
+			//fmt.Printf("#######Value=%s\n", header.Value)
+			codec.WriteVarString(buffer, header.Name)
+			codec.WriteVarString(buffer, header.Value)
 		}
 	}
 	b := msg.Content.Bytes()
@@ -270,7 +328,10 @@ func (msg *HTTPMessageEvent) DoDecode(buffer *bytes.Buffer) bool {
 		if !ok {
 			return false
 		}
-		msg.Headers.Push([]string{headerName, headerValue})
+		 pair := new(NameValuePair)
+		pair.Name = headerName
+		pair.Value = headerValue
+		msg.Headers.Push(pair)
 	}
 	b, ok := codec.ReadVarBytes(buffer)
 	if !ok {
@@ -289,18 +350,18 @@ type HTTPRequestEvent struct {
 }
 
 func (req *HTTPRequestEvent) Encode(buffer *bytes.Buffer) bool {
-	codec.WriteVarString(buffer, req.Method)
 	codec.WriteVarString(buffer, req.Url)
+	codec.WriteVarString(buffer, req.Method)
 	req.DoEncode(buffer)
 	return true
 }
 func (req *HTTPRequestEvent) Decode(buffer *bytes.Buffer) bool {
 	var ok bool
-	req.Method, ok = codec.ReadVarString(buffer)
+	req.Url, ok = codec.ReadVarString(buffer)
 	if !ok {
 		return false
 	}
-	req.Url, ok = codec.ReadVarString(buffer)
+	req.Method, ok = codec.ReadVarString(buffer)
 	if !ok {
 		return false
 	}
@@ -486,7 +547,7 @@ func (ev *EncryptEvent) Encode(buffer *bytes.Buffer) bool {
 		}
 	case E_SE1:
 		{
-			newbuf := se1.Encrypt(buf)
+			newbuf := se.Encrypt(buf)
 			buffer.Write(newbuf.Bytes())
 		}
 	}
@@ -507,7 +568,7 @@ func (ev *EncryptEvent) Decode(buffer *bytes.Buffer) bool {
 		}
 	case E_SE1:
 		{
-			newbuf := se1.Decrypt(buffer)
+			newbuf := se.Decrypt(buffer)
 			success, ev.Ev, _ = ParseEvent(newbuf)
 			return success
 		}
@@ -521,6 +582,12 @@ func (ev *EncryptEvent) GetType() uint32 {
 func (ev *EncryptEvent) GetVersion() uint32 {
 	return 1
 }
+
+const(
+   OPERATION_ADD = 0
+   OPERATION_DELETE = 1
+   OPERATION_MODIFY = 2
+)
 
 type UserOperationEvent struct {
 	User      User
@@ -592,7 +659,7 @@ const (
 )
 
 type ServerConfigEvent struct {
-	Cfg       GAEServerConfig
+	Cfg       *GAEServerConfig
 	Operation uint32
 	HashField
 	Attachement
@@ -604,6 +671,7 @@ func (ev *ServerConfigEvent) Encode(buffer *bytes.Buffer) bool {
 	return true
 }
 func (ev *ServerConfigEvent) Decode(buffer *bytes.Buffer) bool {
+    ev.Cfg = new(GAEServerConfig)
 	if !ev.Cfg.Decode(buffer) {
 		return false
 	}
@@ -641,6 +709,41 @@ func (ev *ListGroupRequestEvent) GetVersion() uint32 {
 	return 1
 }
 
+type ListGroupResponseEvent struct {
+    Groups []*Group
+	HashField
+	Attachement
+}
+
+func (ev *ListGroupResponseEvent) Encode(buffer *bytes.Buffer) bool {
+    codec.WriteUvarint(buffer, uint64(len(ev.Groups)))
+	for _,group:= range ev.Groups{
+	   group.Encode(buffer)
+	}
+	return true
+}
+func (ev *ListGroupResponseEvent) Decode(buffer *bytes.Buffer) bool {
+    tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Groups = make([]*Group, int(tmp))
+	for i:=0 ; i< int(tmp);i++{
+	   ev.Groups[i] = new(Group)
+	   if !ev.Groups[i].Decode(buffer){
+	      return false
+	   }
+	}
+	return true
+}
+
+func (ev *ListGroupResponseEvent) GetType() uint32 {
+	return GROUOP_LIST_RESPONSE_EVENT_TYPE
+}
+func (ev *ListGroupResponseEvent) GetVersion() uint32 {
+	return 1
+}
+
 type ListUserRequestEvent struct {
 	HashField
 	Attachement
@@ -657,6 +760,41 @@ func (ev *ListUserRequestEvent) GetType() uint32 {
 	return USER_LIST_REQUEST_EVENT_TYPE
 }
 func (ev *ListUserRequestEvent) GetVersion() uint32 {
+	return 1
+}
+
+type ListUserResponseEvent struct {
+    Users []*User
+	HashField
+	Attachement
+}
+
+func (ev *ListUserResponseEvent) Encode(buffer *bytes.Buffer) bool {
+    codec.WriteUvarint(buffer, uint64(len(ev.Users)))
+	for _,user:= range ev.Users{
+	   user.Encode(buffer)
+	}
+	return true
+}
+func (ev *ListUserResponseEvent) Decode(buffer *bytes.Buffer) bool {
+    tmp, err := codec.ReadUvarint(buffer)
+	if err != nil {
+		return false
+	}
+	ev.Users = make([]*User, int(tmp))
+	for i:=0 ; i< int(tmp);i++{
+	   ev.Users[i] = new(User)
+	   if !ev.Users[i].Decode(buffer){
+	      return false
+	   }
+	}
+	return true
+}
+
+func (ev *ListUserResponseEvent) GetType() uint32 {
+	return USER_LIST_RESPONSE_EVENT_TYPE
+}
+func (ev *ListUserResponseEvent) GetVersion() uint32 {
 	return 1
 }
 

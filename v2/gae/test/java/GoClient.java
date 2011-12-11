@@ -8,6 +8,7 @@ import java.net.URLConnection;
 
 import org.arch.buffer.Buffer;
 import org.arch.event.Event;
+import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.GAEEventHelper;
@@ -36,6 +37,8 @@ public class GoClient {
 		ev.appid = "1";
 		ev.passwd = GAEConstants.ANONYMOUSE_NAME;
 		ev.user = GAEConstants.ANONYMOUSE_NAME;
+		
+		HTTPRequestEvent httpev = new HTTPRequestEvent();
 		EventHeaderTags tags = new EventHeaderTags();
 		Buffer buf = GAEEventHelper.encodeEvent(tags, ev);
 		

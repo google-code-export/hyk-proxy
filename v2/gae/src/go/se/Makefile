@@ -4,7 +4,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=se1
+TARG=se
 GOFILES=\
 	se1.go\
 

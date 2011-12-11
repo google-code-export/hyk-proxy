@@ -4,6 +4,7 @@
 package org.hyk.proxy.gae.client.handler;
 
 import java.net.InetSocketAddress;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,9 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.handler.codec.http.DefaultHttpChunk;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponse;
@@ -202,7 +205,7 @@ public class ProxySession
 		rangeFetch(range, contentRange.getInstanceLength(), 1);
 	}
 
-	private HttpResponse buildHttpResponse(HTTPResponseEvent ev)
+	private HttpResponse buildHttpResponse(HTTPResponseEvent ev, HttpChunk chunk)
 	{
 		if (null == ev)
 		{
@@ -270,14 +273,22 @@ public class ProxySession
 				                - contentRange.getFirstBytePos() + 1));
 			}
 		}
-
+		
 		if (ev.content.readable())
 		{
 			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(
 			        ev.content.getRawBuffer(), ev.content.getReadIndex(),
 			        ev.content.readableBytes());
 			response.setChunked(false);
-			response.setContent(bufer);
+			response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, "" + ev.content.readableBytes());
+			if(!response.isChunked())
+			{
+				response.setContent(bufer);
+			}
+			else
+			{
+				chunk.setContent(bufer);
+			}
 		}
 		return response;
 	}
@@ -290,8 +301,13 @@ public class ProxySession
 		{
 			contentRange = new ContentRangeHeaderValue(contentRangeStr);
 		}
-		HttpResponse response = buildHttpResponse(ev);
+		HttpChunk chunk = new DefaultHttpChunk(ChannelBuffers.EMPTY_BUFFER);
+		HttpResponse response = buildHttpResponse(ev, chunk);
 		localHTTPChannel.write(response);
+		if(response.isChunked())
+		{
+			localHTTPChannel.write(chunk);
+		}
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("Write response:" + response);
@@ -332,11 +348,16 @@ public class ProxySession
 			if (contentRange.getLastBytePos() == contentRange
 			        .getInstanceLength() - 1)
 			{
-				HttpResponse response = buildHttpResponse(ev);
+				HttpChunk chunk = new DefaultHttpChunk(ChannelBuffers.EMPTY_BUFFER);
+				HttpResponse response = buildHttpResponse(ev, chunk);
 				response.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 				response.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
 				response.setStatus(HttpResponseStatus.OK);
 				localHTTPChannel.write(response);
+				if(response.isChunked())
+				{
+					localHTTPChannel.write(chunk);
+				}
 			}
 			else
 			{

@@ -128,3 +128,23 @@ func LoadServerConfig(ctx appengine.Context) {
 	}
 	memcache.Set(ctx, memitem)
 }
+
+func HandlerConfigEvent(ctx appengine.Context,ev *event.ServerConfigEvent)event.Event{
+   switch ev.Operation{
+      case event.GET_CONFIG_REQ:
+	     res := new(event.ServerConfigEvent)
+		 res.Operation = event.GET_CONFIG_RES
+		 res.Cfg = ServerConfig
+		 return res
+	  case  event.SET_CONFIG_REQ:
+	     if nil != ev.Cfg{
+		    ServerConfig = ev.Cfg
+			SaveServerConfig(ctx)
+		 }
+	     res := new(event.ServerConfigEvent)
+		 res.Operation = event.SET_CONFIG_RES
+		 res.Cfg = ServerConfig
+	    return res
+   }
+   return nil
+}

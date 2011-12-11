@@ -187,7 +187,7 @@ func GetUserWithToken(ctx appengine.Context, token string) *event.User {
 	}
 	q := datastore.NewQuery("ProxyUser").Filter("AuthToken =", token)
 	props := make([]datastore.PropertyList, 0, 10)
-	if _, err := q.GetAll(ctx, &props); err != nil {
+	if _, err := q.GetAll(ctx, props); err != nil {
 		ctx.Errorf("Failed to get user token:%s data in datastore:%s", token, err.String())
 		return nil
 	}
@@ -203,7 +203,7 @@ func GetUserWithToken(ctx appengine.Context, token string) *event.User {
 func GetAllUsers(ctx appengine.Context) []*event.User {
 	q := datastore.NewQuery("ProxyUser")
 	props := make([]datastore.PropertyList, 0, 10)
-	if _, err := q.GetAll(ctx, &props); err != nil {
+	if _, err := q.GetAll(ctx, props); err != nil {
 		ctx.Errorf("Failed to get all user data in datastore:%s", err.String())
 		return nil
 	}

@@ -8,6 +8,6 @@ TARG=entry
 GOFILES=\
 	entry.go\
 
-export GCIMPORTS=-I../service/_obj -I../handler/_obj -I../se1/_obj -I../event/_obj -I$(GOAPPENGINEROOT)/goroot/pkg/linux_amd64/
+export GCIMPORTS=-I../service/_obj -I../handler/_obj -I../se/_obj -I../event/_obj -I$(GOAPPENGINEROOT)/goroot/pkg/linux_amd64/
 include $(GOROOT)/src/Make.pkg
 

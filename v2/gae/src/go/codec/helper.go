@@ -35,13 +35,15 @@ func ReadVarBytes(buffer *bytes.Buffer) (line []byte, ok bool) {
 		ok = false
 		return
 	}
-	buf := make([]byte, length)
-	realLen, err := buffer.Read(buf)
-	if err != nil || uint64(realLen) < length {
-		ok = false
-		return
+	if length >0 {
+	   buf := make([]byte, length)
+	   realLen, err := buffer.Read(buf)
+	   if err != nil || uint64(realLen) < length {
+		  ok = false
+		  return
+	   }
+	   line = buf
 	}
-	line = buf
 	ok = true
 	return
 }
