@@ -10,7 +10,7 @@ GOFILES=\
 	factory.go\
 	data.go\
 
-export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se1/_obj
+export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se/_obj
 
 include $(GOROOT)/src/Make.pkg
 

@@ -10,7 +10,7 @@ import (
 )
 
 func buildHTTPRequest(ev *event.HTTPRequestEvent) *http.Request {
-	req, err := http.NewRequest(ev.Method, ev.Url, nil)
+	req, err := http.NewRequest(ev.Method, ev.Url, &(ev.Content))
 	if err != nil {
 		return nil
 	}
@@ -21,7 +21,9 @@ func buildHTTPRequest(ev *event.HTTPRequestEvent) *http.Request {
 			req.Header.Add(header[0], header[1])
 		}
 	}
-	req.Body.Read(ev.Content.Bytes())
+	//if ev.Content.Len() > 0{
+	//  req.Body.Read(ev.Content.Bytes())
+	//}
 	return req
 }
 
@@ -30,8 +32,7 @@ func buildHTTPResponseEvent(res *http.Response) *event.HTTPResponseEvent {
 	ev.Status = uint32(res.StatusCode)
 	for key, values := range res.Header {
 		for _, value := range values {
-			var h = [...]string{key, value}
-			ev.Headers.Push(h)
+			ev.AddHeader(key, value)
 		}
 	}
 	b := make([]byte, res.ContentLength)

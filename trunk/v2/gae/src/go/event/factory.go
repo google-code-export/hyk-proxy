@@ -39,6 +39,7 @@ func ParseEvent(buffer *bytes.Buffer) (bool, Event, string) {
 	}
 	var event Event
 	event = value.creator(header.Type, header.Version)
+	event.SetHash(header.Hash)
 	return event.Decode(buffer), event, ""
 }
 

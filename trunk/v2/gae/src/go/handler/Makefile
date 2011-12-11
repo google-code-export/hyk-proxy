@@ -9,6 +9,6 @@ GOFILES=\
 	dispatch.go\
 
 
-export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se1/_obj -I../event/_obj -I../service/_obj -I$(GOAPPENGINEROOT)/goroot/pkg/linux_amd64/
+export GCIMPORTS=-I../codec/_obj -I../snappy/_obj -I../se/_obj -I../event/_obj -I../service/_obj -I$(GOAPPENGINEROOT)/goroot/pkg/linux_amd64/
 include $(GOROOT)/src/Make.pkg
 

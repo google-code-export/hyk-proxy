@@ -11,13 +11,23 @@ type DispatchEventHandler struct {
 
 }
 
+func mergeSegmentEvents(ctx appengine.Context, ev *event.SegmentEvent)event.Event{
+   //not supported now
+   return nil
+}
+
 func (dispatcher *DispatchEventHandler) handleRecvEvent(ctx appengine.Context, header *event.EventHeader, ev event.Event) event.Event {
 	var res event.Event
 	switch header.Type {
 	case event.HTTP_REQUEST_EVENT_TYPE:
 		res = service.Fetch(ctx, ev.(*event.HTTPRequestEvent))
 	case event.RESERVED_SEGMENT_EVENT_TYPE:
-		return new(event.SegmentEvent)
+	    merged := mergeSegmentEvents(ctx, ev.(*event.SegmentEvent))
+		if nil != merged{
+		  var tmp = event.EventHeader{merged.GetType(),merged.GetVersion(), header.Hash}
+		  res = dispatcher.handleRecvEvent(ctx, &tmp, merged)
+		}
+		return nil
 	case event.COMPRESS_EVENT_TYPE:
 		compressEvent := ev.(*event.CompressEvent)
 		var tmp = event.EventHeader{compressEvent.Ev.GetType(), compressEvent.Ev.GetVersion(), header.Hash}
@@ -33,13 +43,13 @@ func (dispatcher *DispatchEventHandler) handleRecvEvent(ctx appengine.Context, h
 	case event.GROUP_OPERATION_EVENT_TYPE:
 		res = service.HandlerGroupEvent(ctx, ev.(*event.GroupOperationEvent))
 	case event.USER_LIST_REQUEST_EVENT_TYPE:
-		//res = service.HandlerUserEvent(ev.(*event.AuthRequestEvent))
+		res = service.HandlerUserListEvent(ctx,ev.(*event.ListUserRequestEvent))
 	case event.GROUOP_LIST_REQUEST_EVENT_TYPE:
-		//res = service.HandlerUserEvent(ev.(*event.AuthRequestEvent))
+		res = service.HandlerGroupListEvent(ctx, ev.(*event.ListGroupRequestEvent))
 	case event.BLACKLIST_OPERATION_EVENT_TYPE:
-		//res = service.HandlerUserEvent(ev.(*event.AuthRequestEvent))
+		res = service.HandlerBalcklistEvent(ctx, ev.(*event.BlackListOperationEvent))
 	case event.SERVER_CONFIG_EVENT_TYPE:
-		//res = service.HandlerConfigEvent(ev.(*event.AuthRequestEvent))
+		res = service.HandlerConfigEvent(ctx,ev.(*event.ServerConfigEvent))
 	}
 	return res
 }
@@ -81,6 +91,7 @@ func (dispatcher *DispatchEventHandler) OnEvent(header *event.EventHeader, ev ev
 	tags := ((ev.GetAttachement().([]interface{}))[0]).(*event.EventHeaderTags)
 	ctx = ((ev.GetAttachement().([]interface{}))[1]).(appengine.Context)
 	sendservice := ((ev.GetAttachement().([]interface{}))[2]).(service.EventSendService)
+	ctx.Infof("Received event hash :%d",  ev.GetHash())
 	var res event.Event = dispatcher.handleRecvEvent(ctx, header, ev)
 	if nil != res {
 		res.SetHash(ev.GetHash())
@@ -103,12 +114,15 @@ func (dispatcher *DispatchEventHandler) OnEvent(header *event.EventHeader, ev ev
 		y.Ev = x
 		var buf bytes.Buffer
 		event.EncodeEventWithTags(&buf, y, tags)
-		if buf.Len() > sendservice.GetMaxDataPackageSize() {
+		if sendservice.GetMaxDataPackageSize() > 0 && buf.Len() > sendservice.GetMaxDataPackageSize() {
 			bufs := splitBuffer(&buf, uint32(ev.GetHash()), uint32(sendservice.GetMaxDataPackageSize()), tags)
+			ctx.Infof("Send response event segments %d:%d", res.GetType(), res.GetHash())
 			for _, x := range bufs {
 				sendservice.Send(x)
 			}
+			ctx.Infof("Send response event segments %d:%d", res.GetType(), res.GetHash())
 		} else {
+		    ctx.Infof("Send single response event %d:%d", res.GetType(), res.GetHash())
 			sendservice.Send(&buf)
 		}
 	} else {
