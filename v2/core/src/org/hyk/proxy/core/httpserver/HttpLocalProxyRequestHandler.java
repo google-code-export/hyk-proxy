@@ -81,7 +81,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		{
 			int buflen = content.readableBytes();
 			event.content.ensureWritableBytes(content.readableBytes());
-			content.readBytes(event.content.getRawBuffer(), event.content.getWriteIndex(), event.content.writeableBytes());
+			content.readBytes(event.content.getRawBuffer(), event.content.getWriteIndex(), content.readableBytes());
 			event.content.advanceWriteIndex(buflen);
 		}
 		for (Map.Entry<String, String> header : request.getHeaders())
