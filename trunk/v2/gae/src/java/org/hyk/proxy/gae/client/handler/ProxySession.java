@@ -232,7 +232,7 @@ public class ProxySession
 			}
 			else
 			{
-				response.addHeader(header.getName(), header.getValue());
+				response.addHeader(header.getName(), header.getValue());	
 			}
 		}
 
@@ -280,15 +280,17 @@ public class ProxySession
 			        ev.content.getRawBuffer(), ev.content.getReadIndex(),
 			        ev.content.readableBytes());
 			response.setChunked(false);
+			
 			response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, "" + ev.content.readableBytes());
-			if(!response.isChunked())
+			if(response.isChunked())
 			{
-				response.setContent(bufer);
+				response.removeHeader(HttpHeaders.Names.TRANSFER_ENCODING);
 			}
-			else
-			{
-				chunk.setContent(bufer);
-			}
+//			else
+//			{
+//				chunk.setContent(bufer);
+//			}
+			response.setContent(bufer);
 		}
 		return response;
 	}

@@ -5,7 +5,6 @@ package org.hyk.proxy.gae.client.connection;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import org.arch.buffer.Buffer;
@@ -22,7 +21,6 @@ import org.hyk.proxy.gae.client.handler.ProxySession;
 import org.hyk.proxy.gae.client.handler.ProxySessionManager;
 import org.hyk.proxy.gae.client.handler.ProxySessionStatus;
 import org.hyk.proxy.gae.common.CompressorType;
-import org.hyk.proxy.gae.common.EncryptType;
 import org.hyk.proxy.gae.common.EventHeaderTags;
 import org.hyk.proxy.gae.common.GAEConstants;
 import org.hyk.proxy.gae.common.GAEEventHelper;
