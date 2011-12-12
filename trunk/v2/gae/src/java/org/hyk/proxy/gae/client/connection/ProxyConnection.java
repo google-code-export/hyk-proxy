@@ -154,13 +154,20 @@ public abstract class ProxyConnection
 
 	public boolean send(Event event)
 	{
+		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event
+		        .getAttachment();
 		if (!isReady())
 		{
+			if (logger.isDebugEnabled())
+			{
+				logger.debug("Connection:" + this.hashCode() + " queue session[" + attach.second
+				        + "] event:");
+				logger.debug(event.toString());
+			}
 			queuedEvents.add(event);
 			return true;
 		}
-		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event
-		        .getAttachment();
+
 		if (logger.isDebugEnabled())
 		{
 			if (event instanceof HTTPRequestEvent)

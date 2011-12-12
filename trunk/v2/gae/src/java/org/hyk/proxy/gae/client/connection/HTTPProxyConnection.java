@@ -29,6 +29,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -57,7 +58,8 @@ import org.slf4j.LoggerFactory;
  * @author qiyingwang
  * 
  */
-public class HTTPProxyConnection extends ProxyConnection {
+public class HTTPProxyConnection extends ProxyConnection
+{
 	private static final int INITED = 0;
 	private static final int WAITING_CONNECT_RESPONSE = 1;
 	private static final int CONNECT_RESPONSED = 2;
@@ -72,57 +74,69 @@ public class HTTPProxyConnection extends ProxyConnection {
 	private HttpServerAddress remoteAddress = null;
 	private AtomicInteger sslProxyConnectionStatus = new AtomicInteger(0);
 
-	public HTTPProxyConnection(GAEServerAuth auth) {
+	public HTTPProxyConnection(GAEServerAuth auth)
+	{
 		super(auth);
 		String appid = auth.backendEnable ? (GAEConstants.BACKEND_INSTANCE_NAME
-				+ "." + auth.appid) : auth.appid;
+		        + "." + auth.appid) : auth.appid;
 		remoteAddress = new HttpServerAddress(appid + ".appspot.com",
-				GAEConstants.HTTP_INVOKE_PATH, GAEClientConfiguration
-						.getInstance().getConnectionModeType()
-						.equals(ConnectionMode.HTTPS));
+		        GAEConstants.HTTP_INVOKE_PATH, GAEClientConfiguration
+		                .getInstance().getConnectionModeType()
+		                .equals(ConnectionMode.HTTPS));
 
 	}
 
-	public boolean isReady() {
+	public boolean isReady()
+	{
 		return !waitingResponse;
 	}
 
 	@Override
-	protected int getMaxDataPackageSize() {
+	protected int getMaxDataPackageSize()
+	{
 		return GAEConstants.APPENGINE_HTTP_BODY_LIMIT;
 	}
 
-	protected synchronized SocketChannel getHTTPClientChannel() {
-		if (null == clientChannel || !clientChannel.isConnected()) {
+	protected synchronized SocketChannel getHTTPClientChannel()
+	{
+		if (null == clientChannel || !clientChannel.isConnected())
+		{
 			clientChannel = connectProxyServer(remoteAddress);
-			if (null == clientChannel || !clientChannel.isConnected()) {
+			if (null == clientChannel || !clientChannel.isConnected())
+			{
 				return null;
 			}
 		}
 		return clientChannel;
 	}
 
-	private SocketChannel connectProxyServer(HttpServerAddress address) {
+	private SocketChannel connectProxyServer(HttpServerAddress address)
+	{
 		ChannelPipeline pipeline = Channels.pipeline();
 		pipeline.addLast("decoder", new HttpResponseDecoder());
 		// pipeline.addLast("aggregator", new
 		// HttpChunkAggregator(maxMessageSize));
 		pipeline.addLast("encoder", new HttpRequestEncoder());
 		pipeline.addLast("handler", new HttpResponseHandler());
-		if (null == factory) {
-			if (null == SharedObjectHelper.getGlobalThreadPool()) {
+		if (null == factory)
+		{
+			if (null == SharedObjectHelper.getGlobalThreadPool())
+			{
 				ThreadPoolExecutor workerExecutor = new OrderedMemoryAwareThreadPoolExecutor(
-						20, 0, 0);
+				        20, 0, 0);
 				SharedObjectHelper.setGlobalThreadPool(workerExecutor);
 
 			}
-			if (NetworkHelper.isIPV6Address(address.getHost())) {
+			if (NetworkHelper.isIPV6Address(address.getHost()))
+			{
 				factory = new OioClientSocketChannelFactory(
-						SharedObjectHelper.getGlobalThreadPool());
-			} else {
+				        SharedObjectHelper.getGlobalThreadPool());
+			}
+			else
+			{
 				factory = new NioClientSocketChannelFactory(
-						SharedObjectHelper.getGlobalThreadPool(),
-						SharedObjectHelper.getGlobalThreadPool());
+				        SharedObjectHelper.getGlobalThreadPool(),
+				        SharedObjectHelper.getGlobalThreadPool());
 			}
 
 		}
@@ -130,89 +144,111 @@ public class HTTPProxyConnection extends ProxyConnection {
 		String connectHost;
 		int connectPort;
 		boolean sslConnectionEnable = false;
-		if (null != cfg.getLocalProxy()) {
+		if (null != cfg.getLocalProxy())
+		{
 			connectHost = cfg.getLocalProxy().host;
 			connectPort = cfg.getLocalProxy().port;
-			if (ProxyType.HTTPS.equals(cfg.getLocalProxy().type)) {
+			if (ProxyType.HTTPS.equals(cfg.getLocalProxy().type))
+			{
 				sslConnectionEnable = true;
 			}
 			// except g.cn/google.cn
-		} else {
+		}
+		else
+		{
 			connectHost = address.getHost();
 			connectPort = address.getPort();
 			sslConnectionEnable = address.isSecure();
 		}
 		// connectHost = cfg.getMappingHost(connectHost);
 		connectHost = HostsHelper.getMappingHost(connectHost);
-		if (logger.isInfoEnabled()) {
+		if (logger.isInfoEnabled())
+		{
 			logger.info("Connect remote proxy server " + connectHost + ":"
-					+ connectPort + " and sslProxyEnable:"
-					+ sslConnectionEnable);
+			        + connectPort + " and sslProxyEnable:"
+			        + sslConnectionEnable);
 		}
 		ChannelFuture future = channel.connect(
-				new InetSocketAddress(connectHost, connectPort))
-				.awaitUninterruptibly();
-		if (!future.isSuccess()) {
+		        new InetSocketAddress(connectHost, connectPort))
+		        .awaitUninterruptibly();
+		if (!future.isSuccess())
+		{
 			logger.error("Failed to connect proxy server.", future.getCause());
 			return null;
 		}
 
 		ProxyInfo info = cfg.getLocalProxy();
-		if (null != info && null != cfg.getGoogleProxyChain()) {
+		if (null != info && null != cfg.getGoogleProxyChain())
+		{
 			SimpleSocketAddress chainAddress = cfg.getGoogleProxyChain();
 
 			String httpsHost = chainAddress.host;
 			httpsHost = HostsHelper.getMappingHost(httpsHost);
 			int httpsport = chainAddress.port;
-			if (logger.isDebugEnabled()) {
+			if (logger.isDebugEnabled())
+			{
 				logger.debug("Connect google chain proxy " + httpsHost + ":"
-						+ httpsport);
+				        + httpsport);
 			}
 			HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
-					HttpMethod.CONNECT, httpsHost + ":" + httpsport);
+			        HttpMethod.CONNECT, httpsHost + ":" + httpsport);
 			request.setHeader(HttpHeaders.Names.HOST, httpsHost + ":"
-					+ httpsport);
-			if (null != info.user) {
+			        + httpsport);
+			if (null != info.user)
+			{
 				String userpass = info.user + ":" + info.passwd;
 				String encode = Base64.encodeToString(userpass.getBytes(),
-						false);
+				        false);
 				request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION,
-						"Basic " + encode);
+				        "Basic " + encode);
 			}
 			sslProxyConnectionStatus.set(WAITING_CONNECT_RESPONSE);
 			channel.write(request);
-			synchronized (sslProxyConnectionStatus) {
-				try {
+			synchronized (sslProxyConnectionStatus)
+			{
+				try
+				{
 					sslProxyConnectionStatus.wait(60000);
-					if (sslProxyConnectionStatus.get() != CONNECT_RESPONSED) {
+					if (sslProxyConnectionStatus.get() != CONNECT_RESPONSED)
+					{
 						return null;
 					}
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e)
+				{
 					//
-				} finally {
+				}
+				finally
+				{
 					sslProxyConnectionStatus.set(INITED);
 				}
 			}
 		}
 
-		if (sslConnectionEnable) {
-			try {
+		if (sslConnectionEnable)
+		{
+			try
+			{
 				SSLContext sslContext = SSLContext.getDefault();
 				SSLEngine sslEngine = sslContext.createSSLEngine();
 				sslEngine.setUseClientMode(true);
 				pipeline.addFirst("sslHandler", new SslHandler(sslEngine));
 				ChannelFuture hf = channel.getPipeline().get(SslHandler.class)
-						.handshake();
+				        .handshake(channel);
 				hf.awaitUninterruptibly();
-				if (!hf.isSuccess()) {
+				if (!hf.isSuccess())
+				{
 					logger.error("Handshake failed", hf.getCause());
 					channel.close();
 					return null;
 				}
-				if (logger.isDebugEnabled()) {
+				if (logger.isDebugEnabled())
+				{
 					logger.debug("SSL handshake success!");
 				}
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				logger.error(null, ex);
 				channel.close();
 				return null;
@@ -221,67 +257,80 @@ public class HTTPProxyConnection extends ProxyConnection {
 		return channel;
 	}
 
-	protected boolean doSend(Buffer content) {
-		if (cfg.getConnectionModeType().equals(ConnectionMode.HTTPS)) {
+	protected boolean doSend(Buffer content)
+	{
+		if (cfg.getConnectionModeType().equals(ConnectionMode.HTTPS))
+		{
 			remoteAddress.trnasform2Https();
 		}
 		getHTTPClientChannel();
-		if (clientChannel == null) {
+		if (clientChannel == null)
+		{
 			return false;
 		}
 		waitingResponse = true;
 		String url = remoteAddress.toPrintableString();
-		if (cfg.isSimpleURLEnable()) {
-			if (null == cfg.getLocalProxy() || null == cfg.getLocalProxy().user) {
+		if (cfg.isSimpleURLEnable())
+		{
+			if (null == cfg.getLocalProxy() || null == cfg.getLocalProxy().user)
+			{
 				url = remoteAddress.getPath();
 			}
 		}
 		HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
-				HttpMethod.POST, url);
+		        HttpMethod.POST, url);
 		request.setHeader("Host",
-				remoteAddress.getHost() + ":" + remoteAddress.getPort());
+		        remoteAddress.getHost() + ":" + remoteAddress.getPort());
 		request.setHeader(HttpHeaders.Names.CONNECTION, "keep-alive");
-		if (null != cfg.getLocalProxy()) {
+		if (null != cfg.getLocalProxy())
+		{
 			ProxyInfo info = cfg.getLocalProxy();
-			if (null != info.user) {
+			if (null != info.user)
+			{
 				String userpass = info.user + ":" + info.passwd;
 				String encode = Base64.encodeToString(userpass.getBytes(),
-						false);
+				        false);
 				request.setHeader(HttpHeaders.Names.PROXY_AUTHORIZATION,
-						"Basic " + encode);
+				        "Basic " + encode);
 			}
 		}
 		request.setHeader(HttpHeaders.Names.CONTENT_TRANSFER_ENCODING,
-				HttpHeaders.Values.BINARY);
-		request.setHeader(HttpHeaders.Names.USER_AGENT, cfg.getUserAgent());
+		        HttpHeaders.Values.BINARY);
+		request.setHeader(HttpHeaders.Names.USER_AGENT, cfg.getUserAgent().trim());
 		request.setHeader(HttpHeaders.Names.CONTENT_TYPE,
-				"application/octet-stream");
+		        "application/octet-stream");
 
 		ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(
-				content.getRawBuffer(), content.getReadIndex(),
-				content.readableBytes());
+		        content.getRawBuffer(), content.getReadIndex(),
+		        content.readableBytes());
 		request.setHeader("Content-Length",
-				String.valueOf(buffer.readableBytes()));
+		        String.valueOf(buffer.readableBytes()));
 		request.setContent(buffer);
 
 		clientChannel.write(request);
-		if (logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled())
+		{
 			logger.debug("Send event via HTTP connection.");
 		}
 		return true;
 	}
 
-	private void updateSSLProxyConnectionStatus(int status) {
-		synchronized (sslProxyConnectionStatus) {
+	private void updateSSLProxyConnectionStatus(int status)
+	{
+		synchronized (sslProxyConnectionStatus)
+		{
 			sslProxyConnectionStatus.set(status);
 			sslProxyConnectionStatus.notify();
 		}
 	}
 
-	private boolean casSSLProxyConnectionStatus(int current, int status) {
-		synchronized (sslProxyConnectionStatus) {
+	private boolean casSSLProxyConnectionStatus(int current, int status)
+	{
+		synchronized (sslProxyConnectionStatus)
+		{
 			int cur = sslProxyConnectionStatus.get();
-			if (cur != current) {
+			if (cur != current)
+			{
 				return false;
 			}
 			sslProxyConnectionStatus.set(status);
@@ -289,19 +338,23 @@ public class HTTPProxyConnection extends ProxyConnection {
 			return true;
 		}
 	}
-
-	class HttpResponseHandler extends SimpleChannelUpstreamHandler {
+	
+	@ChannelPipelineCoverage("one")
+	class HttpResponseHandler extends SimpleChannelUpstreamHandler
+	{
 		private boolean readingChunks = false;
 		private int responseContentLength = 0;
 		private Buffer resBuffer = new Buffer(0);
 
-		private void fillResponseBuffer(ChannelBuffer buffer) {
+		private void fillResponseBuffer(ChannelBuffer buffer)
+		{
 			int contentlen = buffer.readableBytes();
 			resBuffer.ensureWritableBytes(contentlen);
 			buffer.readBytes(resBuffer.getRawBuffer(),
-					resBuffer.getWriteIndex(), contentlen);
+			        resBuffer.getWriteIndex(), contentlen);
 			resBuffer.advanceWriteIndex(contentlen);
-			if (responseContentLength <= resBuffer.readableBytes()) {
+			if (responseContentLength <= resBuffer.readableBytes())
+			{
 				waitingResponse = false;
 				doRecv(resBuffer);
 				resBuffer.clear();
@@ -310,7 +363,8 @@ public class HTTPProxyConnection extends ProxyConnection {
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-				throws Exception {
+		        throws Exception
+		{
 			e.getChannel().close();
 			// e.getCause().printStackTrace();
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
@@ -321,8 +375,10 @@ public class HTTPProxyConnection extends ProxyConnection {
 
 		@Override
 		public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
-				throws Exception {
-			if (logger.isDebugEnabled()) {
+		        throws Exception
+		{
+			if (logger.isDebugEnabled())
+			{
 				logger.debug("Connection closed.");
 			}
 			updateSSLProxyConnectionStatus(DISCONNECTED);
@@ -332,43 +388,56 @@ public class HTTPProxyConnection extends ProxyConnection {
 
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
-				throws Exception {
+		        throws Exception
+		{
 			waitingResponse = false;
-			if (!readingChunks) {
+			if (!readingChunks)
+			{
 				HttpResponse response = (HttpResponse) e.getMessage();
 
 				// workaround solution for netty
 				if (casSSLProxyConnectionStatus(WAITING_CONNECT_RESPONSE,
-						CONNECT_RESPONSED)) {
+				        CONNECT_RESPONSED))
+				{
 					HttpMessageDecoder decoder = e.getChannel().getPipeline()
-							.get(HttpResponseDecoder.class);
+					        .get(HttpResponseDecoder.class);
 					Method m = HttpMessageDecoder.class.getDeclaredMethod(
-							"reset", null);
+					        "reset", null);
 					m.setAccessible(true);
 					m.invoke(decoder, null);
 					return;
 				}
 
-				responseContentLength = (int) HttpHeaders
-						.getContentLength(response);
-				if (response.getStatus().getCode() == 200) {
-					if (response.isChunked()) {
+				// responseContentLength = (int) HttpHeaders
+				// .getContentLength(response);
+				responseContentLength = (int) response.getContentLength();
+				if (response.getStatus().getCode() == 200)
+				{
+					if (response.isChunked())
+					{
 						readingChunks = true;
 						waitingResponse = true;
-					} else {
+					}
+					else
+					{
 						readingChunks = false;
 						waitingResponse = false;
 					}
 					ChannelBuffer content = response.getContent();
 					fillResponseBuffer(content);
-				} else {
+				}
+				else
+				{
 					waitingResponse = false;
 					logger.error("Received error response:" + response);
 					closeRelevantSessions(response);
 				}
-			} else {
+			}
+			else
+			{
 				HttpChunk chunk = (HttpChunk) e.getMessage();
-				if (chunk.isLast()) {
+				if (chunk.isLast())
+				{
 					readingChunks = false;
 					waitingResponse = false;
 				}

@@ -59,13 +59,14 @@ public class ProxySessionManager
 	public ProxySession handleConnectionEvent(HTTPConnectionEvent event)
 	{
 		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event.getAttachment();
-		Channel localChannel = attach.first;
+		//Channel localChannel = attach.first;
 		Integer handleID = attach.second;
 		ProxySession session = getProxySession(handleID);
 		if(null != session)
 		{
 			if(event.status == HTTPConnectionEvent.CLOSED)
 			{
+				removeSession(session);
 				session.close(null);
 			}
 		}
