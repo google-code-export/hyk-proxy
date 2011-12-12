@@ -4,12 +4,14 @@
 package org.hyk.proxy.gae.client.handler;
 
 import java.net.InetSocketAddress;
-import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -45,6 +47,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.stream.ChunkedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +76,55 @@ public class ProxySession
 	private long waitingFetchStreamPos = 0;
 	private Buffer uploadBuffer = new Buffer(0);
 
+	private RangeChunkedInput rangeChunk = null;
+	private Map<Long, ScheduledFuture> rangeRetryTaskTable;
+
+	class RangeChunkedInput implements ChunkedInput
+	{
+		private LinkedList<ChannelBuffer> bufList = new LinkedList<ChannelBuffer>();
+
+		@Override
+		public boolean hasNextChunk() throws Exception
+		{
+			return waitingWriteStreamPos >= 0;
+		}
+
+		public void offer(ChannelBuffer buf)
+		{
+			synchronized (bufList)
+			{
+				bufList.addLast(buf);
+				bufList.notify();
+			}
+		}
+
+		@Override
+		public Object nextChunk() throws Exception
+		{
+			synchronized (bufList)
+			{
+				if (bufList.isEmpty())
+				{
+					bufList.wait(60000);
+				}
+				if (bufList.isEmpty())
+				{
+					return ChannelBuffers.EMPTY_BUFFER;
+				}
+				return bufList.removeFirst();
+			}
+		}
+
+		@Override
+		public void close() throws Exception
+		{
+			synchronized (bufList)
+			{
+				bufList.notify();
+			}
+		}
+	}
+
 	public ProxySession(Integer id, Channel localChannel)
 	{
 		this.sessionID = id;
@@ -84,13 +136,69 @@ public class ProxySession
 		return status;
 	}
 
+	private RangeChunkedInput getRangeChunkedInput()
+	{
+		if (null == rangeChunk)
+		{
+			rangeChunk = new RangeChunkedInput();
+		}
+		return rangeChunk;
+	}
+
+	private void saveRangeRetryTask(ScheduledFuture future, RangeHeaderValue v)
+	{
+		if (null == rangeRetryTaskTable)
+		{
+			rangeRetryTaskTable = new ConcurrentHashMap<Long, ScheduledFuture>();
+		}
+		rangeRetryTaskTable.put(v.getFirstBytePos(), future);
+	}
+
+	private void cancelRangeRetryTask(ContentRangeHeaderValue v)
+	{
+		if (null != rangeRetryTaskTable)
+		{
+			ScheduledFuture future = rangeRetryTaskTable.remove(v
+			        .getFirstBytePos());
+			if (null != future)
+			{
+				future.cancel(true);
+			}
+		}
+		if (null != rangeChunk)
+		{
+			try
+            {
+	            rangeChunk.close();
+            }
+            catch (Exception e)
+            {
+	            //
+            }
+		}
+	}
+
+	private void cancelAllRangeRetryTask()
+	{
+		if (null != rangeRetryTaskTable)
+		{
+			for (ScheduledFuture future : rangeRetryTaskTable.values())
+			{
+				future.cancel(true);
+			}
+		}
+	}
+
 	private HTTPRequestEvent cloneHeaders(HTTPRequestEvent event)
 	{
 		HTTPRequestEvent newEvent = new HTTPRequestEvent();
 		newEvent.method = event.method;
 		newEvent.url = event.url;
 		newEvent.headers = new ArrayList<KeyValuePair<String, String>>();
-		newEvent.headers.addAll(event.getHeaders());
+		for (KeyValuePair<String, String> header : event.getHeaders())
+		{
+			newEvent.addHeader(header.getName(), header.getValue());
+		}
 		return newEvent;
 	}
 
@@ -113,8 +221,8 @@ public class ProxySession
 		return connectionManager.getClientConnection(event);
 	}
 
-	private boolean rangeFetch(RangeHeaderValue originRange,
-	        long limitSize, int wokerNum)
+	private boolean rangeFetch(RangeHeaderValue originRange, long limitSize,
+	        int wokerNum)
 	{
 		int fetchSizeLimit = GAEClientConfiguration.getInstance()
 		        .getFetchLimitSize();
@@ -133,6 +241,11 @@ public class ProxySession
 		}
 		for (int i = 0; i < concurrentWorkerNum; i++)
 		{
+			if (waitingWriteStreamPos > 0
+			        && waitingFetchStreamPos - waitingWriteStreamPos > 1024 * 1024)
+			{
+				break;
+			}
 			long begin = start;
 			if (begin >= limit)
 			{
@@ -144,17 +257,42 @@ public class ProxySession
 				end = limit;
 			}
 			start = end + 1;
-			RangeHeaderValue headerValue = new RangeHeaderValue(begin, end);
+			final RangeHeaderValue headerValue = new RangeHeaderValue(begin,
+			        end);
 			final HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
 			newEvent.setAttachment(proxyEvent.getAttachment());
 			newEvent.setHeader(HttpHeaders.Names.RANGE, headerValue.toString());
-			getConcurrentClientConnection(newEvent).send(newEvent);
-			
+			Runnable retryTask = new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (logger.isDebugEnabled())
+					{
+						logger.debug("Retry range fetch since no response received in 10s, range fetch request is:"
+						        + newEvent);
+					}
+					getConcurrentClientConnection(newEvent).send(newEvent);
+				}
+			};
+			ScheduledFuture future = SharedObjectHelper.getGlobalTimer()
+			        .scheduleAtFixedRate(retryTask, 10, 10, TimeUnit.SECONDS);
+			saveRangeRetryTask(future, headerValue);
+			SharedObjectHelper.getGlobalThreadPool().submit(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					getConcurrentClientConnection(newEvent).send(newEvent);
+				}
+			});
+
 			if (-1 == waitingWriteStreamPos)
 			{
 				waitingWriteStreamPos = begin;
 			}
 			waitingFetchStreamPos = start;
+
 		}
 		if (waitingWriteStreamPos >= limit)
 		{
@@ -175,14 +313,21 @@ public class ProxySession
 		}
 		if (null == contentRangeValue)
 		{
+			logger.error("No content range header in response:" + ev);
+			close(null);
 			return;
 		}
 		ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
 		        contentRangeValue);
+		cancelRangeRetryTask(contentRange);
 		String rangeValue = proxyEvent.getHeader(HttpHeaders.Names.RANGE);
 		RangeHeaderValue range = isOriginalContainsRangeHeader ? new RangeHeaderValue(
 		        rangeValue) : null;
 		rangeFetchContents.put(contentRange.getFirstBytePos(), ev.content);
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("Save range content:" + contentRange);
+		}
 		while (rangeFetchContents.containsKey(waitingWriteStreamPos))
 		{
 			Buffer content = rangeFetchContents.remove(waitingWriteStreamPos);
@@ -191,16 +336,17 @@ public class ProxySession
 			        content.readableBytes());
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("Write content-range content with stream pos:" + waitingWriteStreamPos);
+				logger.debug("Write content-range content with stream pos:"
+				        + waitingWriteStreamPos);
 			}
-
-			localHTTPChannel.write(buf);
+			getRangeChunkedInput().offer(buf);
 			waitingWriteStreamPos = contentRange.getLastBytePos() + 1;
 		}
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("After writing conten-range contents, waitingWriteStreamPos = "
 			        + waitingWriteStreamPos);
+			logger.debug("rangeFetchContents is  " + rangeFetchContents);
 		}
 		rangeFetch(range, contentRange.getInstanceLength(), 1);
 	}
@@ -213,8 +359,14 @@ public class ProxySession
 			        HttpResponseStatus.REQUEST_TIMEOUT);
 		}
 
+		int status = ev.statusCode;
+		if (!isOriginalContainsRangeHeader
+		        && HttpResponseStatus.PARTIAL_CONTENT.getCode() == status)
+		{
+			status = HttpResponseStatus.OK.getCode();
+		}
 		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
-		        HttpResponseStatus.valueOf(ev.statusCode));
+		        HttpResponseStatus.valueOf(status));
 
 		List<KeyValuePair<String, String>> headers = ev.getHeaders();
 		for (KeyValuePair<String, String> header : headers)
@@ -232,10 +384,9 @@ public class ProxySession
 			}
 			else
 			{
-				response.addHeader(header.getName(), header.getValue());	
+				response.addHeader(header.getName(), header.getValue());
 			}
 		}
-
 		String contentRangeValue = ev
 		        .getHeader(HttpHeaders.Names.CONTENT_RANGE);
 		if (null != contentRangeValue)
@@ -248,8 +399,6 @@ public class ProxySession
 				response.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
 				response.setHeader(HttpHeaders.Names.CONTENT_LENGTH,
 				        String.valueOf(contentRange.getInstanceLength()));
-				response.setStatus(HttpResponseStatus.OK);
-
 			}
 			else
 			{
@@ -266,30 +415,26 @@ public class ProxySession
 					        .getInstanceLength() - 1);
 				}
 				response.setHeader(HttpHeaders.Names.CONTENT_RANGE,
-				        contentRange);
+				        contentRange.toString());
 				response.setHeader(
 				        HttpHeaders.Names.CONTENT_LENGTH,
-				        (contentRange.getLastBytePos()
-				                - contentRange.getFirstBytePos() + 1));
+				        ""
+				                + (contentRange.getLastBytePos()
+				                        - contentRange.getFirstBytePos() + 1));
 			}
 		}
-		
+		else
+		{
+			response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, ""
+			        + ev.content.readableBytes());
+		}
+
 		if (ev.content.readable())
 		{
 			ChannelBuffer bufer = ChannelBuffers.wrappedBuffer(
 			        ev.content.getRawBuffer(), ev.content.getReadIndex(),
 			        ev.content.readableBytes());
-			response.setChunked(false);
-			
-			response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, "" + ev.content.readableBytes());
-			if(response.isChunked())
-			{
-				response.removeHeader(HttpHeaders.Names.TRANSFER_ENCODING);
-			}
-//			else
-//			{
-//				chunk.setContent(bufer);
-//			}
+			// response.setChunked(false);
 			response.setContent(bufer);
 		}
 		return response;
@@ -306,10 +451,6 @@ public class ProxySession
 		HttpChunk chunk = new DefaultHttpChunk(ChannelBuffers.EMPTY_BUFFER);
 		HttpResponse response = buildHttpResponse(ev, chunk);
 		localHTTPChannel.write(response);
-		if(response.isChunked())
-		{
-			localHTTPChannel.write(chunk);
-		}
 		if (logger.isDebugEnabled())
 		{
 			logger.debug("Write response:" + response);
@@ -333,6 +474,15 @@ public class ProxySession
 			waitingFetchStreamPos = contentRange.getLastBytePos() + 1;
 			status = ProxySessionStatus.WAITING_MULTI_RANGE_RESPONSE;
 			rangeFetch(range, contentRange.getInstanceLength(), -1);
+			SharedObjectHelper.getGlobalThreadPool().submit(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					localHTTPChannel.write(getRangeChunkedInput());
+				}
+			});
+
 		}
 		else
 		{
@@ -350,16 +500,17 @@ public class ProxySession
 			if (contentRange.getLastBytePos() == contentRange
 			        .getInstanceLength() - 1)
 			{
-				HttpChunk chunk = new DefaultHttpChunk(ChannelBuffers.EMPTY_BUFFER);
+				HttpChunk chunk = new DefaultHttpChunk(
+				        ChannelBuffers.EMPTY_BUFFER);
 				HttpResponse response = buildHttpResponse(ev, chunk);
 				response.removeHeader(HttpHeaders.Names.CONTENT_RANGE);
 				response.removeHeader(HttpHeaders.Names.ACCEPT_RANGES);
-				response.setStatus(HttpResponseStatus.OK);
+				// response.setStatus(HttpResponseStatus.OK);
 				localHTTPChannel.write(response);
-				if(response.isChunked())
-				{
-					localHTTPChannel.write(chunk);
-				}
+				// if (response.isChunked())
+				// {
+				// localHTTPChannel.write(chunk);
+				// }
 			}
 			else
 			{
@@ -602,7 +753,8 @@ public class ProxySession
 		waitingWriteStreamPos = -1;
 		// rangeUploadingEnable = false;
 		rangeFetchContents.clear();
-		ProxySessionManager.getInstance().removeSession(this);
+		cancelAllRangeRetryTask();
+		// ProxySessionManager.getInstance().removeSession(this);
 		GAEEventHelper.releaseSessionBuffer(sessionID);
 		switch (status)
 		{
@@ -610,15 +762,14 @@ public class ProxySession
 			{
 				if (null != localHTTPChannel)
 				{
-					if(null== res)
+					if (null == res)
 					{
-						res = new DefaultHttpResponse(
-						        HttpVersion.HTTP_1_1,
+						res = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
 						        HttpResponseStatus.REQUEST_TIMEOUT);
 						logger.error("Send fake 408 to browser since session closed while no response sent.");
 					}
 					localHTTPChannel.write(res);
-					
+
 				}
 				break;
 			}
@@ -634,5 +785,4 @@ public class ProxySession
 				break;
 		}
 	}
-
 }

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author yinqiwen
  * 
  */
+@ChannelPipelineCoverage("one")
 public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 {
 	protected Logger logger = LoggerFactory.getLogger(getClass());
@@ -43,21 +44,23 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	private Channel localChannel = null;
 
 	private Integer id;
-	
+
 	private static AtomicInteger seed = new AtomicInteger(1);
-	
+
 	public HttpLocalProxyRequestHandler()
 	{
 		id = seed.getAndIncrement();
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 		{
-			logger.debug("HttpLocalProxyRequestHandler instance created with ID:" + id);
+			logger.debug("HttpLocalProxyRequestHandler instance created with ID:"
+			        + id);
 		}
 	}
-	
+
 	private boolean dispatchEvent(Event event)
 	{
-		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(localChannel, id);
+		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(
+		        localChannel, id);
 		event.setAttachment(attach);
 		try
 		{
@@ -81,14 +84,24 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 		{
 			int buflen = content.readableBytes();
 			event.content.ensureWritableBytes(content.readableBytes());
-			content.readBytes(event.content.getRawBuffer(), event.content.getWriteIndex(), content.readableBytes());
+			content.readBytes(event.content.getRawBuffer(),
+			        event.content.getWriteIndex(), content.readableBytes());
 			event.content.advanceWriteIndex(buflen);
 		}
-		for (Map.Entry<String, String> header : request.getHeaders())
+		for (String name : request.getHeaderNames())
 		{
-			event.headers.add(new KeyValuePair<String, String>(header.getKey(),
-			        header.getValue()));
+			for (String value : request.getHeaders(name))
+			{
+				event.headers
+				        .add(new KeyValuePair<String, String>(name, value));
+			}
+
 		}
+		// for (Map.Entry<String, String> header : request.getHeaders())
+		// {
+		// event.headers.add(new KeyValuePair<String, String>(header.getKey(),
+		// header.getValue()));
+		// }
 		return event;
 	}
 
@@ -116,7 +129,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	private void handleHttpRequest(HttpRequest request, MessageEvent e)
 	{
 		HTTPRequestEvent event = buildEvent(request);
-		if(!dispatchEvent(event))
+		if (!dispatchEvent(event))
 		{
 			localChannel.close();
 		}
@@ -143,8 +156,9 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
 	        throws Exception
 	{
+		logger.info("Browser connection closed");
 		super.channelClosed(ctx, e);
-		close();
+		//close();
 	}
 
 	@Override
@@ -157,10 +171,14 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 
 	public void close()
 	{
+		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(
+		        localChannel, id);
+		HTTPConnectionEvent event = new HTTPConnectionEvent(
+		        HTTPConnectionEvent.CLOSED);
+		event.setAttachment(attach);
+		dispatchEvent(event);
 		if (localChannel != null && localChannel.isConnected())
 		{
-			HTTPConnectionEvent event = new HTTPConnectionEvent(HTTPConnectionEvent.CLOSED);
-			dispatchEvent(event);
 			localChannel.close();
 			localChannel = null;
 		}

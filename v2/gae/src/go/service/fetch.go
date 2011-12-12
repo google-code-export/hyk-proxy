@@ -16,9 +16,9 @@ func buildHTTPRequest(ev *event.HTTPRequestEvent) *http.Request {
 	}
 	var slen int = ev.Headers.Len()
 	for i := 0; i < slen; i++ {
-		header, ok := ev.Headers.At(i).([]string)
+		header, ok := ev.Headers.At(i).(*event.NameValuePair)
 		if ok {
-			req.Header.Add(header[0], header[1])
+			req.Header.Add(header.Name, header.Value)
 		}
 	}
 	//if ev.Content.Len() > 0{
@@ -59,13 +59,14 @@ func Fetch(context appengine.Context, ev *event.HTTPRequestEvent) event.Event {
 		fillErrorResponse(errorResponse, "Invalid fetch url:"+ev.Url)
 		return errorResponse
 	}
-	t := &urlfetch.Transport{context, 10.0, true}
+	t := &urlfetch.Transport{context, 0, true}
 	retryCount := ServerConfig.RetryFetchCount
 	for retryCount > 0 {
 		resp, err := t.RoundTrip(req)
 		if err == nil {
 			return buildHTTPResponseEvent(resp)
 		}
+		context.Errorf("Failed to fetch URL[%s] for reason:%s", ev.Url, err.String())
 		retryCount--
 		if req.Header.Get("Range") == "" {
 			rangeLimit := ServerConfig.RangeFetchLimit
