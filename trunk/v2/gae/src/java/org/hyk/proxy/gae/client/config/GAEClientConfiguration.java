@@ -82,6 +82,14 @@ public class GAEClientConfiguration
 		@XmlAttribute
 		public boolean backendEnable;
 	}
+	
+	public static class MasterNode
+	{
+		@XmlAttribute
+		public String appid;
+		@XmlAttribute
+		public boolean backendEnable;
+	}
 
 	public static enum ProxyType
 	{
@@ -222,6 +230,20 @@ public class GAEClientConfiguration
 	{
 		return serverAuths;
 	}
+	
+	
+	@XmlElementWrapper(name = "GAE")
+	@XmlElement(name = "MasterNode")
+	private MasterNode masterNode;
+	public void setMasterNode(MasterNode node)
+	{
+		this.masterNode = node;
+	}
+	public MasterNode getMasterNode()
+	{
+		return masterNode;
+	}
+	
 	
 	public GAEServerAuth getGAEServerAuth(String appid)
 	{

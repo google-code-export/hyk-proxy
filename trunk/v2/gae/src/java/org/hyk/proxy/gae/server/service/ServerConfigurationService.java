@@ -55,6 +55,7 @@ public class ServerConfigurationService
 		entity.setProperty("RangeFetchLimit", "" + cfg.getRangeFetchLimit());
 		entity.setProperty("Compressor", "" + cfg.getCompressor().toString());
 		entity.setProperty("Encrypter", "" + cfg.getEncrypter().toString());
+		entity.setProperty("ProxyEnable", "" + cfg.isProxyEnable());
 		//entity.setProperty("TrafficStatEnable", "" + cfg.isTrafficStatEnable());
 		Set<String> set = cfg.getCompressFilter();
 		StringBuilder buffer = new StringBuilder();
@@ -80,7 +81,7 @@ public class ServerConfigurationService
 		cfg.setRangeFetchLimit(Integer.parseInt((String) entity.getProperty("RangeFetchLimit")));
 		cfg.setCompressor(CompressorType.valueOf((String) entity.getProperty("Compressor")));
 		cfg.setEncrypter(EncryptType.valueOf((String) entity.getProperty("Encrypter")));
-		//cfg.setTrafficStatEnable(Boolean.parseBoolean((String) entity.getProperty("TrafficStatEnable")));
+		cfg.setProxyEnable(Boolean.valueOf((String) entity.getProperty("ProxyEnable")));
 		String str = (String) entity.getProperty("CompressFilter");
 		if(null != str)
 		{

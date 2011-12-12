@@ -45,6 +45,17 @@ public class GAEServerConfiguration implements CodecObject
 
 	private CompressorType compressor = CompressorType.SNAPPY;
 	private EncryptType encrypter = EncryptType.SE1;
+	private boolean proxyEnable = true;
+
+	public boolean isProxyEnable() 
+	{
+		return proxyEnable;
+	}
+
+	public void setProxyEnable(boolean proxyEnable) 
+	{
+		this.proxyEnable = proxyEnable;
+	}
 
 	private Set<String> compressFilter = new HashSet<String>();
 
@@ -133,6 +144,7 @@ public class GAEServerConfiguration implements CodecObject
 		BufferHelper.writeVarInt(buffer, rangeFetchLimit);
 		BufferHelper.writeVarInt(buffer, compressor.getValue());
 		BufferHelper.writeVarInt(buffer, encrypter.getValue());
+		BufferHelper.writeBoolean(buffer, proxyEnable);
 		BufferHelper.writeSet(buffer, compressFilter);
 
 		return true;
@@ -149,6 +161,7 @@ public class GAEServerConfiguration implements CodecObject
 			compressor = CompressorType
 			        .fromInt(BufferHelper.readVarInt(buffer));
 			encrypter = EncryptType.fromInt(BufferHelper.readVarInt(buffer));
+			proxyEnable = BufferHelper.readBool(buffer);
 			compressFilter = BufferHelper.readSet(buffer, String.class);
 		}
 		catch (Exception e)
@@ -165,17 +178,18 @@ public class GAEServerConfiguration implements CodecObject
 		String colu3 = "RangeFetchLimit";
 		String colu4 = "Compressor";
 		String colu5 = "Encrypter";
-		String colu6 = "CompressFilter";
+		String colu6 = "ProxyEnable";
+		String colu7 = "CompressFilter";
 		final String formater = "%" + colu1.length() + "s %" + colu2.length()
 		        + "s %" + colu3.length() + "s %" + colu4.length() + "s %"
-		        + colu5.length() + "s %" + colu6.length() + "s";
+		        + colu5.length() + "s %" + colu6.length() + "s"+ colu7.length() + "s";
 		String header = String.format(formater, "FetchRetryCount",
 		        "MaxXMPPDataPackageSize", "RangeFetchLimit", "Compressor",
-		        "Encrypter", "CompressFilter");
+		        "Encrypter","ProxyEnable", "CompressFilter");
 		ps.println(header);
 		String output = String.format(formater, "" + fetchRetryCount, ""
 		        + maxXMPPDataPackageSize, "" + rangeFetchLimit,
-		        compressor.toString(), encrypter.toString(),
+		        compressor.toString(), encrypter.toString(), Boolean.toString(proxyEnable),
 		        getCompressFilter().toString());
 		ps.println(output);
 	}

@@ -64,6 +64,10 @@ public abstract class ProxyConnection
 	}
 
 	public abstract boolean isReady();
+	protected void setAvailable(boolean flag)
+	{
+		//nothing
+	}
 
 	protected void closeRelevantSessions(HttpResponse res)
 	{
@@ -167,7 +171,7 @@ public abstract class ProxyConnection
 			queuedEvents.add(event);
 			return true;
 		}
-
+		setAvailable(false);
 		if (logger.isDebugEnabled())
 		{
 			if (event instanceof HTTPRequestEvent)
