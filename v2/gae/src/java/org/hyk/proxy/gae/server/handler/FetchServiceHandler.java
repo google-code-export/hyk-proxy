@@ -66,6 +66,12 @@ public class FetchServiceHandler
 			fillErrorResponse(errorResponse, "URL Fetch service is no available in maintain time.");
 			return errorResponse;
 		}
+		GAEServerConfiguration cfg = ServerConfigurationService.getServerConfig();
+		if(!cfg.isProxyEnable())
+		{
+			fillErrorResponse(errorResponse, "Proxy service is no enable by admin.");
+			return errorResponse;
+		}
 		Object[] attachment = (Object[]) req.getAttachment();
 		EventHeaderTags tags = (EventHeaderTags) attachment[0];
 		if (UserManagementService.userAuthServiceAvailable(tags.token))
@@ -91,7 +97,7 @@ public class FetchServiceHandler
 			return errorResponse;
 		}
 		HTTPResponse fetchRes = null;
-		GAEServerConfiguration cfg = ServerConfigurationService.getServerConfig();
+		
 		int retry = cfg.getFetchRetryCount();
 		do
 		{

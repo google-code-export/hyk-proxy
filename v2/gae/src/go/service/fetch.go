@@ -52,6 +52,10 @@ func fillErrorResponse(ev *event.HTTPResponseEvent, cause string) {
 }
 
 func Fetch(context appengine.Context, ev *event.HTTPRequestEvent) event.Event {
+	if !ServerConfig.ProxyEnable{
+	    fillErrorResponse(errorResponse, "Proxy service is no enable by admin.")
+		return errorResponse 
+	}
 	req := buildHTTPRequest(ev)
 	errorResponse := new(event.HTTPResponseEvent)
 	if req == nil {

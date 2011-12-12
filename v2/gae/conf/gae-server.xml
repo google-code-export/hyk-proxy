@@ -18,4 +18,5 @@
 	<RangeFetchLimit>262144</RangeFetchLimit>
 	<Compressor>Snappy</Compressor>
 	<Encrypter>SE1</Encrypter>
+	<ProxyEnable>true</ProxyEnable>
 </Configure>

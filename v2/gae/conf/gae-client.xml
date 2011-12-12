@@ -2,6 +2,7 @@
 <Configure>
 	<!-- Can config more than 1 hyk-proxy-server -->
 	<GAE>
+	   <MasterNode appid="hykserver"/>
 	   <Server appid="hykserver" backendEnable="false"/>
 	   <!-- <Server appid="" user="" passwd=""  backendEnable="false"/> -->
 	</GAE>

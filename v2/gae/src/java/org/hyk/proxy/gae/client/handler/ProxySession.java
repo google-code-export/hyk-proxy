@@ -77,7 +77,7 @@ public class ProxySession
 	private Buffer uploadBuffer = new Buffer(0);
 
 	private RangeChunkedInput rangeChunk = null;
-	private Map<Long, ScheduledFuture> rangeRetryTaskTable;
+	//private Map<Long, ScheduledFuture> rangeRetryTaskTable;
 
 	class RangeChunkedInput implements ChunkedInput
 	{
@@ -145,49 +145,39 @@ public class ProxySession
 		return rangeChunk;
 	}
 
-	private void saveRangeRetryTask(ScheduledFuture future, RangeHeaderValue v)
-	{
-		if (null == rangeRetryTaskTable)
-		{
-			rangeRetryTaskTable = new ConcurrentHashMap<Long, ScheduledFuture>();
-		}
-		rangeRetryTaskTable.put(v.getFirstBytePos(), future);
-	}
+//	private void saveRangeRetryTask(ScheduledFuture future, RangeHeaderValue v)
+//	{
+//		if (null == rangeRetryTaskTable)
+//		{
+//			rangeRetryTaskTable = new ConcurrentHashMap<Long, ScheduledFuture>();
+//		}
+//		rangeRetryTaskTable.put(v.getFirstBytePos(), future);
+//	}
+//
+//	private void cancelRangeRetryTask(ContentRangeHeaderValue v)
+//	{
+//		if (null != rangeRetryTaskTable)
+//		{
+//			ScheduledFuture future = rangeRetryTaskTable.remove(v
+//			        .getFirstBytePos());
+//			if (null != future)
+//			{
+//				future.cancel(true);
+//			}
+//		}
+//		
+//	}
 
-	private void cancelRangeRetryTask(ContentRangeHeaderValue v)
-	{
-		if (null != rangeRetryTaskTable)
-		{
-			ScheduledFuture future = rangeRetryTaskTable.remove(v
-			        .getFirstBytePos());
-			if (null != future)
-			{
-				future.cancel(true);
-			}
-		}
-		if (null != rangeChunk)
-		{
-			try
-            {
-	            rangeChunk.close();
-            }
-            catch (Exception e)
-            {
-	            //
-            }
-		}
-	}
-
-	private void cancelAllRangeRetryTask()
-	{
-		if (null != rangeRetryTaskTable)
-		{
-			for (ScheduledFuture future : rangeRetryTaskTable.values())
-			{
-				future.cancel(true);
-			}
-		}
-	}
+//	private void cancelAllRangeRetryTask()
+//	{
+//		if (null != rangeRetryTaskTable)
+//		{
+//			for (ScheduledFuture future : rangeRetryTaskTable.values())
+//			{
+//				future.cancel(true);
+//			}
+//		}
+//	}
 
 	private HTTPRequestEvent cloneHeaders(HTTPRequestEvent event)
 	{
@@ -262,22 +252,22 @@ public class ProxySession
 			final HTTPRequestEvent newEvent = cloneHeaders(proxyEvent);
 			newEvent.setAttachment(proxyEvent.getAttachment());
 			newEvent.setHeader(HttpHeaders.Names.RANGE, headerValue.toString());
-			Runnable retryTask = new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					if (logger.isDebugEnabled())
-					{
-						logger.debug("Retry range fetch since no response received in 10s, range fetch request is:"
-						        + newEvent);
-					}
-					getConcurrentClientConnection(newEvent).send(newEvent);
-				}
-			};
-			ScheduledFuture future = SharedObjectHelper.getGlobalTimer()
-			        .scheduleAtFixedRate(retryTask, 10, 10, TimeUnit.SECONDS);
-			saveRangeRetryTask(future, headerValue);
+//			Runnable retryTask = new Runnable()
+//			{
+//				@Override
+//				public void run()
+//				{
+//					if (logger.isDebugEnabled())
+//					{
+//						logger.debug("Retry range fetch since no response received in 10s, range fetch request is:"
+//						        + newEvent);
+//					}
+//					getConcurrentClientConnection(newEvent).send(newEvent);
+//				}
+//			};
+			//ScheduledFuture future = SharedObjectHelper.getGlobalTimer()
+			//        .schedule(retryTask, 20, TimeUnit.SECONDS);
+			//saveRangeRetryTask(future, headerValue);
 			SharedObjectHelper.getGlobalThreadPool().submit(new Runnable()
 			{
 				@Override
@@ -319,7 +309,7 @@ public class ProxySession
 		}
 		ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(
 		        contentRangeValue);
-		cancelRangeRetryTask(contentRange);
+		//cancelRangeRetryTask(contentRange);
 		String rangeValue = proxyEvent.getHeader(HttpHeaders.Names.RANGE);
 		RangeHeaderValue range = isOriginalContainsRangeHeader ? new RangeHeaderValue(
 		        rangeValue) : null;
@@ -340,7 +330,9 @@ public class ProxySession
 				        + waitingWriteStreamPos);
 			}
 			getRangeChunkedInput().offer(buf);
-			waitingWriteStreamPos = contentRange.getLastBytePos() + 1;
+			int fetchSizeLimit = GAEClientConfiguration.getInstance()
+			        .getFetchLimitSize();
+			waitingWriteStreamPos = waitingWriteStreamPos + fetchSizeLimit;
 		}
 		if (logger.isDebugEnabled())
 		{
@@ -753,7 +745,18 @@ public class ProxySession
 		waitingWriteStreamPos = -1;
 		// rangeUploadingEnable = false;
 		rangeFetchContents.clear();
-		cancelAllRangeRetryTask();
+		if (null != rangeChunk)
+		{
+			try
+            {
+	            rangeChunk.close();
+            }
+            catch (Exception e)
+            {
+	            //
+            }
+		}
+		//cancelAllRangeRetryTask();
 		// ProxySessionManager.getInstance().removeSession(this);
 		GAEEventHelper.releaseSessionBuffer(sessionID);
 		switch (status)

@@ -6,6 +6,7 @@ package org.hyk.proxy.gae.client.connection;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
@@ -68,7 +69,7 @@ public class HTTPProxyConnection extends ProxyConnection
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 	private static ClientSocketChannelFactory factory;
 
-	private boolean waitingResponse = false;
+	private AtomicBoolean waitingResponse = new AtomicBoolean(false);
 	private SocketChannel clientChannel = null;
 
 	private HttpServerAddress remoteAddress = null;
@@ -86,9 +87,14 @@ public class HTTPProxyConnection extends ProxyConnection
 
 	}
 
-	public boolean isReady()
+	public  boolean isReady()
 	{
-		return !waitingResponse;
+		return !waitingResponse.get();
+	}
+	
+	@Override
+	protected void setAvailable(boolean flag) {
+		waitingResponse.set(flag);
 	}
 
 	@Override
@@ -259,6 +265,7 @@ public class HTTPProxyConnection extends ProxyConnection
 
 	protected boolean doSend(Buffer content)
 	{
+		waitingResponse.set(true);
 		if (cfg.getConnectionModeType().equals(ConnectionMode.HTTPS))
 		{
 			remoteAddress.trnasform2Https();
@@ -266,9 +273,10 @@ public class HTTPProxyConnection extends ProxyConnection
 		getHTTPClientChannel();
 		if (clientChannel == null)
 		{
+			waitingResponse.set(false);
 			return false;
 		}
-		waitingResponse = true;
+		
 		String url = remoteAddress.toPrintableString();
 		if (cfg.isSimpleURLEnable())
 		{
@@ -355,7 +363,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			resBuffer.advanceWriteIndex(contentlen);
 			if (responseContentLength <= resBuffer.readableBytes())
 			{
-				waitingResponse = false;
+				waitingResponse.set(false);
 				doRecv(resBuffer);
 				resBuffer.clear();
 			}
@@ -369,7 +377,7 @@ public class HTTPProxyConnection extends ProxyConnection
 			// e.getCause().printStackTrace();
 			logger.error("exceptionCaught in HttpResponseHandler", e.getCause());
 			updateSSLProxyConnectionStatus(DISCONNECTED);
-			waitingResponse = false;
+			waitingResponse.set(false);
 			close();
 		}
 
@@ -382,7 +390,7 @@ public class HTTPProxyConnection extends ProxyConnection
 				logger.debug("Connection closed.");
 			}
 			updateSSLProxyConnectionStatus(DISCONNECTED);
-			waitingResponse = false;
+			waitingResponse.set(false);
 			close();
 		}
 
@@ -390,7 +398,7 @@ public class HTTPProxyConnection extends ProxyConnection
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 		        throws Exception
 		{
-			waitingResponse = false;
+			
 			if (!readingChunks)
 			{
 				HttpResponse response = (HttpResponse) e.getMessage();
@@ -405,6 +413,7 @@ public class HTTPProxyConnection extends ProxyConnection
 					        "reset", null);
 					m.setAccessible(true);
 					m.invoke(decoder, null);
+					waitingResponse.set(false);
 					return;
 				}
 
@@ -416,19 +425,19 @@ public class HTTPProxyConnection extends ProxyConnection
 					if (response.isChunked())
 					{
 						readingChunks = true;
-						waitingResponse = true;
+						waitingResponse.set(true);
 					}
 					else
 					{
 						readingChunks = false;
-						waitingResponse = false;
+						waitingResponse.set(false);
 					}
 					ChannelBuffer content = response.getContent();
 					fillResponseBuffer(content);
 				}
 				else
 				{
-					waitingResponse = false;
+					waitingResponse.set(false);
 					logger.error("Received error response:" + response);
 					closeRelevantSessions(response);
 				}
@@ -439,7 +448,7 @@ public class HTTPProxyConnection extends ProxyConnection
 				if (chunk.isLast())
 				{
 					readingChunks = false;
-					waitingResponse = false;
+					waitingResponse.set(false);
 				}
 				fillResponseBuffer(chunk.getContent());
 			}
