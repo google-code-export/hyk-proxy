@@ -48,7 +48,7 @@ public class GAE implements Plugin
 			{
 				// try GoogleHttps
 				info = new ProxyInfo();
-				info.host = GAEConstants.RESERVED_GOOGLECN_HOST_MAPPING;
+				info.host = GAEConstants.RESERVED_GOOGLEHTTPS_HOST_MAPPING;
 				info.port = 443;
 				info.type = ProxyType.HTTPS;
 				GAEClientConfiguration.getInstance().setLocalProxy(info);

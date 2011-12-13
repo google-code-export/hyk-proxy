@@ -3,7 +3,6 @@
  */
 package org.hyk.proxy.gae.server.handler;
 
-
 import java.net.MalformedURLException;
 
 import org.arch.event.Event;
@@ -36,13 +35,14 @@ import com.google.apphosting.api.ApiProxy.OverQuotaException;
  */
 public class FetchServiceHandler
 {
-	protected Logger logger = LoggerFactory.getLogger(getClass());
-
-	private CapabilitiesService capabilities = CapabilitiesServiceFactory
-	        .getCapabilitiesService();
-	protected URLFetchService urlFetchService = URLFetchServiceFactory
-	        .getURLFetchService();
-
+	protected Logger	        logger	        = LoggerFactory
+	                                                    .getLogger(getClass());
+	
+	private CapabilitiesService	capabilities	= CapabilitiesServiceFactory
+	                                                    .getCapabilitiesService();
+	protected URLFetchService	urlFetchService	= URLFetchServiceFactory
+	                                                    .getURLFetchService();
+	
 	public FetchServiceHandler()
 	{
 	}
@@ -55,21 +55,25 @@ public class FetchServiceHandler
 		errorResponse.setHeader("Content-Length", "" + ret.length());
 		errorResponse.content.write(ret.getBytes());
 	}
-
+	
 	public Event fetch(HTTPRequestEvent req)
 	{
 		Event ret = null;
 		HTTPResponseEvent errorResponse = new HTTPResponseEvent();
-		if(capabilities.getStatus(Capability.URL_FETCH).getStatus().equals(CapabilityStatus.DISABLED))
+		if (capabilities.getStatus(Capability.URL_FETCH).getStatus()
+		        .equals(CapabilityStatus.DISABLED))
 		{
 			errorResponse.statusCode = 503;
-			fillErrorResponse(errorResponse, "URL Fetch service is no available in maintain time.");
+			fillErrorResponse(errorResponse,
+			        "URL Fetch service is no available in maintain time.");
 			return errorResponse;
 		}
-		GAEServerConfiguration cfg = ServerConfigurationService.getServerConfig();
-		if(!cfg.isProxyEnable())
+		GAEServerConfiguration cfg = ServerConfigurationService
+		        .getServerConfig();
+		if (!cfg.isProxyEnable())
 		{
-			fillErrorResponse(errorResponse, "Proxy service is no enable by admin.");
+			fillErrorResponse(errorResponse,
+			        "Proxy service is no enable by admin.");
 			return errorResponse;
 		}
 		Object[] attachment = (Object[]) req.getAttachment();
@@ -78,13 +82,14 @@ public class FetchServiceHandler
 		{
 			User user = UserManagementService.getUserWithToken(tags.token);
 			if (null == user)
-			{		
+			{
 				errorResponse.statusCode = 401;
-				fillErrorResponse(errorResponse, "You are not a authorized user for this proxy server.");
+				fillErrorResponse(errorResponse,
+				        "You are not a authorized user for this proxy server.");
 				return errorResponse;
 			}
 		}
-
+		
 		HTTPRequest fetchReq = null;
 		try
 		{
@@ -102,30 +107,38 @@ public class FetchServiceHandler
 		do
 		{
 			try
-            {
-	            fetchRes = urlFetchService.fetch(fetchReq);
-	            ret = GAEServerHelper.toHttpResponseExchange(fetchRes);
-            }
-			catch(OverQuotaException e)
+			{
+				fetchRes = urlFetchService.fetch(fetchReq);
+				HTTPResponseEvent responseEvent = GAEServerHelper
+				        .toHttpResponseExchange(fetchRes);
+				if (responseEvent.statusCode == 302
+				        && req.containsHeader("Range"))
+				{
+					responseEvent.addHeader("X-Range", req.getHeader("Range"));
+				}
+				ret = responseEvent;
+			}
+			catch (OverQuotaException e)
 			{
 				errorResponse.statusCode = 503;
 				fillErrorResponse(errorResponse, "Over daily quota limit.");
 				return errorResponse;
 			}
-            catch (Exception e)
-            {
-            	logger.error("Failed to fetch URL:" +req.url , e);
-            	retry--;
-            	if(!req.containsHeader("Range"))
-            	{
-            		HTTPHeader rangeHeader = new HTTPHeader("Range", new RangeHeaderValue(0, cfg.getRangeFetchLimit() - 1).toString());
-            		fetchReq.addHeader(rangeHeader);
-            	}
-            }	
-		}
-		while (null == ret && retry > 0);
+			catch (Exception e)
+			{
+				logger.error("Failed to fetch URL:" + req.url, e);
+				retry--;
+				if (!req.containsHeader("Range"))
+				{
+					HTTPHeader rangeHeader = new HTTPHeader("Range",
+					        new RangeHeaderValue(0,
+					                cfg.getRangeFetchLimit() - 1).toString());
+					fetchReq.addHeader(rangeHeader);
+				}
+			}
+		} while (null == ret && retry > 0);
 		
-		if(null == fetchRes)
+		if (null == fetchRes)
 		{
 			errorResponse.statusCode = 408;
 			fillErrorResponse(errorResponse, "Fetch timeout for url:" + req.url);

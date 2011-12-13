@@ -12,7 +12,7 @@ type GAEServerConfig struct {
 	RangeFetchLimit        uint32
 	CompressType           uint32
 	EncryptType            uint32
-	ProxyEnable            bool
+	ProxyEnable            uint8
 	CompressFilter         map[string]string
 }
 
@@ -31,7 +31,7 @@ func (cfg *GAEServerConfig) Encode(buffer *bytes.Buffer) bool {
 	codec.WriteUvarint(buffer, uint64(cfg.RangeFetchLimit))
 	codec.WriteUvarint(buffer, uint64(cfg.CompressType))
 	codec.WriteUvarint(buffer, uint64(cfg.EncryptType))
-	buffer.WriteByte(byte(cfg.ProxyEnable))
+	buffer.WriteByte(cfg.ProxyEnable)
 	codec.WriteUvarint(buffer, uint64(len(cfg.CompressFilter)))
 	for key := range cfg.CompressFilter {
 		codec.WriteVarString(buffer, key)
@@ -55,7 +55,7 @@ func (cfg *GAEServerConfig) Decode(buffer *bytes.Buffer) bool {
 	cfg.RangeFetchLimit = uint32(tmp3)
 	cfg.CompressType = uint32(tmp4)
 	cfg.EncryptType = uint32(tmp5)
-	cfg.ProxyEnable = bool(tmp7)
+	cfg.ProxyEnable = uint8(tmp7)
 	filter := make(map[string]string)
 	for i := 0; i < int(tmp6); i++ {
 		line, ok := codec.ReadVarString(buffer)

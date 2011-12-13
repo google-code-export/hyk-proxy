@@ -158,7 +158,7 @@ public class HttpLocalProxyRequestHandler extends SimpleChannelUpstreamHandler
 	{
 		logger.info("Browser connection closed");
 		super.channelClosed(ctx, e);
-		//close();
+		close();
 	}
 
 	@Override

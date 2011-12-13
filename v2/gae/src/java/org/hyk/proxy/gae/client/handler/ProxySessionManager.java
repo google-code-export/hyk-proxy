@@ -12,6 +12,8 @@ import org.arch.event.http.HTTPConnectionEvent;
 import org.arch.event.http.HTTPRequestEvent;
 import org.hyk.proxy.gae.client.handler.ProxySession;
 import org.jboss.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author qiyingwang
@@ -19,6 +21,8 @@ import org.jboss.netty.channel.Channel;
  */
 public class ProxySessionManager
 {
+	protected static Logger logger = LoggerFactory
+	        .getLogger(ProxySessionManager.class);
 	private static ProxySessionManager instance = new ProxySessionManager();
 	
 	private Map<Integer, ProxySession> sessionTable = new HashMap<Integer, ProxySession>(); 
@@ -53,6 +57,10 @@ public class ProxySessionManager
 				sessionTable.put(id, session);
             }
 		}
+		if(logger.isDebugEnabled())
+		{
+			logger.debug("Current session table have " + sessionTable.size() + " sessions");
+		}
 		return session;
 	}
 	
@@ -69,6 +77,10 @@ public class ProxySessionManager
 				removeSession(session);
 				session.close(null);
 			}
+		}
+		else
+		{
+			logger.error("Can not find session with session ID:" + handleID);
 		}
 		return session;
 	}

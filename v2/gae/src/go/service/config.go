@@ -18,6 +18,7 @@ func initServerConfig() *event.GAEServerConfig {
 	cfg.MaxXMPPDataPackageSize = 40960
 	cfg.CompressType = event.C_SNAPPY
 	cfg.EncryptType = event.E_SE1
+	cfg.ProxyEnable = 1
 	cfg.CompressFilter = make(map[string]string)
 	return cfg
 }
@@ -45,6 +46,10 @@ func toPropertyList() datastore.PropertyList {
 	ret = append(ret, datastore.Property{
 		Name:  "EncryptType",
 		Value: strconv.Itoa64(int64(ServerConfig.EncryptType)),
+	})
+	ret = append(ret, datastore.Property{
+		Name:  "ProxyEnable",
+		Value: strconv.Itoa64(int64(ServerConfig.ProxyEnable)),
 	})
 	var tmp string
 	for key, _ := range ServerConfig.CompressFilter {
@@ -76,6 +81,9 @@ func fromPropertyList(item datastore.PropertyList) {
 		case "EncryptType":
 			tmp, _ := strconv.Atoui64(v.Value.(string))
 			ServerConfig.EncryptType = uint32(tmp)
+		case "ProxyEnable":
+			tmp, _ := strconv.Atoui64(v.Value.(string))
+			ServerConfig.ProxyEnable = uint8(tmp)
 		case "CompressFilter":
 			str := v.Value.(string)
 			ss := strings.Split(str, ";")

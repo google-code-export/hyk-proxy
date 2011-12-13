@@ -6,6 +6,7 @@ package org.hyk.proxy.gae.client.connection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.arch.buffer.Buffer;
 import org.arch.common.Pair;
@@ -39,36 +40,38 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class ProxyConnection
 {
-	protected Logger logger = LoggerFactory.getLogger(getClass());
-	protected static GAEClientConfiguration cfg = GAEClientConfiguration
-	        .getInstance();
-	private LinkedList<Event> queuedEvents = new LinkedList<Event>();
-	protected GAEServerAuth auth = null;
-	private String authToken = null;
-	private Object authTokenLock = new Object();
-	private Set<Integer> relevantSessions = new HashSet<Integer>();
-	private EventHandler outSessionHandler = null;
-
+	protected Logger	                    logger	          = LoggerFactory
+	                                                                  .getLogger(getClass());
+	protected static GAEClientConfiguration	cfg	              = GAEClientConfiguration
+	                                                                  .getInstance();
+	private LinkedList<Event>	            queuedEvents	  = new LinkedList<Event>();
+	protected GAEServerAuth	                auth	          = null;
+	private String	                        authToken	      = null;
+	private AtomicInteger	                        authTokenLock	  = new AtomicInteger(0);
+	private Set<Integer>	                relevantSessions	= new HashSet<Integer>();
+	private EventHandler	                outSessionHandler	= null;
+	
 	protected ProxyConnection(GAEServerAuth auth)
 	{
 		this.auth = auth;
 	}
-
+	
 	protected abstract boolean doSend(Buffer msgbuffer);
-
+	
 	protected abstract int getMaxDataPackageSize();
-
+	
 	protected void doClose()
 	{
-
+		
 	}
-
+	
 	public abstract boolean isReady();
+	
 	protected void setAvailable(boolean flag)
 	{
-		//nothing
+		// nothing
 	}
-
+	
 	protected void closeRelevantSessions(HttpResponse res)
 	{
 		for (Integer sessionID : relevantSessions)
@@ -84,13 +87,15 @@ public abstract class ProxyConnection
 		}
 		relevantSessions.clear();
 	}
-
+	
 	public void close()
 	{
 		doClose();
 		closeRelevantSessions(null);
+		authTokenLock.set(-1);
+		setAuthToken((AuthResponseEvent) null);
 	}
-
+	
 	public boolean auth()
 	{
 		if (null != authToken)
@@ -103,6 +108,7 @@ public abstract class ProxyConnection
 		event.passwd = auth.passwd.trim();
 		Pair<Channel, Integer> attach = new Pair<Channel, Integer>(null, 0);
 		event.setAttachment(attach);
+		authTokenLock.set(0);
 		if (!send(event))
 		{
 			return false;
@@ -111,7 +117,10 @@ public abstract class ProxyConnection
 		{
 			try
 			{
-				authTokenLock.wait(60 * 1000); // 1min
+				if(authTokenLock.get() == 0)
+				{
+					authTokenLock.wait(60 * 1000); // 1min
+				}
 			}
 			catch (InterruptedException e)
 			{
@@ -120,42 +129,48 @@ public abstract class ProxyConnection
 		}
 		return authToken != null && !authToken.isEmpty();
 	}
-
+	
 	public String getAuthToken()
 	{
 		return authToken;
 	}
-
+	
 	private void setAuthToken(AuthResponseEvent ev)
 	{
 		synchronized (authTokenLock)
 		{
-			setAuthToken(ev.token);
+			if (null != ev)
+			{
+				setAuthToken(ev.token);
+			}
 			authTokenLock.notify();
 		}
-		if (logger.isInfoEnabled())
+		
+		if (null != ev)
 		{
-			logger.info("Set connection auth token:" + ev.token);
-		}
-
-		if (null != ev.error)
-		{
-			logger.error("Failed to auth appid:" + ev.appid + " fore reason:"
-			        + ev.error);
+			if (logger.isInfoEnabled())
+			{
+				logger.info("Set connection auth token:" + ev.token);
+			}
+			if (null != ev.error)
+			{
+				logger.error("Failed to auth appid:" + ev.appid
+				        + " fore reason:" + ev.error);
+			}
 		}
 	}
-
+	
 	public void setAuthToken(String token)
 	{
 		authToken = token;
 	}
-
+	
 	public boolean send(Event event, EventHandler handler)
 	{
 		outSessionHandler = handler;
 		return send(event);
 	}
-
+	
 	public boolean send(Event event)
 	{
 		Pair<Channel, Integer> attach = (Pair<Channel, Integer>) event
@@ -164,8 +179,8 @@ public abstract class ProxyConnection
 		{
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("Connection:" + this.hashCode() + " queue session[" + attach.second
-				        + "] event:");
+				logger.debug("Connection:" + this.hashCode()
+				        + " queue session[" + attach.second + "] event:");
 				logger.debug(event.toString());
 			}
 			queuedEvents.add(event);
@@ -176,7 +191,8 @@ public abstract class ProxyConnection
 		{
 			if (event instanceof HTTPRequestEvent)
 			{
-				logger.debug("Connection:" + this.hashCode() + " send out session[" + attach.second
+				logger.debug("Connection:" + this.hashCode()
+				        + " send out session[" + attach.second
 				        + "] HTTP request:");
 				logger.debug(event.toString());
 			}
@@ -185,12 +201,12 @@ public abstract class ProxyConnection
 		{
 			attach = new Pair<Channel, Integer>(null, -1);
 		}
-
+		
 		EventHeaderTags tags = new EventHeaderTags();
 		// tags.compressor = cfg.getCompressor();
 		// tags.encrypter = cfg.getEncrypter();
 		tags.token = authToken;
-
+		
 		event.setHash(attach.second);
 		CompressorType compressType = cfg.getCompressorType();
 		CompressEvent comress = new CompressEvent(compressType, event);
@@ -214,7 +230,7 @@ public abstract class ProxyConnection
 			return doSend(msgbuffer);
 		}
 	}
-
+	
 	private void handleRecvEvent(Event ev)
 	{
 		if (null == ev)
@@ -222,7 +238,7 @@ public abstract class ProxyConnection
 			close();
 			return;
 		}
-
+		
 		relevantSessions.remove(ev.getHash());
 		int type;
 		type = Event.getTypeVersion(ev.getClass()).type;
@@ -282,7 +298,7 @@ public abstract class ProxyConnection
 				break;
 			}
 		}
-
+		
 		ProxySession session = ProxySessionManager.getInstance()
 		        .getProxySession(ev.getHash());
 		if (null != session)
@@ -308,7 +324,7 @@ public abstract class ProxyConnection
 			}
 		}
 	}
-
+	
 	protected void doRecv(Buffer content)
 	{
 		Event ev = null;
