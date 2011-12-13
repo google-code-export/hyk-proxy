@@ -10,8 +10,8 @@
 package org.hyk.proxy.core.framework;
 
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import org.arch.event.EventDispatcher;
 import org.hyk.proxy.core.config.CoreConfiguration;
 import org.hyk.proxy.core.event.Events;
 import org.hyk.proxy.core.httpserver.HttpLocalProxyServer;
@@ -91,6 +91,16 @@ public class Framework
 
 			SharedObjectHelper.getTrace().info("Local HTTP(S) Server Running...\nat "
 			        + cfg.getLocalProxyServerAddress());
+			
+			Runnable gcTask = new Runnable()
+			{	
+				@Override
+				public void run()
+				{
+					System.gc();	
+				}
+			};
+			SharedObjectHelper.getGlobalTimer().scheduleAtFixedRate(gcTask, 10, 10, TimeUnit.SECONDS);
 			isStarted = true;
 			return true;
 		}

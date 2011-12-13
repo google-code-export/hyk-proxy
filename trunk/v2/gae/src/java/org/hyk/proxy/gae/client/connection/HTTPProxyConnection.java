@@ -158,7 +158,6 @@ public class HTTPProxyConnection extends ProxyConnection
 			{
 				sslConnectionEnable = true;
 			}
-			// except g.cn/google.cn
 		}
 		else
 		{

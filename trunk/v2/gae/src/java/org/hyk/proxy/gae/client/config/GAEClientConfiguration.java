@@ -232,17 +232,17 @@ public class GAEClientConfiguration
 	}
 	
 	
-	@XmlElementWrapper(name = "GAE")
-	@XmlElement(name = "MasterNode")
-	private MasterNode masterNode;
-	public void setMasterNode(MasterNode node)
-	{
-		this.masterNode = node;
-	}
-	public MasterNode getMasterNode()
-	{
-		return masterNode;
-	}
+//	@XmlElementWrapper(name = "GAE")
+//	@XmlElement(name = "MasterNode")
+//	private MasterNode masterNode;
+//	public void setMasterNode(MasterNode node)
+//	{
+//		this.masterNode = node;
+//	}
+//	public MasterNode getMasterNode()
+//	{
+//		return masterNode;
+//	}
 	
 	
 	public GAEServerAuth getGAEServerAuth(String appid)

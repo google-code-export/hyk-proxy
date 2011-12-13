@@ -304,7 +304,22 @@ public class ProxySession
 		if (null == contentRangeValue)
 		{
 			logger.error("No content range header in response:" + ev);
-			close(null);
+			if(ev.statusCode >= 400)
+			{
+				close(null);
+			}	
+			if(ev.statusCode == 302)
+			{
+				String location = ev.getHeader("Location");
+				String xrange = ev.getHeader("X-Range");
+				if(null != location && null != xrange)
+				{
+					proxyEvent.url = location;
+					proxyEvent.setHeader("Range", xrange);
+					getConcurrentClientConnection(proxyEvent).send(proxyEvent);
+					logger.info("Redirect in multi range fetching.");
+				}
+			}
 			return;
 		}
 		ContentRangeHeaderValue contentRange = new ContentRangeHeaderValue(

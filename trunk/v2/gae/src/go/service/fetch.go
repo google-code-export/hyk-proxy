@@ -52,12 +52,13 @@ func fillErrorResponse(ev *event.HTTPResponseEvent, cause string) {
 }
 
 func Fetch(context appengine.Context, ev *event.HTTPRequestEvent) event.Event {
-	if !ServerConfig.ProxyEnable{
+	errorResponse := new(event.HTTPResponseEvent)
+	if ServerConfig.ProxyEnable == 0{
 	    fillErrorResponse(errorResponse, "Proxy service is no enable by admin.")
 		return errorResponse 
 	}
 	req := buildHTTPRequest(ev)
-	errorResponse := new(event.HTTPResponseEvent)
+	
 	if req == nil {
 		errorResponse.Status = 400
 		fillErrorResponse(errorResponse, "Invalid fetch url:"+ev.Url)
@@ -68,7 +69,12 @@ func Fetch(context appengine.Context, ev *event.HTTPRequestEvent) event.Event {
 	for retryCount > 0 {
 		resp, err := t.RoundTrip(req)
 		if err == nil {
-			return buildHTTPResponseEvent(resp)
+			res := buildHTTPResponseEvent(resp)
+			rangeHeader :=  req.Header.Get("Range")
+			if len(rangeHeader) >0 && res.Status == 302{
+			   res.AddHeader("X-Range", rangeHeader);
+			}
+			return res
 		}
 		context.Errorf("Failed to fetch URL[%s] for reason:%s", ev.Url, err.String())
 		retryCount--

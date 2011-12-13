@@ -17,19 +17,19 @@ import org.hyk.proxy.gae.client.config.GAEClientConfiguration.XmppAccount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @author qiyingwang
  * 
  */
 public class ProxyConnectionManager
 {
-	private static ProxyConnectionManager instance = new ProxyConnectionManager();
-	protected Logger logger = LoggerFactory.getLogger(getClass());
-	private Map<String, List<ProxyConnection> > conntionTable = new HashMap<String, List<ProxyConnection>>();
+	private static ProxyConnectionManager	   instance	      = new ProxyConnectionManager();
+	protected Logger	                       logger	      = LoggerFactory
+	                                                                  .getLogger(getClass());
+	private Map<String, List<ProxyConnection>>	conntionTable	= new HashMap<String, List<ProxyConnection>>();
 	
-	private ListSelector<GAEServerAuth> seletor = null;
-
+	private ListSelector<GAEServerAuth>	       seletor	      = null;
+	
 	public static ProxyConnectionManager getInstance()
 	{
 		return instance;
@@ -39,67 +39,77 @@ public class ProxyConnectionManager
 	{
 		List<GAEServerAuth> auths = new ArrayList<GAEClientConfiguration.GAEServerAuth>();
 		auths.addAll(gaeAuths);
-		for(GAEServerAuth auth:GAEClientConfiguration.getInstance().getGAEServerAuths())
+		for (GAEServerAuth auth : GAEClientConfiguration.getInstance()
+		        .getGAEServerAuths())
 		{
 			ProxyConnection conn = getClientConnection(auth);
-			if(null == conn)
+			if (null == conn)
 			{
 				logger.error("Failed to auth connetion for appid:" + auth.appid);
 				auths.remove(auth);
 			}
 		}
-		if(auths.isEmpty())
+		if (auths.isEmpty())
 		{
 			logger.error("Failed to connect remote GAE server.");
 			return false;
 		}
-		if(logger.isInfoEnabled())
+		if (logger.isInfoEnabled())
 		{
-			int size =  auths.size();
-			logger.info("Success to connect " + size + " GAE server" + (size > 1 ?"s":""));
+			int size = auths.size();
+			logger.info("Success to connect " + size + " GAE server"
+			        + (size > 1 ? "s" : ""));
 		}
 		seletor = new ListSelector<GAEServerAuth>(auths);
 		return true;
 	}
+	
 	public boolean init(GAEServerAuth auth)
 	{
 		return init(Arrays.asList(auth));
 	}
+	
 	public boolean init()
 	{
 		return init(GAEClientConfiguration.getInstance().getGAEServerAuths());
 	}
 	
-	private void addProxyConnection(List<ProxyConnection> connlist, ProxyConnection connection)
+	private boolean addProxyConnection(List<ProxyConnection> connlist,
+	        ProxyConnection connection)
 	{
-		if(!connlist.isEmpty())
+		if (!connlist.isEmpty())
 		{
 			connection.setAuthToken(connlist.get(0).getAuthToken());
 		}
 		else
 		{
-			connection.auth();
+			if(!connection.auth())
+			{
+				return false;
+			}
 		}
 		connlist.add(connection);
+		return true;
 	}
 	
 	private ProxyConnection getClientConnection(GAEServerAuth auth)
 	{
 		ProxyConnection connection = null;
 		List<ProxyConnection> connlist = conntionTable.get(auth.appid);
-		if(null == connlist)
+		if (null == connlist)
 		{
 			connlist = new ArrayList<ProxyConnection>();
 			conntionTable.put(auth.appid, connlist);
 		}
-		for(ProxyConnection conn:connlist)
+		for (ProxyConnection conn : connlist)
 		{
-			if(conn.isReady())
+			if (conn.isReady())
 			{
 				return conn;
 			}
 		}
-		if(connlist.size() >= GAEClientConfiguration.getInstance().getConnectionPoolSize())
+		if (connlist.size() >= GAEClientConfiguration.getInstance()
+		        .getConnectionPoolSize())
 		{
 			return connlist.get(0);
 		}
@@ -109,23 +119,32 @@ public class ProxyConnectionManager
 			case HTTP:
 			case HTTPS:
 			{
-				connection = new HTTPProxyConnection(auth);	
-				addProxyConnection(connlist, connection);
+				connection = new HTTPProxyConnection(auth);
+				if(!addProxyConnection(connlist, connection))
+				{
+					return null;
+				}
 				break;
 			}
 			case XMPP:
 			{
-				for(XmppAccount account:GAEClientConfiguration.getInstance().getXmppAccounts())
+				for (XmppAccount account : GAEClientConfiguration.getInstance()
+				        .getXmppAccounts())
 				{
 					try
-                    {
-	                    connection = new XMPPProxyConnection(auth, account);
-	                    addProxyConnection(connlist, connection);
-                    }
-                    catch (Exception e)
-                    {
-	                    logger.error("Failed to create XMPP proxy connection for jid:" + account.jid, e);
-                    }
+					{
+						connection = new XMPPProxyConnection(auth, account);
+						if(!addProxyConnection(connlist, connection))
+						{
+							return null;
+						}
+					}
+					catch (Exception e)
+					{
+						logger.error(
+						        "Failed to create XMPP proxy connection for jid:"
+						                + account.jid, e);
+					}
 				}
 				break;
 			}
@@ -137,11 +156,11 @@ public class ProxyConnectionManager
 		
 		return connection;
 	}
-
+	
 	public ProxyConnection getClientConnection(HTTPRequestEvent event)
 	{
-		String appid = null != event?GAEClientConfiguration.getInstance()
-		        .getBindingAppId(event.getHeader("Host")):null;
+		String appid = null != event ? GAEClientConfiguration.getInstance()
+		        .getBindingAppId(event.getHeader("Host")) : null;
 		GAEServerAuth auth = null;
 		if (null == appid)
 		{
@@ -149,14 +168,14 @@ public class ProxyConnectionManager
 		}
 		else
 		{
-			 auth = GAEClientConfiguration.getInstance().getGAEServerAuth(appid);
+			auth = GAEClientConfiguration.getInstance().getGAEServerAuth(appid);
 		}
 		return getClientConnection(auth);
 	}
-
+	
 	public void routine()
 	{
-
+		
 	}
-
+	
 }
